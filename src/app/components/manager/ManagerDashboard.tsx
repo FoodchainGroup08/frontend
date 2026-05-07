@@ -1,27 +1,65 @@
+import { useEffect, useState } from "react";
 import { ShoppingCart, DollarSign, TrendingUp, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getManagerDashboard, type ManagerDashboard as DashboardData } from "@/services/api";
 
-interface DashboardStats {
-  totalOrders: number;
-  totalRevenue: number;
-  averageOrderValue: number;
-  ordersChange?: number;
-  revenueChange?: number;
-}
+export function ManagerDashboard() {
+  const [stats, setStats] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-interface ManagerDashboardProps {
-  stats?: DashboardStats;
-}
+  const fetchStats = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getManagerDashboard();
+      setStats(data);
+    } catch {
+      setError("Failed to load dashboard stats");
+      toast.error("Failed to load dashboard stats");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-const mockStats: DashboardStats = {
-  totalOrders: 142,
-  totalRevenue: 387500,
-  averageOrderValue: 2729,
-  ordersChange: 12,
-  revenueChange: 8
-};
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
-export function ManagerDashboard({ stats = mockStats }: ManagerDashboardProps) {
+  if (isLoading) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8">
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-5 w-72 mb-8" />
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
+          </div>
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+            <Skeleton className="h-64 w-full rounded-lg" />
+            <Skeleton className="h-64 w-full rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8 text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error || "No data available"}</p>
+          <Button onClick={fetchStats} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const statCards = [
     {
       title: "Today's Orders",

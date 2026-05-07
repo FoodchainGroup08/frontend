@@ -4,13 +4,15 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 interface RegisterProps {
   onNavigateToLogin: () => void;
-  onRegister?: (name: string, email: string, password: string, role: string) => void;
 }
 
-export function Register({ onNavigateToLogin, onRegister }: RegisterProps) {
+export function Register({ onNavigateToLogin }: RegisterProps) {
+  const { register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,13 +36,15 @@ export function Register({ onNavigateToLogin, onRegister }: RegisterProps) {
     }
 
     setIsLoading(true);
-
-    setTimeout(() => {
-      if (onRegister) {
-        onRegister(name, email, password, role);
-      }
+    try {
+      await register(name, email, password, role);
+      toast.success("Account created successfully!", { description: `Welcome to FoodChain, ${name}!` });
+    } catch {
+      toast.error("Registration failed", { description: "Please try again" });
+      setError("Registration failed. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

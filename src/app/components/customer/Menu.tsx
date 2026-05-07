@@ -1,20 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Minus, Search } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-
-interface MenuItem {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image: string;
-  available: boolean;
-}
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getMenuByBranch, type MenuItem } from "@/services/api";
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -23,109 +16,38 @@ interface CartItem extends MenuItem {
 interface MenuProps {
   onAddToCart: (item: MenuItem, quantity: number) => void;
   cart: CartItem[];
+  branchId: string;
 }
 
-const mockMenuItems: MenuItem[] = [
-  {
-    id: "1",
-    name: "Jollof Rice & Chicken",
-    description: "Classic Nigerian jollof rice served with grilled chicken",
-    price: 2500,
-    category: "Mains",
-    image: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "2",
-    name: "Fried Rice Special",
-    description: "Fried rice with mixed vegetables, prawns, and chicken",
-    price: 3000,
-    category: "Mains",
-    image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "3",
-    name: "Pepper Soup",
-    description: "Spicy goat meat pepper soup with herbs",
-    price: 2000,
-    category: "Soups",
-    image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "4",
-    name: "Egusi Soup & Pounded Yam",
-    description: "Traditional egusi soup with assorted meat",
-    price: 3500,
-    category: "Soups",
-    image: "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "5",
-    name: "Suya Platter",
-    description: "Grilled spiced beef skewers with onions",
-    price: 1500,
-    category: "Grills",
-    image: "https://images.unsplash.com/photo-1529042410759-befb1204b468?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "6",
-    name: "Grilled Fish",
-    description: "Whole tilapia grilled to perfection",
-    price: 4000,
-    category: "Grills",
-    image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=300&fit=crop",
-    available: false
-  },
-  {
-    id: "7",
-    name: "Chapman",
-    description: "Refreshing Nigerian cocktail drink",
-    price: 800,
-    category: "Drinks",
-    image: "https://images.unsplash.com/photo-1546173159-315724a31696?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "8",
-    name: "Zobo",
-    description: "Chilled hibiscus drink",
-    price: 500,
-    category: "Drinks",
-    image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "9",
-    name: "Puff Puff",
-    description: "Sweet fried dough balls (6 pieces)",
-    price: 600,
-    category: "Sides",
-    image: "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=400&h=300&fit=crop",
-    available: true
-  },
-  {
-    id: "10",
-    name: "Plantain",
-    description: "Fried ripe plantain slices",
-    price: 700,
-    category: "Sides",
-    image: "https://images.unsplash.com/photo-1593096870549-36d3fbc6f1c8?w=400&h=300&fit=crop",
-    available: true
-  }
-];
-
-export function Menu({ onAddToCart, cart }: MenuProps) {
+export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-
-  const categories = ["All", "Mains", "Soups", "Grills", "Sides", "Drinks"];
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const filteredItems = mockMenuItems.filter(item => {
+  const categories = ["All", "Mains", "Soups", "Grills", "Sides", "Drinks"];
+
+  const fetchMenu = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const items = await getMenuByBranch(branchId);
+      setMenuItems(items);
+    } catch {
+      setError("Failed to load menu");
+      toast.error("Failed to load menu");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (branchId) fetchMenu();
+  }, [branchId]);
+
+  const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
@@ -185,7 +107,25 @@ export function Menu({ onAddToCart, cart }: MenuProps) {
           </Tabs>
         </div>
 
-        {filteredItems.length === 0 ? (
+        {isLoading ? (
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <Skeleton key={i} className="h-72 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+            <Button
+              onClick={fetchMenu}
+              variant="outline"
+              className="border-[#3B2314]/20"
+              style={{ color: '#3B2314' }}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : filteredItems.length === 0 ? (
           <div className="text-center py-16">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#3B2314', opacity: 0.1 }}>
               <Search className="w-8 h-8" style={{ color: '#3B2314' }} />
@@ -214,7 +154,7 @@ export function Menu({ onAddToCart, cart }: MenuProps) {
                 >
                   <div className="aspect-video w-full overflow-hidden bg-gray-100">
                     <img
-                      src={item.image}
+                      src={item.imageUrl || item.image || ''}
                       alt={item.name}
                       className="w-full h-full object-cover"
                       loading="lazy"

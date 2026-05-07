@@ -4,6 +4,8 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { toast } from "sonner";
+import { postForgotPassword } from "@/services/api";
 
 interface ForgotPasswordProps {
   onNavigateToLogin: () => void;
@@ -18,11 +20,15 @@ export function ForgotPassword({ onNavigateToLogin, onResetSuccess }: ForgotPass
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    setTimeout(() => {
+    try {
+      await postForgotPassword(email);
       setEmailSent(true);
+      onResetSuccess();
+    } catch {
+      toast.error("Failed to send reset email", { description: "Please check your email and try again" });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   if (emailSent) {

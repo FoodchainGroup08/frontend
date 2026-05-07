@@ -3,86 +3,24 @@ import { Clock, ChevronRight, Flame } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-
-interface KitchenOrder {
-  id: string;
-  status: 'received' | 'preparing' | 'ready';
-  items: Array<{
-    id: string;
-    name: string;
-    quantity: number;
-    specialInstructions?: string;
-  }>;
-  orderType: 'dine-in' | 'takeaway' | 'delivery';
-  tableNumber?: string;
-  receivedAt: string;
-  isNew?: boolean;
-  isUrgent?: boolean;
-}
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getKitchenQueue, updateOrderStatus, type KitchenOrder, type WsOrderUpdate } from "@/services/api";
+import { useKitchenQueue } from "@/hooks/useKitchenQueue";
+import { useAuth } from "@/context/AuthContext";
 
 interface KitchenQueueProps {
-  orders: KitchenOrder[];
   onOrderClick: (order: KitchenOrder) => void;
   onStatusChange: (orderId: string, newStatus: 'preparing' | 'ready') => void;
 }
 
-const mockOrders: KitchenOrder[] = [
-  {
-    id: "ORD-2026-5001",
-    status: "received",
-    items: [
-      { id: "1", name: "Jollof Rice & Chicken", quantity: 2 },
-      { id: "7", name: "Chapman", quantity: 2 }
-    ],
-    orderType: "delivery",
-    receivedAt: new Date(Date.now() - 2 * 60000).toISOString(),
-    isNew: true
-  },
-  {
-    id: "ORD-2026-5002",
-    status: "received",
-    items: [
-      { id: "3", name: "Pepper Soup", quantity: 1 },
-      { id: "9", name: "Puff Puff", quantity: 1 }
-    ],
-    orderType: "dine-in",
-    tableNumber: "12",
-    receivedAt: new Date(Date.now() - 18 * 60000).toISOString(),
-    isUrgent: true
-  },
-  {
-    id: "ORD-2026-5003",
-    status: "preparing",
-    items: [
-      { id: "4", name: "Egusi Soup & Pounded Yam", quantity: 1, specialInstructions: "Extra spicy" },
-      { id: "5", name: "Suya Platter", quantity: 1 }
-    ],
-    orderType: "delivery",
-    receivedAt: new Date(Date.now() - 12 * 60000).toISOString()
-  },
-  {
-    id: "ORD-2026-5004",
-    status: "preparing",
-    items: [
-      { id: "2", name: "Fried Rice Special", quantity: 2 }
-    ],
-    orderType: "takeaway",
-    receivedAt: new Date(Date.now() - 8 * 60000).toISOString()
-  },
-  {
-    id: "ORD-2026-5005",
-    status: "ready",
-    items: [
-      { id: "1", name: "Jollof Rice & Chicken", quantity: 1 },
-      { id: "10", name: "Plantain", quantity: 1 }
-    ],
-    orderType: "dine-in",
-    tableNumber: "5",
-    receivedAt: new Date(Date.now() - 22 * 60000).toISOString()
-  }
-];
+export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps) {
+  const { user } = useAuth();
+  const branchId = user?.branchId ?? '';
 
-export function KitchenQueue({ orders = mockOrders, onOrderClick, onStatusChange }: KitchenQueueProps) {
+  const [orders, setOrders] = useState<KitchenOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   useEffect(() => {
@@ -90,9 +28,52 @@ export function KitchenQueue({ orders = mockOrders, onOrderClick, onStatusChange
     return () => clearInterval(interval);
   }, []);
 
+  const fetchQueue = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getKitchenQueue();
+      setOrders(data);
+    } catch {
+      setError("Failed to load kitchen queue");
+      toast.error("Failed to load kitchen queue");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQueue();
+  }, []);
+
+  useKitchenQueue(branchId, (data) => {
+    const msg = data as WsOrderUpdate;
+    if (msg.orderId && msg.newStatus) {
+      setOrders(prev => prev.map(o =>
+        o.id === msg.orderId
+          ? { ...o, status: msg.newStatus.toLowerCase() as KitchenOrder['status'], isNew: false }
+          : o
+      ));
+    } else {
+      // New order arrived — refresh the queue
+      fetchQueue();
+    }
+  });
+
+  const handleStatusChange = async (orderId: string, newStatus: 'preparing' | 'ready') => {
+    const apiStatus = newStatus === 'preparing' ? 'PREPARING' : 'READY';
+    try {
+      await updateOrderStatus(orderId, apiStatus);
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      onStatusChange(orderId, newStatus);
+      toast.success(`Order status updated to ${newStatus}`);
+    } catch {
+      toast.error("Failed to update order status");
+    }
+  };
+
   const getElapsedTime = (receivedAt: string) => {
-    const elapsed = Math.floor((currentTime - new Date(receivedAt).getTime()) / 60000);
-    return elapsed;
+    return Math.floor((currentTime - new Date(receivedAt).getTime()) / 60000);
   };
 
   const receivedOrders = orders.filter(o => o.status === 'received');
@@ -117,7 +98,7 @@ export function KitchenQueue({ orders = mockOrders, onOrderClick, onStatusChange
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p className="text-sm mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
-                #{order.id.split('-')[2]}
+                #{order.id.split('-')[2] ?? order.id}
               </p>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge
@@ -168,7 +149,7 @@ export function KitchenQueue({ orders = mockOrders, onOrderClick, onStatusChange
             <Button
               onClick={(e) => {
                 e.stopPropagation();
-                onStatusChange(order.id, 'preparing');
+                handleStatusChange(order.id, 'preparing');
               }}
               className="w-full transition-all hover:opacity-90"
               size="sm"
@@ -182,7 +163,7 @@ export function KitchenQueue({ orders = mockOrders, onOrderClick, onStatusChange
             <Button
               onClick={(e) => {
                 e.stopPropagation();
-                onStatusChange(order.id, 'ready');
+                handleStatusChange(order.id, 'ready');
               }}
               className="w-full transition-all hover:opacity-90"
               size="sm"
@@ -195,6 +176,38 @@ export function KitchenQueue({ orders = mockOrders, onOrderClick, onStatusChange
       </Card>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen overflow-hidden" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 border-b" style={{ borderColor: '#3B2314', opacity: 0.1 }}>
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+          {[1, 2, 3].map(col => (
+            <div key={col} className="space-y-4">
+              <Skeleton className="h-6 w-24" />
+              {[1, 2].map(i => <Skeleton key={i} className="h-40 w-full rounded-lg" />)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+          <Button onClick={fetchQueue} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (

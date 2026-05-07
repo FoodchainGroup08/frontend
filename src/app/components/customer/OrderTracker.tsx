@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getActiveOrder, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
+import { useOrderTracker } from "@/hooks/useOrderTracker";
 
-interface Order {
+type LocalStatus = 'confirmed' | 'preparing' | 'ready' | 'out-for-delivery' | 'delivered';
+
+interface TrackedOrder {
   id: string;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out-for-delivery' | 'delivered';
-  items: Array<{
-    id: string;
-    name: string;
-    quantity: number;
-  }>;
+  status: LocalStatus;
+  items: Array<{ id: string; name: string; quantity: number }>;
   total: number;
   branchName: string;
   estimatedTime: string;
@@ -20,7 +22,6 @@ interface Order {
 }
 
 interface OrderTrackerProps {
-  activeOrder?: Order;
   onGoBack?: () => void;
 }
 
@@ -32,16 +33,91 @@ const statusSteps = [
   { key: 'delivered', label: 'Delivered', icon: Home }
 ];
 
-export function OrderTracker({ activeOrder, onGoBack }: OrderTrackerProps) {
+function mapApiStatus(apiStatus: OrderStatus): LocalStatus {
+  const map: Record<OrderStatus, LocalStatus> = {
+    RECEIVED: 'confirmed',
+    PREPARING: 'preparing',
+    READY: 'ready',
+    PICKED_UP: 'out-for-delivery',
+    SERVED: 'delivered',
+  };
+  return map[apiStatus] ?? 'confirmed';
+}
+
+function mapApiOrder(order: Order): TrackedOrder {
+  return {
+    id: order.id,
+    status: mapApiStatus(order.status),
+    items: order.items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity })),
+    total: order.total,
+    branchName: order.branchName,
+    estimatedTime: order.estimatedTime ?? '45 mins',
+    placedAt: order.placedAt,
+  };
+}
+
+export function OrderTracker({ onGoBack }: OrderTrackerProps) {
+  const [activeOrder, setActiveOrder] = useState<TrackedOrder | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
+
+  const fetchOrder = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const order = await getActiveOrder();
+      setActiveOrder(order ? mapApiOrder(order) : null);
+    } catch {
+      setError("Failed to load order");
+      toast.error("Failed to load active order");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrder();
+  }, []);
 
   useEffect(() => {
     if (activeOrder) {
       const currentIndex = statusSteps.findIndex(step => step.key === activeOrder.status);
-      const progressValue = ((currentIndex + 1) / statusSteps.length) * 100;
-      setProgress(progressValue);
+      setProgress(((currentIndex + 1) / statusSteps.length) * 100);
     }
   }, [activeOrder]);
+
+  useOrderTracker(activeOrder?.id ?? '', (data) => {
+    const msg = data as WsOrderUpdate;
+    if (msg.newStatus && activeOrder) {
+      setActiveOrder(prev => prev ? { ...prev, status: mapApiStatus(msg.newStatus) } : prev);
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Skeleton className="h-10 w-48 mb-8" />
+          <Skeleton className="h-64 w-full rounded-lg mb-6" />
+          <Skeleton className="h-48 w-full rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+          <Button onClick={fetchOrder} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!activeOrder) {
     return (

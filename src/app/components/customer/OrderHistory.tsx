@@ -1,16 +1,16 @@
+import { useEffect, useState } from "react";
 import { Calendar, MapPin, Package, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getOrderHistory, type Order } from "@/services/api";
 
 interface HistoricalOrder {
   id: string;
   status: 'delivered' | 'cancelled';
-  items: Array<{
-    id: string;
-    name: string;
-    quantity: number;
-  }>;
+  items: Array<{ id: string; name: string; quantity: number }>;
   total: number;
   branchName: string;
   orderDate: string;
@@ -18,60 +18,71 @@ interface HistoricalOrder {
 }
 
 interface OrderHistoryProps {
-  orders: HistoricalOrder[];
   onViewDetails: (order: HistoricalOrder) => void;
 }
 
-const mockOrders: HistoricalOrder[] = [
-  {
-    id: "ORD-2024-1245",
-    status: "delivered",
-    items: [
-      { id: "1", name: "Jollof Rice & Chicken", quantity: 2 },
-      { id: "7", name: "Chapman", quantity: 2 }
-    ],
-    total: 5800,
-    branchName: "Victoria Island",
-    orderDate: "2026-05-06 14:30",
-    deliveryDate: "2026-05-06 15:15"
-  },
-  {
-    id: "ORD-2024-1198",
-    status: "delivered",
-    items: [
-      { id: "4", name: "Egusi Soup & Pounded Yam", quantity: 1 },
-      { id: "5", name: "Suya Platter", quantity: 1 }
-    ],
-    total: 5500,
-    branchName: "Lekki Phase 1",
-    orderDate: "2026-05-04 19:00",
-    deliveryDate: "2026-05-04 20:05"
-  },
-  {
-    id: "ORD-2024-1102",
-    status: "delivered",
-    items: [
-      { id: "2", name: "Fried Rice Special", quantity: 1 },
-      { id: "9", name: "Puff Puff", quantity: 1 }
-    ],
-    total: 4100,
-    branchName: "Victoria Island",
-    orderDate: "2026-05-01 12:15",
-    deliveryDate: "2026-05-01 13:00"
-  },
-  {
-    id: "ORD-2024-1089",
-    status: "cancelled",
-    items: [
-      { id: "3", name: "Pepper Soup", quantity: 1 }
-    ],
-    total: 2500,
-    branchName: "Surulere",
-    orderDate: "2026-04-29 18:30"
-  }
-];
+function mapApiOrder(order: Order): HistoricalOrder {
+  const deliveredStatuses = ['SERVED', 'PICKED_UP'];
+  return {
+    id: order.id,
+    status: deliveredStatuses.includes(order.status) ? 'delivered' : 'cancelled',
+    items: order.items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity })),
+    total: order.total,
+    branchName: order.branchName,
+    orderDate: order.orderDate ?? order.placedAt,
+    deliveryDate: order.deliveryDate,
+  };
+}
 
-export function OrderHistory({ orders = mockOrders, onViewDetails }: OrderHistoryProps) {
+export function OrderHistory({ onViewDetails }: OrderHistoryProps) {
+  const [orders, setOrders] = useState<HistoricalOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchHistory = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getOrderHistory();
+      setOrders(data.map(mapApiOrder));
+    } catch {
+      setError("Failed to load order history");
+      toast.error("Failed to load order history");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <Skeleton className="h-10 w-48 mb-6" />
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 w-full rounded-lg" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+          <Button onClick={fetchHistory} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (orders.length === 0) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>

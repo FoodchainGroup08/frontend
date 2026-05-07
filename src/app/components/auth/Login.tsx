@@ -4,14 +4,16 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 interface LoginProps {
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
-  onLogin?: (email: string, password: string) => void;
 }
 
-export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onLogin }: LoginProps) {
+export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: LoginProps) {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,17 +21,17 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onLogi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    setTimeout(() => {
-      if (onLogin) {
-        onLogin(email, password);
-      }
+    try {
+      await login(email, password);
+    } catch {
+      toast.error("Login failed", { description: "Invalid email or password" });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+    toast.info("Coming soon", { description: "Google sign-in is not yet available" });
   };
 
   return (

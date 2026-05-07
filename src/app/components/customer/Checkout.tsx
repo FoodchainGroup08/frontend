@@ -7,6 +7,8 @@ import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Textarea } from "../ui/textarea";
+import { toast } from "sonner";
+import { placeOrder, type Order } from "@/services/api";
 
 interface CartItem {
   id: string;
@@ -17,8 +19,9 @@ interface CartItem {
 
 interface CheckoutProps {
   cart: CartItem[];
+  branchId: string;
   branchName: string;
-  onPlaceOrder: (orderDetails: OrderDetails) => void;
+  onPlaceOrder: (formData: OrderDetails, order: Order) => void;
   onGoBack: () => void;
 }
 
@@ -30,7 +33,7 @@ export interface OrderDetails {
   specialInstructions: string;
 }
 
-export function Checkout({ cart, branchName, onPlaceOrder, onGoBack }: CheckoutProps) {
+export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }: CheckoutProps) {
   const [customerName, setCustomerName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -42,20 +45,28 @@ export function Checkout({ cart, branchName, onPlaceOrder, onGoBack }: CheckoutP
   const deliveryFee = 500;
   const total = subtotal + deliveryFee;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-
-    setTimeout(() => {
-      onPlaceOrder({
+    try {
+      const order = await placeOrder({
+        branchId,
+        orderType: 'delivery',
+        deliveryAddress,
+        items: cart.map(item => ({ menuItemId: item.id, quantity: item.quantity })),
         customerName,
         phoneNumber,
-        deliveryAddress,
         paymentMethod,
-        specialInstructions
+        specialInstructions,
       });
+      const formData: OrderDetails = { customerName, phoneNumber, deliveryAddress, paymentMethod, specialInstructions };
+      onPlaceOrder(formData, order);
+      toast.success("Order placed successfully!", { description: `Order #${order.id}` });
+    } catch {
+      toast.error("Failed to place order", { description: "Please try again" });
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
   };
 
   return (
