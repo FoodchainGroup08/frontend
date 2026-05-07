@@ -1,95 +1,70 @@
+import { useState, useEffect } from "react";
 import { Award, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { toast } from "sonner";
+import { getPopularItems, type PopularItem } from "@/services/api";
 
-interface PopularItem {
-  id: string;
-  name: string;
-  category: string;
-  quantitySold: number;
-  revenue: number;
-  trend: number;
-}
+export function PopularItems() {
+  const [items, setItems] = useState<PopularItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-interface PopularItemsProps {
-  items?: PopularItem[];
-}
+  const fetchItems = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getPopularItems();
+      setItems(data);
+    } catch {
+      setError("Failed to load popular items");
+      toast.error("Failed to load popular items");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-const mockItems: PopularItem[] = [
-  {
-    id: "1",
-    name: "Jollof Rice & Chicken",
-    category: "Mains",
-    quantitySold: 89,
-    revenue: 222500,
-    trend: 12
-  },
-  {
-    id: "2",
-    name: "Fried Rice Special",
-    category: "Mains",
-    quantitySold: 67,
-    revenue: 201000,
-    trend: 8
-  },
-  {
-    id: "4",
-    name: "Egusi Soup & Pounded Yam",
-    category: "Soups",
-    quantitySold: 54,
-    revenue: 189000,
-    trend: -3
-  },
-  {
-    id: "5",
-    name: "Suya Platter",
-    category: "Grills",
-    quantitySold: 48,
-    revenue: 72000,
-    trend: 15
-  },
-  {
-    id: "7",
-    name: "Chapman",
-    category: "Drinks",
-    quantitySold: 102,
-    revenue: 81600,
-    trend: 5
-  },
-  {
-    id: "10",
-    name: "Plantain",
-    category: "Sides",
-    quantitySold: 76,
-    revenue: 53200,
-    trend: 7
-  },
-  {
-    id: "3",
-    name: "Pepper Soup",
-    category: "Soups",
-    quantitySold: 41,
-    revenue: 82000,
-    trend: 2
-  },
-  {
-    id: "9",
-    name: "Puff Puff",
-    category: "Sides",
-    quantitySold: 63,
-    revenue: 37800,
-    trend: 10
-  }
-];
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
-export function PopularItems({ items = mockItems }: PopularItemsProps) {
   const sortedByQuantity = [...items].sort((a, b) => b.quantitySold - a.quantitySold).slice(0, 8);
 
   const chartData = sortedByQuantity.map(item => ({
     name: item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name,
     quantity: item.quantitySold
   }));
+
+  if (isLoading) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8">
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-5 w-72 mb-8" />
+          <Skeleton className="h-[460px] w-full rounded-lg mb-8" />
+          <div className="grid gap-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8 text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+          <Button onClick={fetchItems} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
@@ -224,10 +199,10 @@ export function PopularItems({ items = mockItems }: PopularItemsProps) {
             </CardHeader>
             <CardContent>
               <p className="text-xl mb-1" style={{ color: '#F0A500', fontWeight: 600 }}>
-                {sortedByQuantity[0]?.name}
+                {sortedByQuantity[0]?.name ?? '—'}
               </p>
               <p className="text-sm" style={{ color: '#3B2314', opacity: 0.6 }}>
-                {sortedByQuantity[0]?.quantitySold} units sold
+                {sortedByQuantity[0]?.quantitySold ?? 0} units sold
               </p>
             </CardContent>
           </Card>
@@ -240,10 +215,10 @@ export function PopularItems({ items = mockItems }: PopularItemsProps) {
             </CardHeader>
             <CardContent>
               <p className="text-xl mb-1" style={{ color: '#4CAF7D', fontWeight: 600 }}>
-                {[...items].sort((a, b) => b.revenue - a.revenue)[0]?.name}
+                {[...items].sort((a, b) => b.revenue - a.revenue)[0]?.name ?? '—'}
               </p>
               <p className="text-sm" style={{ color: '#3B2314', opacity: 0.6 }}>
-                ₦{[...items].sort((a, b) => b.revenue - a.revenue)[0]?.revenue.toLocaleString()}
+                ₦{([...items].sort((a, b) => b.revenue - a.revenue)[0]?.revenue ?? 0).toLocaleString()}
               </p>
             </CardContent>
           </Card>
@@ -256,11 +231,11 @@ export function PopularItems({ items = mockItems }: PopularItemsProps) {
             </CardHeader>
             <CardContent>
               <p className="text-xl mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
-                {[...items].sort((a, b) => b.trend - a.trend)[0]?.name}
+                {[...items].sort((a, b) => b.trend - a.trend)[0]?.name ?? '—'}
               </p>
               <p className="text-sm flex items-center gap-1" style={{ color: '#4CAF7D' }}>
                 <TrendingUp className="w-4 h-4" />
-                +{[...items].sort((a, b) => b.trend - a.trend)[0]?.trend}% growth
+                +{[...items].sort((a, b) => b.trend - a.trend)[0]?.trend ?? 0}% growth
               </p>
             </CardContent>
           </Card>

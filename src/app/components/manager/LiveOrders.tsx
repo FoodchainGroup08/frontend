@@ -1,94 +1,89 @@
+import { useState, useEffect } from "react";
 import { Clock, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getManagerLiveOrders, type Order, type WsOrderUpdate } from "@/services/api";
+import { useManagerOrders } from "@/hooks/useManagerOrders";
+import { useAuth } from "@/context/AuthContext";
 
 interface LiveOrder {
   id: string;
   status: 'received' | 'preparing' | 'ready' | 'out-for-delivery';
-  items: Array<{
-    id: string;
-    name: string;
-    quantity: number;
-  }>;
+  items: Array<{ id: string; name: string; quantity: number }>;
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   tableNumber?: string;
   receivedAt: string;
   customerName?: string;
 }
 
-interface LiveOrdersProps {
-  orders?: LiveOrder[];
+function mapOrderStatus(status: string): LiveOrder['status'] {
+  const map: Record<string, LiveOrder['status']> = {
+    RECEIVED: 'received', PREPARING: 'preparing', READY: 'ready', PICKED_UP: 'out-for-delivery',
+  };
+  return map[status] ?? 'received';
 }
 
-const mockOrders: LiveOrder[] = [
-  {
-    id: "ORD-2026-5001",
-    status: "received",
-    items: [
-      { id: "1", name: "Jollof Rice & Chicken", quantity: 2 },
-      { id: "7", name: "Chapman", quantity: 2 }
-    ],
-    orderType: "delivery",
-    receivedAt: new Date(Date.now() - 2 * 60000).toISOString(),
-    customerName: "John Doe"
-  },
-  {
-    id: "ORD-2026-5002",
-    status: "preparing",
-    items: [
-      { id: "4", name: "Egusi Soup & Pounded Yam", quantity: 1 },
-      { id: "5", name: "Suya Platter", quantity: 1 }
-    ],
-    orderType: "delivery",
-    receivedAt: new Date(Date.now() - 12 * 60000).toISOString(),
-    customerName: "Jane Smith"
-  },
-  {
-    id: "ORD-2026-5003",
-    status: "preparing",
-    items: [
-      { id: "2", name: "Fried Rice Special", quantity: 2 }
-    ],
-    orderType: "takeaway",
-    receivedAt: new Date(Date.now() - 8 * 60000).toISOString(),
-    customerName: "Mike Johnson"
-  },
-  {
-    id: "ORD-2026-5004",
-    status: "ready",
-    items: [
-      { id: "1", name: "Jollof Rice & Chicken", quantity: 1 },
-      { id: "10", name: "Plantain", quantity: 1 }
-    ],
-    orderType: "dine-in",
-    tableNumber: "5",
-    receivedAt: new Date(Date.now() - 22 * 60000).toISOString(),
-    customerName: "Sarah Wilson"
-  },
-  {
-    id: "ORD-2026-5005",
-    status: "out-for-delivery",
-    items: [
-      { id: "3", name: "Pepper Soup", quantity: 1 },
-      { id: "8", name: "Zobo", quantity: 1 }
-    ],
-    orderType: "delivery",
-    receivedAt: new Date(Date.now() - 35 * 60000).toISOString(),
-    customerName: "David Brown"
-  }
-];
+function mapApiOrder(o: Order): LiveOrder {
+  return {
+    id: o.id,
+    status: mapOrderStatus(o.status),
+    items: o.items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity })),
+    orderType: o.orderType,
+    tableNumber: o.tableNumber,
+    receivedAt: o.placedAt,
+    customerName: o.customerName,
+  };
+}
 
-export function LiveOrders({ orders = mockOrders }: LiveOrdersProps) {
+export function LiveOrders() {
+  const { user } = useAuth();
+  const branchId = user?.branchId ?? '';
+
+  const [orders, setOrders] = useState<LiveOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getManagerLiveOrders();
+      setOrders(data.map(mapApiOrder));
+    } catch {
+      setError("Failed to load live orders");
+      toast.error("Failed to load live orders");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  useManagerOrders(branchId, (data) => {
+    const msg = data as WsOrderUpdate;
+    if (msg.orderId && msg.newStatus) {
+      setOrders(prev => prev.map(o =>
+        o.id === msg.orderId ? { ...o, status: mapOrderStatus(msg.newStatus) } : o
+      ));
+    } else {
+      fetchOrders();
+    }
+  });
+
   const getElapsedTime = (receivedAt: string) => {
-    const elapsed = Math.floor((Date.now() - new Date(receivedAt).getTime()) / 60000);
-    return elapsed;
+    return Math.floor((Date.now() - new Date(receivedAt).getTime()) / 60000);
   };
 
   const ordersByStatus = {
     received: orders.filter(o => o.status === 'received'),
     preparing: orders.filter(o => o.status === 'preparing'),
     ready: orders.filter(o => o.status === 'ready'),
-    'out-for-delivery': orders.filter(o => o.status === 'out-for-delivery')
+    'out-for-delivery': orders.filter(o => o.status === 'out-for-delivery'),
   };
 
   const renderOrderCard = (order: LiveOrder) => {
@@ -104,7 +99,7 @@ export function LiveOrders({ orders = mockOrders }: LiveOrdersProps) {
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p className="text-sm mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
-                #{order.id.split('-')[2]}
+                #{order.id.split('-')[2] ?? order.id}
               </p>
               {order.customerName && (
                 <p className="text-xs mb-2" style={{ color: '#3B2314', opacity: 0.6 }}>
@@ -153,6 +148,38 @@ export function LiveOrders({ orders = mockOrders }: LiveOrdersProps) {
       </Card>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8">
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-5 w-72 mb-8" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(col => (
+              <div key={col} className="space-y-4">
+                <Skeleton className="h-6 w-24" />
+                {[1, 2].map(i => <Skeleton key={i} className="h-36 w-full rounded-lg" />)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8 text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+          <Button onClick={fetchOrders} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (
