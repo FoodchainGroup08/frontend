@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit, XCircle, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -8,6 +8,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import {
+  getBranches,
+  createBranch,
+  updateBranch,
+  patchBranchStatus,
+  type Branch as ApiBranch,
+} from "@/services/api";
 
 interface Branch {
   id: string;
@@ -17,51 +26,47 @@ interface Branch {
   isActive: boolean;
 }
 
-interface BranchManagementProps {
-  branches?: Branch[];
+function mapApiBranch(b: ApiBranch): Branch {
+  return {
+    id: b.id,
+    name: b.name,
+    location: b.address ?? b.location ?? '',
+    manager: b.manager ?? '',
+    isActive: b.isActive,
+  };
 }
 
-const mockBranches: Branch[] = [
-  {
-    id: "1",
-    name: "Victoria Island",
-    location: "15 Ahmadu Bello Way, Victoria Island, Lagos",
-    manager: "Adebayo Ogunlesi",
-    isActive: true
-  },
-  {
-    id: "2",
-    name: "Lekki Phase 1",
-    location: "23 Admiralty Way, Lekki Phase 1, Lagos",
-    manager: "Chioma Nwosu",
-    isActive: true
-  },
-  {
-    id: "3",
-    name: "Ikeja GRA",
-    location: "12 Oba Akran Avenue, Ikeja GRA, Lagos",
-    manager: "Oluwaseun Adeyemi",
-    isActive: false
-  },
-  {
-    id: "4",
-    name: "Surulere",
-    location: "45 Adeniran Ogunsanya Street, Surulere, Lagos",
-    manager: "Funmilayo Ibrahim",
-    isActive: true
-  }
-];
-
-export function BranchManagement({ branches: initialBranches = mockBranches }: BranchManagementProps) {
-  const [branches, setBranches] = useState<Branch[]>(initialBranches);
+export function BranchManagement() {
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     location: "",
     manager: "",
     isActive: true
   });
+
+  const fetchBranches = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getBranches();
+      setBranches(data.map(mapApiBranch));
+    } catch {
+      setError("Failed to load branches");
+      toast.error("Failed to load branches");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
 
   const handleAdd = () => {
     setEditingBranch(null);
@@ -80,26 +85,69 @@ export function BranchManagement({ branches: initialBranches = mockBranches }: B
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (editingBranch) {
-      setBranches(branches.map(b =>
-        b.id === editingBranch.id ? { ...b, ...formData } : b
-      ));
-    } else {
-      const newBranch: Branch = {
-        id: (branches.length + 1).toString(),
-        ...formData
-      };
-      setBranches([...branches, newBranch]);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const apiData = { name: formData.name, address: formData.location, manager: formData.manager, isActive: formData.isActive };
+      if (editingBranch) {
+        const updated = await updateBranch(editingBranch.id, apiData);
+        setBranches(branches.map(b => b.id === editingBranch.id ? mapApiBranch(updated) : b));
+        toast.success("Branch updated");
+      } else {
+        const created = await createBranch(apiData);
+        setBranches([...branches, mapApiBranch(created)]);
+        toast.success("Branch added");
+      }
+      setIsModalOpen(false);
+    } catch {
+      toast.error(editingBranch ? "Failed to update branch" : "Failed to add branch");
+    } finally {
+      setIsSaving(false);
     }
-    setIsModalOpen(false);
   };
 
-  const handleDeactivate = (branchId: string) => {
-    setBranches(branches.map(b =>
-      b.id === branchId ? { ...b, isActive: !b.isActive } : b
-    ));
+  const handleDeactivate = async (branchId: string) => {
+    const branch = branches.find(b => b.id === branchId);
+    if (!branch) return;
+    const newStatus = !branch.isActive;
+    try {
+      await patchBranchStatus(branchId, newStatus);
+      setBranches(branches.map(b => b.id === branchId ? { ...b, isActive: newStatus } : b));
+      toast.success(`Branch ${newStatus ? 'activated' : 'deactivated'}`);
+    } catch {
+      toast.error("Failed to update branch status");
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <Skeleton className="h-10 w-56 mb-2" />
+              <Skeleton className="h-5 w-64" />
+            </div>
+            <Skeleton className="h-10 w-32 rounded-md" />
+          </div>
+          <Skeleton className="h-64 w-full rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8 text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+          <Button onClick={fetchBranches} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
@@ -269,15 +317,17 @@ export function BranchManagement({ branches: initialBranches = mockBranches }: B
                 variant="outline"
                 className="border-[#3B2314]/20"
                 style={{ color: '#3B2314' }}
+                disabled={isSaving}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSave}
+                disabled={isSaving}
                 className="transition-all hover:opacity-90"
                 style={{ backgroundColor: '#F0A500', color: '#1E1E1E' }}
               >
-                {editingBranch ? 'Save Changes' : 'Add Branch'}
+                {isSaving ? 'Saving...' : editingBranch ? 'Save Changes' : 'Add Branch'}
               </Button>
             </DialogFooter>
           </DialogContent>

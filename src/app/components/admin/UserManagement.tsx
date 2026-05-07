@@ -1,95 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, XCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Badge } from "../ui/badge";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getAllUsers, patchUserStatus, type SystemUser } from "@/services/api";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "Customer" | "Kitchen Staff" | "Branch Manager" | "Admin";
-  status: "active" | "inactive";
-  branch?: string;
-}
-
-interface UserManagementProps {
-  users?: User[];
-}
-
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Adebayo Ogunlesi",
-    email: "adebayo@foodchain.ng",
-    role: "Branch Manager",
-    status: "active",
-    branch: "Victoria Island"
-  },
-  {
-    id: "2",
-    name: "Chioma Nwosu",
-    email: "chioma@foodchain.ng",
-    role: "Branch Manager",
-    status: "active",
-    branch: "Lekki Phase 1"
-  },
-  {
-    id: "3",
-    name: "Ibrahim Yusuf",
-    email: "ibrahim@foodchain.ng",
-    role: "Kitchen Staff",
-    status: "active",
-    branch: "Victoria Island"
-  },
-  {
-    id: "4",
-    name: "Funmilayo Ibrahim",
-    email: "funmi@foodchain.ng",
-    role: "Kitchen Staff",
-    status: "active",
-    branch: "Lekki Phase 1"
-  },
-  {
-    id: "5",
-    name: "Demo User",
-    email: "demo@foodchain.ng",
-    role: "Customer",
-    status: "active"
-  },
-  {
-    id: "6",
-    name: "John Doe",
-    email: "john@customer.com",
-    role: "Customer",
-    status: "active"
-  },
-  {
-    id: "7",
-    name: "Sarah Wilson",
-    email: "sarah@customer.com",
-    role: "Customer",
-    status: "inactive"
-  },
-  {
-    id: "8",
-    name: "Michael Chen",
-    email: "michael@foodchain.ng",
-    role: "Kitchen Staff",
-    status: "active",
-    branch: "Ikeja GRA"
-  }
-];
-
-export function UserManagement({ users: initialUsers = mockUsers }: UserManagementProps) {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+export function UserManagement() {
+  const [users, setUsers] = useState<SystemUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [filterRole, setFilterRole] = useState<string>("All");
 
-  const handleToggleStatus = (userId: string) => {
-    setUsers(users.map(u =>
-      u.id === userId ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u
-    ));
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getAllUsers();
+      setUsers(data);
+    } catch {
+      setError("Failed to load users");
+      toast.error("Failed to load users");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleToggleStatus = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    try {
+      await patchUserStatus(userId, newStatus);
+      setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+      toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
+    } catch {
+      toast.error("Failed to update user status");
+    }
   };
 
   const filteredUsers = filterRole === "All"
@@ -97,6 +50,37 @@ export function UserManagement({ users: initialUsers = mockUsers }: UserManageme
     : users.filter(u => u.role === filterRole);
 
   const roles = ["All", "Customer", "Kitchen Staff", "Branch Manager", "Admin"];
+
+  if (isLoading) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8">
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-5 w-72 mb-8" />
+          <div className="flex gap-2 mb-6">
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-9 w-24 rounded-md" />)}
+          </div>
+          <Skeleton className="h-72 w-full rounded-lg mb-8" />
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+        <div className="p-6 sm:p-8 text-center">
+          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+          <Button onClick={fetchUsers} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
