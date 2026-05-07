@@ -1,0 +1,49 @@
+import { useEffect, useRef, useState } from 'react';
+
+export function useOrderTracker(orderId: string, onMessage: (data: unknown) => void) {
+  const [isConnected, setIsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectRef = useRef<ReturnType<typeof setTimeout>>();
+  const mountedRef = useRef(true);
+  const onMessageRef = useRef(onMessage);
+  onMessageRef.current = onMessage;
+
+  useEffect(() => {
+    if (!orderId) return;
+    mountedRef.current = true;
+
+    const connect = () => {
+      if (!mountedRef.current) return;
+      const ws = new WebSocket(`ws://localhost:8080/ws/orders/${orderId}`);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        if (mountedRef.current) setIsConnected(true);
+      };
+      ws.onmessage = (e) => {
+        try {
+          onMessageRef.current(JSON.parse(e.data));
+        } catch {
+          /* ignore malformed messages */
+        }
+      };
+      ws.onclose = () => {
+        if (mountedRef.current) {
+          setIsConnected(false);
+          reconnectRef.current = setTimeout(connect, 3000);
+        }
+      };
+      ws.onerror = () => ws.close();
+    };
+
+    connect();
+
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(reconnectRef.current);
+      wsRef.current?.close();
+    };
+  }, [orderId]);
+
+  return { isConnected };
+}
