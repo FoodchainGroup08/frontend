@@ -4,6 +4,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,6 +18,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showDemoCredentials, setShowDemoCredentials] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +35,19 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
   const handleGoogleLogin = () => {
     toast.info("Coming soon", { description: "Google sign-in is not yet available" });
   };
+
+  const useDemoCredentials = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    toast.success("Demo credentials loaded", { description: "Click 'Sign in' to continue" });
+  };
+
+  const demoAccounts = [
+    { role: "Customer", email: "customer@demo.com", password: "demo123" },
+    { role: "Kitchen Staff", email: "kitchen@demo.com", password: "demo123" },
+    { role: "Branch Manager", email: "manager@demo.com", password: "demo123" },
+    { role: "Admin", email: "admin@demo.com", password: "demo123" }
+  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#FAF7F2' }}>
@@ -113,7 +128,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
               <div className="relative w-full">
                 <Separator />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs" style={{ color: '#3B2314', opacity: 0.6 }}>
-                  OR CONTINUE WITH
+                  OR
                 </span>
               </div>
 
@@ -147,6 +162,77 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
             </CardFooter>
           </form>
         </Card>
+
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={() => setShowDemoCredentials(!showDemoCredentials)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors"
+            style={{
+              backgroundColor: '#FAF7F2',
+              borderColor: '#3B2314',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              opacity: 0.9
+            }}
+          >
+            <span className="text-sm" style={{ color: '#3B2314', fontWeight: 500 }}>
+              Demo Credentials
+            </span>
+            {showDemoCredentials ? (
+              <ChevronUp className="w-4 h-4" style={{ color: '#3B2314' }} />
+            ) : (
+              <ChevronDown className="w-4 h-4" style={{ color: '#3B2314' }} />
+            )}
+          </button>
+
+          {showDemoCredentials && (
+            <div
+              className="mt-2 p-4 rounded-lg border"
+              style={{
+                backgroundColor: 'white',
+                borderColor: '#3B2314',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                opacity: 0.95
+              }}
+            >
+              <p className="text-xs mb-3" style={{ color: '#3B2314', opacity: 0.7 }}>
+                Use these test accounts to explore different user roles
+              </p>
+              <div className="space-y-2">
+                {demoAccounts.map((account) => (
+                  <div
+                    key={account.role}
+                    className="flex items-center justify-between p-2 rounded"
+                    style={{ backgroundColor: '#FAF7F2' }}
+                  >
+                    <div className="flex-1">
+                      <p className="text-xs" style={{ color: '#3B2314', fontWeight: 500 }}>
+                        {account.role}
+                      </p>
+                      <p className="text-xs" style={{ color: '#3B2314', opacity: 0.6 }}>
+                        {account.email}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => useDemoCredentials(account.email, account.password)}
+                      className="text-xs h-7 px-3"
+                      style={{
+                        backgroundColor: '#F0A500',
+                        color: '#1E1E1E'
+                      }}
+                    >
+                      Use
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

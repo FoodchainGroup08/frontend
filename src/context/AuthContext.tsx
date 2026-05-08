@@ -5,7 +5,7 @@ interface AuthContextValue {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser);
   };
 
-  const register = async (name: string, email: string, password: string, role: string) => {
-    const { token: newToken, user: newUser } = await postRegister(name, email, password, role);
+  const register = async (name: string, email: string, password: string) => {
+    const { token: newToken, user: newUser } = await postRegister(name, email, password);
     localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
     setUser(newUser);

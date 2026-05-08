@@ -172,8 +172,8 @@ export interface WsOrderUpdate {
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
-export const postRegister = (name: string, email: string, password: string, role: string) =>
-  apiClient.post<{ token: string; user: User }>('/auth/register', { name, email, password, role }).then(r => r.data);
+export const postRegister = (name: string, email: string, password: string) =>
+  apiClient.post<{ token: string; user: User }>('/auth/register', { name, email, password }).then(r => r.data);
 
 export const postLogin = (email: string, password: string) =>
   apiClient.post<{ token: string; user: User }>('/auth/login', { email, password }).then(r => r.data);

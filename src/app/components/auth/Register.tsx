@@ -3,7 +3,6 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,7 +16,6 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("Customer");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,7 +35,7 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
 
     setIsLoading(true);
     try {
-      await register(name, email, password, role);
+      await register(name, email, password);
       toast.success("Account created successfully!", { description: `Welcome to FoodChain, ${name}!` });
     } catch {
       toast.error("Registration failed", { description: "Please try again" });
@@ -136,25 +134,6 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
                   className="border-[#3B2314]/20"
                   style={{ backgroundColor: 'white' }}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role" style={{ color: '#3B2314' }}>Role</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger
-                    id="role"
-                    className="border-[#3B2314]/20"
-                    style={{ backgroundColor: 'white' }}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Customer">Customer</SelectItem>
-                    <SelectItem value="Kitchen Staff">Kitchen Staff</SelectItem>
-                    <SelectItem value="Branch Manager">Branch Manager</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
