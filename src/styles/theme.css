@@ -47,6 +47,7 @@
   --foodchain-warm-white: #FAF7F2;
   --foodchain-sage-green: #4CAF7D;
   --foodchain-burnt-orange: #E8622A;
+  --foodchain-white: #ffffff;
 }
 
 .dark {
@@ -133,6 +134,7 @@
   --color-foodchain-warm-white: var(--foodchain-warm-white);
   --color-foodchain-sage-green: var(--foodchain-sage-green);
   --color-foodchain-burnt-orange: var(--foodchain-burnt-orange);
+  --color-foodchain-white: var(--foodchain-white);
 }
 
 @layer base {
