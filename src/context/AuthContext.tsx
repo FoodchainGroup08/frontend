@@ -15,20 +15,20 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 // Demo credentials for when backend is not available
 const DEMO_USERS: Record<string, { password: string; user: User }> = {
-  'customer@demo.com': {
-    password: 'demo123',
-    user: { id: '1', name: 'Demo Customer', email: 'customer@demo.com', role: 'Customer' }
+  'user@demo.com': {
+    password: 'demo',
+    user: { id: '1', name: 'Demo Customer', email: 'user@demo.com', role: 'Customer' }
   },
   'kitchen@demo.com': {
-    password: 'demo123',
+    password: 'demo',
     user: { id: '2', name: 'Demo Kitchen Staff', email: 'kitchen@demo.com', role: 'Kitchen Staff', branchId: 'branch-1' }
   },
   'manager@demo.com': {
-    password: 'demo123',
+    password: 'demo',
     user: { id: '3', name: 'Demo Manager', email: 'manager@demo.com', role: 'Branch Manager', branchId: 'branch-1' }
   },
   'admin@demo.com': {
-    password: 'demo123',
+    password: 'demo',
     user: { id: '4', name: 'Demo Admin', email: 'admin@demo.com', role: 'Admin' }
   }
 };
@@ -96,6 +96,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem(TOKEN_KEY, demoToken);
           localStorage.setItem('foodchain_user', JSON.stringify(demoAccount.user));
           localStorage.setItem('foodchain_demo_mode', 'true');
+
+          // Pre-populate demo data for customer
+          if (demoAccount.user.role === 'Customer') {
+            localStorage.setItem('foodchain_phone_number', '08012345678');
+            localStorage.setItem('foodchain_delivery_location', '12 Admiralty Way, Lekki Phase 1, Lagos');
+          }
+
           setToken(demoToken);
           setUser(demoAccount.user);
           setUseDemoMode(true);

@@ -50,33 +50,33 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl" style={{ backgroundColor: 'white', border: '2px solid #3B2314' }}>
+      <DialogContent className="max-w-2xl" style={{ backgroundColor: 'var(--foodchain-white)', border: '2px solid var(--foodchain-espresso)' }}>
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-2xl mb-2" style={{ color: '#FAF7F2' }}>
+              <DialogTitle className="text-2xl mb-2" style={{ color: 'var(--foodchain-warm-white)' }}>
                 Order #{order.id.split('-')[2]}
               </DialogTitle>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge
                   className="border-0"
                   style={{
-                    backgroundColor: order.orderType === 'dine-in' ? '#4CAF7D' : order.orderType === 'delivery' ? '#F0A500' : '#3B2314',
-                    color: 'white'
+                    backgroundColor: order.orderType === 'dine-in' ? 'var(--foodchain-sage-green)' : order.orderType === 'delivery' ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
+                    color: 'var(--foodchain-white)'
                   }}
                 >
                   {order.orderType === 'dine-in' ? 'Dine-In' : order.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
                 </Badge>
                 {order.tableNumber && (
-                  <Badge className="border-0" style={{ backgroundColor: '#3B2314', color: '#FAF7F2' }}>
+                  <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}>
                     Table {order.tableNumber}
                   </Badge>
                 )}
                 <Badge
                   className="border-0"
                   style={{
-                    backgroundColor: order.status === 'ready' ? '#4CAF7D' : order.status === 'preparing' ? '#F0A500' : '#3B2314',
-                    color: 'white'
+                    backgroundColor: order.status === 'ready' ? 'var(--foodchain-sage-green)' : order.status === 'preparing' ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
+                    color: 'var(--foodchain-white)'
                   }}
                 >
                   {order.status === 'ready' ? 'Ready' : order.status === 'preparing' ? 'Preparing' : 'Received'}
@@ -85,13 +85,13 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
             </div>
             <div className="text-right">
               <div className={`flex items-center gap-2 text-xl ${isOverdue || order.isUrgent ? 'animate-pulse' : ''}`}>
-                {(isOverdue || order.isUrgent) && <Flame className="w-6 h-6" style={{ color: '#E8622A' }} />}
-                <Clock className="w-6 h-6" style={{ color: isOverdue || order.isUrgent ? '#E8622A' : '#3B2314' }} />
-                <span style={{ color: isOverdue || order.isUrgent ? '#E8622A' : '#3B2314', fontWeight: 600 }}>
+                {(isOverdue || order.isUrgent) && <Flame className="w-6 h-6" style={{ color: 'var(--foodchain-burnt-orange)' }} />}
+                <Clock className="w-6 h-6" style={{ color: isOverdue || order.isUrgent ? 'var(--foodchain-burnt-orange)' : 'var(--foodchain-espresso)' }} />
+                <span style={{ color: isOverdue || order.isUrgent ? 'var(--foodchain-burnt-orange)' : 'var(--foodchain-espresso)', fontWeight: 600 }}>
                   {elapsedMinutes}:{elapsedSeconds.toString().padStart(2, '0')}
                 </span>
               </div>
-              <p className="text-xs mt-1" style={{ color: '#3B2314', opacity: 0.6 }}>
+              <p className="text-xs mt-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
                 Elapsed Time
               </p>
             </div>
@@ -100,13 +100,13 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
 
         <div className="space-y-6 mt-4">
           {(isOverdue || order.isUrgent) && (
-            <div className="p-4 rounded-md flex items-start gap-3" style={{ backgroundColor: '#E8622A', opacity: 0.9 }}>
-              <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'white' }} />
+            <div className="p-4 rounded-md flex items-start gap-3" style={{ backgroundColor: 'var(--foodchain-burnt-orange)', opacity: 0.9 }}>
+              <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--foodchain-white)' }} />
               <div>
-                <p style={{ color: 'white', fontWeight: 600 }}>
+                <p style={{ color: 'var(--foodchain-white)', fontWeight: 600 }}>
                   {isOverdue ? 'Order Overdue!' : 'Urgent Order'}
                 </p>
-                <p className="text-sm" style={{ color: 'white', opacity: 0.9 }}>
+                <p className="text-sm" style={{ color: 'var(--foodchain-white)', opacity: 0.9 }}>
                   {isOverdue ? 'This order has exceeded the 15-minute target.' : 'This order requires immediate attention.'}
                 </p>
               </div>
@@ -114,7 +114,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
           )}
 
           <div>
-            <h3 className="text-lg mb-4" style={{ color: '#FAF7F2', fontWeight: 600 }}>
+            <h3 className="text-lg mb-4" style={{ color: 'var(--foodchain-warm-white)', fontWeight: 600 }}>
               Order Items
             </h3>
             <div className="space-y-3">
@@ -122,20 +122,20 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                 <div
                   key={item.id}
                   className="p-4 rounded-md"
-                  style={{ backgroundColor: '#FAF7F2' }}
+                  style={{ backgroundColor: 'var(--foodchain-warm-white)' }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F0A500' }}>
-                      <span style={{ color: '#1E1E1E', fontWeight: 600 }}>{item.quantity}</span>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}>
+                      <span style={{ color: 'var(--foodchain-charcoal)', fontWeight: 600 }}>{item.quantity}</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-lg mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
+                      <p className="text-lg mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                         {item.name}
                       </p>
                       {item.specialInstructions && (
-                        <div className="mt-2 p-2 rounded" style={{ backgroundColor: '#F0A500', opacity: 0.2 }}>
-                          <p className="text-sm flex items-center gap-2" style={{ color: '#3B2314' }}>
-                            <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#F0A500' }} />
+                        <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'var(--foodchain-golden-amber)', opacity: 0.2 }}>
+                          <p className="text-sm flex items-center gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
                             <span style={{ fontWeight: 600 }}>Note:</span> {item.specialInstructions}
                           </p>
                         </div>
@@ -147,32 +147,32 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
             </div>
           </div>
 
-          <Separator style={{ backgroundColor: '#3B2314' }} />
+          <Separator style={{ backgroundColor: 'var(--foodchain-espresso)' }} />
 
           <div>
-            <h3 className="text-lg mb-3" style={{ color: '#3B2314', fontWeight: 600 }}>
+            <h3 className="text-lg mb-3" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
               Order Details
             </h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span style={{ color: '#3B2314', opacity: 0.7 }}>Order ID</span>
-                <span style={{ color: '#3B2314', fontWeight: 600 }}>{order.id}</span>
+                <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Order ID</span>
+                <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>{order.id}</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: '#3B2314', opacity: 0.7 }}>Received At</span>
-                <span style={{ color: '#3B2314', fontWeight: 600 }}>
+                <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Received At</span>
+                <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                   {new Date(order.receivedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
               {order.customerName && (
                 <div className="flex justify-between">
-                  <span style={{ color: '#3B2314', opacity: 0.7 }}>Customer</span>
-                  <span style={{ color: '#3B2314', fontWeight: 600 }}>{order.customerName}</span>
+                  <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Customer</span>
+                  <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>{order.customerName}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span style={{ color: '#3B2314', opacity: 0.7 }}>Total Items</span>
-                <span style={{ color: '#3B2314', fontWeight: 600 }}>
+                <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Total Items</span>
+                <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                   {order.items.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               </div>
@@ -189,7 +189,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                   onClose();
                 }}
                 className="flex-1 transition-all hover:opacity-90"
-                style={{ backgroundColor: '#F0A500', color: '#1E1E1E' }}
+                style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
               >
                 Start Preparing
               </Button>
@@ -197,7 +197,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                 onClick={onClose}
                 variant="outline"
                 className="border-2"
-                style={{ borderColor: '#3B2314', color: '#FAF7F2' }}
+                style={{ borderColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}
               >
                 Close
               </Button>
@@ -212,7 +212,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                   onClose();
                 }}
                 className="flex-1 transition-all hover:opacity-90"
-                style={{ backgroundColor: '#4CAF7D', color: 'white' }}
+                style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}
               >
                 Mark as Ready
               </Button>
@@ -220,7 +220,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                 onClick={onClose}
                 variant="outline"
                 className="border-2"
-                style={{ borderColor: '#3B2314', color: '#3B2314' }}
+                style={{ borderColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-espresso)' }}
               >
                 Close
               </Button>
@@ -231,7 +231,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
             <Button
               onClick={onClose}
               className="w-full"
-              style={{ backgroundColor: '#3B2314', color: 'white' }}
+              style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-white)' }}
             >
               Close
             </Button>

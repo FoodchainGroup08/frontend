@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { getManagerLiveOrders, type Order, type WsOrderUpdate } from "@/services/api";
 import { useManagerOrders } from "@/hooks/useManagerOrders";
 import { useAuth } from "@/context/AuthContext";
+import { isNetworkError, DEMO_LIVE_MANAGER_ORDERS } from "@/utils/demoData";
 
 interface LiveOrder {
   id: string;
@@ -52,9 +53,13 @@ export function LiveOrders() {
     try {
       const data = await getManagerLiveOrders();
       setOrders(data.map(mapApiOrder));
-    } catch {
-      setError("Failed to load live orders");
-      toast.error("Failed to load live orders");
+    } catch (err: any) {
+      if (isNetworkError(err)) {
+        setOrders(DEMO_LIVE_MANAGER_ORDERS.map(mapApiOrder));
+      } else {
+        setError("Failed to load live orders");
+        toast.error("Failed to load live orders");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,17 +97,17 @@ export function LiveOrders() {
     return (
       <Card
         key={order.id}
-        className="border-[#3B2314]/10"
-        style={{ backgroundColor: 'white' }}
+        className="border-[var(--foodchain-espresso)]/10"
+        style={{ backgroundColor: 'var(--foodchain-white)' }}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <p className="text-sm mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 #{order.id.split('-')[2] ?? order.id}
               </p>
               {order.customerName && (
-                <p className="text-xs mb-2" style={{ color: '#3B2314', opacity: 0.6 }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
                   {order.customerName}
                 </p>
               )}
@@ -110,14 +115,14 @@ export function LiveOrders() {
                 <Badge
                   className="border-0 text-xs"
                   style={{
-                    backgroundColor: order.orderType === 'dine-in' ? '#4CAF7D' : order.orderType === 'delivery' ? '#F0A500' : '#3B2314',
-                    color: 'white'
+                    backgroundColor: order.orderType === 'dine-in' ? 'var(--foodchain-sage-green)' : order.orderType === 'delivery' ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
+                    color: 'var(--foodchain-white)'
                   }}
                 >
                   {order.orderType === 'dine-in' ? 'Dine-In' : order.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
                 </Badge>
                 {order.tableNumber && (
-                  <Badge className="border-0 text-xs" style={{ backgroundColor: '#3B2314', color: '#FAF7F2' }}>
+                  <Badge className="border-0 text-xs" style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}>
                     Table {order.tableNumber}
                   </Badge>
                 )}
@@ -125,8 +130,8 @@ export function LiveOrders() {
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1 text-sm">
-                <Clock className="w-4 h-4" style={{ color: '#3B2314', opacity: 0.6 }} />
-                <span style={{ color: '#3B2314', fontWeight: 600 }}>
+                <Clock className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }} />
+                <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                   {elapsedMinutes}m
                 </span>
               </div>
@@ -137,8 +142,8 @@ export function LiveOrders() {
           <div className="space-y-1">
             {order.items.map((item) => (
               <div key={item.id} className="flex items-center gap-2 text-sm">
-                <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: '#F0A500' }} />
-                <span style={{ color: '#3B2314' }}>
+                <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
+                <span style={{ color: 'var(--foodchain-espresso)' }}>
                   {item.quantity}× {item.name}
                 </span>
               </div>
@@ -151,7 +156,7 @@ export function LiveOrders() {
 
   if (isLoading) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8">
           <Skeleton className="h-10 w-48 mb-2" />
           <Skeleton className="h-5 w-72 mb-8" />
@@ -170,10 +175,10 @@ export function LiveOrders() {
 
   if (error) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
-          <Button onClick={fetchOrders} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
+          <Button onClick={fetchOrders} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
             Retry
           </Button>
         </div>
@@ -183,20 +188,20 @@ export function LiveOrders() {
 
   if (orders.length === 0) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8">
-          <h1 className="text-3xl mb-8" style={{ color: '#3B2314', fontWeight: 600 }}>
+          <h1 className="text-3xl mb-8" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
             Live Orders
           </h1>
-          <Card className="border-[#3B2314]/10" style={{ backgroundColor: 'white' }}>
+          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
             <CardContent className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: '#3B2314', opacity: 0.1 }}>
-                <Clock className="w-10 h-10" style={{ color: '#3B2314' }} />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                <Clock className="w-10 h-10" style={{ color: 'var(--foodchain-espresso)' }} />
               </div>
-              <h3 className="text-xl mb-2" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 No Active Orders
               </h3>
-              <p style={{ color: '#3B2314', opacity: 0.6 }}>
+              <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
                 Active orders will appear here
               </p>
             </CardContent>
@@ -207,13 +212,13 @@ export function LiveOrders() {
   }
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="p-6 sm:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl mb-2" style={{ color: '#3B2314', fontWeight: 600 }}>
+          <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
             Live Orders
           </h1>
-          <p style={{ color: '#3B2314', opacity: 0.7 }}>
+          <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
             Real-time view of all active orders • {orders.length} {orders.length === 1 ? 'order' : 'orders'} in progress
           </p>
         </div>
@@ -221,10 +226,10 @@ export function LiveOrders() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 Received
               </h2>
-              <Badge className="border-0" style={{ backgroundColor: '#3B2314', color: '#FAF7F2' }}>
+              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}>
                 {ordersByStatus.received.length}
               </Badge>
             </div>
@@ -235,10 +240,10 @@ export function LiveOrders() {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 Preparing
               </h2>
-              <Badge className="border-0" style={{ backgroundColor: '#F0A500', color: '#1E1E1E' }}>
+              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
                 {ordersByStatus.preparing.length}
               </Badge>
             </div>
@@ -249,10 +254,10 @@ export function LiveOrders() {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 Ready
               </h2>
-              <Badge className="border-0" style={{ backgroundColor: '#4CAF7D', color: 'white' }}>
+              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
                 {ordersByStatus.ready.length}
               </Badge>
             </div>
@@ -263,10 +268,10 @@ export function LiveOrders() {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 Out for Delivery
               </h2>
-              <Badge className="border-0" style={{ backgroundColor: '#F0A500', color: '#1E1E1E' }}>
+              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
                 {ordersByStatus['out-for-delivery'].length}
               </Badge>
             </div>

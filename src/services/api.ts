@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 export const TOKEN_KEY = 'foodchain_token';
 
 export const apiClient = axios.create({ baseURL: BASE_URL });
@@ -219,6 +219,66 @@ const DEMO_BRANCHES: Branch[] = [
     isOpen: false,
     isActive: true,
     distance: '8.5 km'
+  },
+  {
+    id: 'branch-4',
+    name: 'FoodChain Ikoyi',
+    address: '45 Awolowo Road, Ikoyi, Lagos',
+    hours: '8:00 AM - 10:00 PM',
+    rating: 4.9,
+    isOpen: true,
+    isActive: true,
+    distance: '3.2 km'
+  },
+  {
+    id: 'branch-5',
+    name: 'FoodChain Surulere',
+    address: '18 Adeniran Ogunsanya Street, Surulere, Lagos',
+    hours: '7:00 AM - 10:00 PM',
+    rating: 4.5,
+    isOpen: true,
+    isActive: true,
+    distance: '10.2 km'
+  },
+  {
+    id: 'branch-6',
+    name: 'FoodChain Yaba',
+    address: '52 Herbert Macaulay Way, Yaba, Lagos',
+    hours: '8:00 AM - 9:00 PM',
+    rating: 4.4,
+    isOpen: true,
+    isActive: true,
+    distance: '12.0 km'
+  },
+  {
+    id: 'branch-7',
+    name: 'FoodChain Ajah',
+    address: '7 Lekki-Epe Expressway, Ajah, Lagos',
+    hours: '9:00 AM - 11:00 PM',
+    rating: 4.6,
+    isOpen: true,
+    isActive: true,
+    distance: '15.8 km'
+  },
+  {
+    id: 'branch-8',
+    name: 'FoodChain Maryland',
+    address: '34 Ikorodu Road, Maryland, Lagos',
+    hours: '7:00 AM - 9:00 PM',
+    rating: 4.3,
+    isOpen: true,
+    isActive: true,
+    distance: '11.5 km'
+  },
+  {
+    id: 'branch-9',
+    name: 'FoodChain Festac',
+    address: '22 Second Avenue, Festac Town, Lagos',
+    hours: '8:00 AM - 10:00 PM',
+    rating: 4.5,
+    isOpen: false,
+    isActive: true,
+    distance: '18.3 km'
   }
 ];
 

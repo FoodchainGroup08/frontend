@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080';
+
 export function useOrderTracker(orderId: string, onMessage: (data: unknown) => void) {
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -14,7 +16,7 @@ export function useOrderTracker(orderId: string, onMessage: (data: unknown) => v
 
     const connect = () => {
       if (!mountedRef.current) return;
-      const ws = new WebSocket(`ws://localhost:8080/ws/orders/${orderId}`);
+      const ws = new WebSocket(`${WS_BASE}/ws/orders/${orderId}`);
       wsRef.current = ws;
 
       ws.onopen = () => {

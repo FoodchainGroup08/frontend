@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080';
+
 export function useManagerOrders(branchId: string, onMessage: (data: unknown) => void) {
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -14,7 +16,7 @@ export function useManagerOrders(branchId: string, onMessage: (data: unknown) =>
 
     const connect = () => {
       if (!mountedRef.current) return;
-      const ws = new WebSocket(`ws://localhost:8080/ws/manager/${branchId}`);
+      const ws = new WebSocket(`${WS_BASE}/ws/manager/${branchId}`);
       wsRef.current = ws;
 
       ws.onopen = () => {

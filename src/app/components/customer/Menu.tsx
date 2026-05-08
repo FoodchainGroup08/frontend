@@ -72,33 +72,33 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl mb-4" style={{ color: '#3B2314', fontWeight: 600 }}>
+          <h1 className="text-2xl sm:text-3xl mb-4" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
             Menu
           </h1>
 
           <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: '#3B2314', opacity: 0.4 }} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--foodchain-espresso)', opacity: 0.4 }} />
             <Input
               type="text"
               placeholder="Search for dishes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-[#3B2314]/20"
-              style={{ backgroundColor: 'white' }}
+              className="pl-10 border-[var(--foodchain-espresso)]/20"
+              style={{ backgroundColor: 'var(--foodchain-white)' }}
             />
           </div>
 
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap bg-white border border-[#3B2314]/10">
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap border border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
               {categories.map(category => (
                 <TabsTrigger
                   key={category}
                   value={category}
-                  className="data-[state=active]:bg-[#F0A500] data-[state=active]:text-[#1E1E1E]"
-                  style={{ color: '#3B2314' }}
+                  className="data-[state=active]:bg-[var(--foodchain-golden-amber)] data-[state=active]:text-[var(--foodchain-charcoal)]"
+                  style={{ color: 'var(--foodchain-espresso)' }}
                 >
                   {category}
                 </TabsTrigger>
@@ -115,25 +115,25 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
+            <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
             <Button
               onClick={fetchMenu}
               variant="outline"
-              className="border-[#3B2314]/20"
-              style={{ color: '#3B2314' }}
+              className="border-[var(--foodchain-espresso)]/20"
+              style={{ color: 'var(--foodchain-espresso)' }}
             >
               Retry
             </Button>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#3B2314', opacity: 0.1 }}>
-              <Search className="w-8 h-8" style={{ color: '#3B2314' }} />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+              <Search className="w-8 h-8" style={{ color: 'var(--foodchain-espresso)' }} />
             </div>
-            <h3 className="text-xl mb-2" style={{ color: '#3B2314', fontWeight: 600 }}>
+            <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
               No items found
             </h3>
-            <p style={{ color: '#3B2314', opacity: 0.6 }}>
+            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
               Try adjusting your search or filters
             </p>
           </div>
@@ -146,9 +146,9 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
               return (
                 <Card
                   key={item.id}
-                  className="border-[#3B2314]/10 flex flex-col overflow-hidden"
+                  className="border-[var(--foodchain-espresso)]/10 flex flex-col overflow-hidden"
                   style={{
-                    backgroundColor: 'white',
+                    backgroundColor: 'var(--foodchain-white)',
                     opacity: item.available ? 1 : 0.6
                   }}
                 >
@@ -162,26 +162,26 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                   </div>
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <CardTitle className="text-lg" style={{ color: '#3B2314' }}>
+                      <CardTitle className="text-lg" style={{ color: 'var(--foodchain-espresso)' }}>
                         {item.name}
                       </CardTitle>
                       {!item.available && (
-                        <Badge className="border-0 flex-shrink-0" style={{ backgroundColor: '#E8622A', color: 'white' }}>
+                        <Badge className="border-0 flex-shrink-0" style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' }}>
                           Unavailable
                         </Badge>
                       )}
                     </div>
-                    <CardDescription className="text-sm" style={{ color: '#3B2314', opacity: 0.7 }}>
+                    <CardDescription className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
                       {item.description}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col justify-end">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xl" style={{ color: '#F0A500', fontWeight: 600 }}>
+                      <span className="text-xl" style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
                         ₦{item.price.toLocaleString()}
                       </span>
                       {cartQty > 0 && (
-                        <Badge className="border-0" style={{ backgroundColor: '#4CAF7D', color: 'white' }}>
+                        <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
                           {cartQty} in cart
                         </Badge>
                       )}
@@ -189,22 +189,22 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
 
                     {item.available && (
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center border rounded-md" style={{ borderColor: '#3B2314', opacity: 0.2 }}>
+                        <div className="flex items-center border rounded-md" style={{ borderColor: 'var(--foodchain-espresso)', opacity: 0.2 }}>
                           <button
                             onClick={() => handleQuantityChange(item.id, -1)}
-                            className="p-2 hover:bg-[#3B2314]/5 transition-colors"
+                            className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
                             disabled={selectedQty === 0}
                           >
-                            <Minus className="w-4 h-4" style={{ color: '#3B2314' }} />
+                            <Minus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
                           </button>
-                          <span className="px-4 text-center min-w-[3rem]" style={{ color: '#3B2314', fontWeight: 600 }}>
+                          <span className="px-4 text-center min-w-[3rem]" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                             {selectedQty}
                           </span>
                           <button
                             onClick={() => handleQuantityChange(item.id, 1)}
-                            className="p-2 hover:bg-[#3B2314]/5 transition-colors"
+                            className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
                           >
-                            <Plus className="w-4 h-4" style={{ color: '#3B2314' }} />
+                            <Plus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
                           </button>
                         </div>
                         <Button
@@ -212,8 +212,8 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                           disabled={selectedQty === 0}
                           className="flex-1 transition-all hover:opacity-90"
                           style={{
-                            backgroundColor: selectedQty > 0 ? '#F0A500' : '#3B2314',
-                            color: selectedQty > 0 ? '#1E1E1E' : '#FAF7F2',
+                            backgroundColor: selectedQty > 0 ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
+                            color: selectedQty > 0 ? 'var(--foodchain-charcoal)' : 'var(--foodchain-warm-white)',
                             opacity: selectedQty === 0 ? 0.5 : 1
                           }}
                         >

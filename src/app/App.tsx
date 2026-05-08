@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
+import { useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
 import { type OrderDetails } from "./components/customer/Checkout";
 import { Login } from "./components/auth/Login";
@@ -80,6 +80,10 @@ type HistoricalOrder = {
   branchName: string;
   orderDate: string;
   deliveryDate?: string;
+  deliveryAddress?: string;
+  phoneNumber?: string;
+  paymentMethod?: string;
+  customerName?: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -236,10 +240,10 @@ function CustomerLayout() {
       items: order.items.map(i => ({ ...i, price: 0 })),
       subtotal: order.total > 500 ? order.total - 500 : order.total,
       deliveryFee: 500,
-      customerName: user?.name ?? '—',
-      phoneNumber: '—',
-      deliveryAddress: '—',
-      paymentMethod: '—',
+      customerName: order.customerName ?? user?.name ?? '—',
+      phoneNumber: order.phoneNumber ?? '—',
+      deliveryAddress: order.deliveryAddress ?? '—',
+      paymentMethod: order.paymentMethod ?? '—',
     });
     setIsOrderDetailOpen(true);
   };
@@ -296,7 +300,7 @@ function CustomerLayout() {
       case 'order-tracker':
         return <OrderTracker onGoBack={() => navigate('/menu')} />;
       case 'order-history':
-        return <OrderHistory onViewDetails={handleViewOrderDetails} />;
+        return <OrderHistory onViewDetails={handleViewOrderDetails} onBrowseMenu={() => navigate('/menu')} />;
       default:
         return <Navigate to="/branches" replace />;
     }
@@ -515,11 +519,5 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
-  );
+  return <AppRoutes />;
 }

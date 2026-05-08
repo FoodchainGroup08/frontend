@@ -11,6 +11,7 @@ import {
   type Analytics as AnalyticsData,
   type BranchAnalytics,
 } from "@/services/api";
+import { isNetworkError, DEMO_ANALYTICS, DEMO_BRANCH_ANALYTICS } from "@/utils/demoData";
 
 function getDateParams(range: string): { startDate?: string; endDate?: string } {
   const today = new Date();
@@ -45,9 +46,14 @@ export function Analytics() {
       ]);
       setAnalytics(analyticsData);
       setBranchData(branchesData);
-    } catch {
-      setError("Failed to load analytics");
-      toast.error("Failed to load analytics");
+    } catch (err: any) {
+      if (isNetworkError(err)) {
+        setAnalytics(DEMO_ANALYTICS);
+        setBranchData(DEMO_BRANCH_ANALYTICS);
+      } else {
+        setError("Failed to load analytics");
+        toast.error("Failed to load analytics");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -69,11 +75,11 @@ export function Analytics() {
       onClick={() => setSelectedRange(label)}
       className="transition-all"
       style={selectedRange === label ? {
-        backgroundColor: '#F0A500',
-        color: '#1E1E1E'
+        backgroundColor: 'var(--foodchain-golden-amber)',
+        color: 'var(--foodchain-charcoal)'
       } : {
-        borderColor: '#3B2314',
-        color: '#3B2314',
+        borderColor: 'var(--foodchain-espresso)',
+        color: 'var(--foodchain-espresso)',
         opacity: 0.6
       }}
     >
@@ -83,7 +89,7 @@ export function Analytics() {
 
   if (isLoading) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -110,10 +116,10 @@ export function Analytics() {
 
   if (error) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
-          <Button onClick={() => fetchData(selectedRange)} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
+          <Button onClick={() => fetchData(selectedRange)} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
             Retry
           </Button>
         </div>
@@ -122,14 +128,14 @@ export function Analytics() {
   }
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl mb-2" style={{ color: '#3B2314', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
               Cross-Branch Analytics
             </h1>
-            <p style={{ color: '#3B2314', opacity: 0.7 }}>
+            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
               Performance overview across all branches
             </p>
           </div>
@@ -142,67 +148,67 @@ export function Analytics() {
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-8">
-          <Card className="border-[#3B2314]/10" style={{ backgroundColor: 'white' }}>
+          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm" style={{ color: '#3B2314', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
                 Total Orders
               </CardTitle>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F0A500', opacity: 0.1 }}>
-                <ShoppingCart className="w-4 h-4" style={{ color: '#F0A500' }} />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--foodchain-golden-amber)', opacity: 0.1 }}>
+                <ShoppingCart className="w-4 h-4" style={{ color: 'var(--foodchain-golden-amber)' }} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <div className="text-3xl mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 {totalOrders}
               </div>
               {analytics?.ordersChange !== undefined && (
                 <div className="flex items-center gap-1 text-sm mt-1">
-                  <TrendingUp className="w-4 h-4" style={{ color: '#4CAF7D' }} />
-                  <span style={{ color: '#4CAF7D', fontWeight: 600 }}>+{analytics.ordersChange}%</span>
-                  <span style={{ color: '#3B2314', opacity: 0.6 }}>vs last period</span>
+                  <TrendingUp className="w-4 h-4" style={{ color: 'var(--foodchain-sage-green)' }} />
+                  <span style={{ color: 'var(--foodchain-sage-green)', fontWeight: 600 }}>+{analytics.ordersChange}%</span>
+                  <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>vs last period</span>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="border-[#3B2314]/10" style={{ backgroundColor: 'white' }}>
+          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm" style={{ color: '#3B2314', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
                 Total Revenue
               </CardTitle>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#4CAF7D', opacity: 0.1 }}>
-                <DollarSign className="w-4 h-4" style={{ color: '#4CAF7D' }} />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--foodchain-sage-green)', opacity: 0.1 }}>
+                <DollarSign className="w-4 h-4" style={{ color: 'var(--foodchain-sage-green)' }} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <div className="text-3xl mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 ₦{(totalRevenue / 1000000).toFixed(2)}M
               </div>
               {analytics?.revenueChange !== undefined && (
                 <div className="flex items-center gap-1 text-sm mt-1">
-                  <TrendingUp className="w-4 h-4" style={{ color: '#4CAF7D' }} />
-                  <span style={{ color: '#4CAF7D', fontWeight: 600 }}>+{analytics.revenueChange}%</span>
-                  <span style={{ color: '#3B2314', opacity: 0.6 }}>vs last period</span>
+                  <TrendingUp className="w-4 h-4" style={{ color: 'var(--foodchain-sage-green)' }} />
+                  <span style={{ color: 'var(--foodchain-sage-green)', fontWeight: 600 }}>+{analytics.revenueChange}%</span>
+                  <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>vs last period</span>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="border-[#3B2314]/10" style={{ backgroundColor: 'white' }}>
+          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm" style={{ color: '#3B2314', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
                 Busiest Branch
               </CardTitle>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#3B2314', opacity: 0.1 }}>
-                <Building2 className="w-4 h-4" style={{ color: '#3B2314' }} />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                <Building2 className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl mb-1" style={{ color: '#3B2314', fontWeight: 600 }}>
+              <div className="text-3xl mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 {busiestBranch?.name ?? '—'}
               </div>
               {busiestBranch && (
-                <p className="text-sm" style={{ color: '#3B2314', opacity: 0.6 }}>
+                <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
                   {busiestBranch.orders} orders
                 </p>
               )}
@@ -210,40 +216,40 @@ export function Analytics() {
           </Card>
         </div>
 
-        <Card className="border-[#3B2314]/10 mb-8" style={{ backgroundColor: 'white' }}>
+        <Card className="border-[var(--foodchain-espresso)]/10 mb-8" style={{ backgroundColor: 'var(--foodchain-white)' }}>
           <CardHeader>
-            <CardTitle style={{ color: '#3B2314' }}>Branch Performance Comparison</CardTitle>
+            <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>Branch Performance Comparison</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={branchData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3B2314" opacity={0.1} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--foodchain-espresso)" opacity={0.1} />
                   <XAxis
                     dataKey="name"
-                    stroke="#3B2314"
-                    style={{ fontSize: '12px', fill: '#3B2314' }}
+                    stroke="var(--foodchain-espresso)"
+                    style={{ fontSize: '12px', fill: 'var(--foodchain-espresso)' }}
                   />
                   <YAxis
                     yAxisId="left"
-                    stroke="#3B2314"
-                    style={{ fontSize: '12px', fill: '#3B2314' }}
-                    label={{ value: 'Orders', angle: -90, position: 'insideLeft', style: { fill: '#3B2314' } }}
+                    stroke="var(--foodchain-espresso)"
+                    style={{ fontSize: '12px', fill: 'var(--foodchain-espresso)' }}
+                    label={{ value: 'Orders', angle: -90, position: 'insideLeft', style: { fill: 'var(--foodchain-espresso)' } }}
                   />
                   <YAxis
                     yAxisId="right"
                     orientation="right"
-                    stroke="#3B2314"
-                    style={{ fontSize: '12px', fill: '#3B2314' }}
+                    stroke="var(--foodchain-espresso)"
+                    style={{ fontSize: '12px', fill: 'var(--foodchain-espresso)' }}
                     tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
-                    label={{ value: 'Revenue', angle: 90, position: 'insideRight', style: { fill: '#3B2314' } }}
+                    label={{ value: 'Revenue', angle: 90, position: 'insideRight', style: { fill: 'var(--foodchain-espresso)' } }}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#FAF7F2',
-                      border: '1px solid #3B2314',
+                      backgroundColor: 'var(--foodchain-warm-white)',
+                      border: '1px solid var(--foodchain-espresso)',
                       borderRadius: '8px',
-                      color: '#3B2314'
+                      color: 'var(--foodchain-espresso)'
                     }}
                     formatter={(value: number, name: string) => {
                       if (name === 'Orders') return [value, 'Orders'];
@@ -255,8 +261,8 @@ export function Analytics() {
                     wrapperStyle={{ paddingTop: '20px' }}
                     iconType="circle"
                   />
-                  <Bar yAxisId="left" dataKey="orders" fill="#F0A500" name="Orders" radius={[8, 8, 0, 0]} />
-                  <Bar yAxisId="right" dataKey="revenue" fill="#4CAF7D" name="Revenue" radius={[8, 8, 0, 0]} />
+                  <Bar yAxisId="left" dataKey="orders" fill="var(--foodchain-golden-amber)" name="Orders" radius={[8, 8, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="revenue" fill="var(--foodchain-sage-green)" name="Revenue" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -265,22 +271,22 @@ export function Analytics() {
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           {branchData.map((branch) => (
-            <Card key={branch.name} className="border-[#3B2314]/10" style={{ backgroundColor: 'white' }}>
+            <Card key={branch.name} className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
               <CardHeader>
-                <CardTitle className="text-base" style={{ color: '#3B2314' }}>{branch.name}</CardTitle>
+                <CardTitle className="text-base" style={{ color: 'var(--foodchain-espresso)' }}>{branch.name}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="text-sm mb-1" style={{ color: '#3B2314', opacity: 0.6 }}>Orders</p>
-                  <p className="text-2xl" style={{ color: '#F0A500', fontWeight: 600 }}>{branch.orders}</p>
+                  <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Orders</p>
+                  <p className="text-2xl" style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>{branch.orders}</p>
                 </div>
                 <div>
-                  <p className="text-sm mb-1" style={{ color: '#3B2314', opacity: 0.6 }}>Revenue</p>
-                  <p className="text-xl" style={{ color: '#4CAF7D', fontWeight: 600 }}>₦{branch.revenue.toLocaleString()}</p>
+                  <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Revenue</p>
+                  <p className="text-xl" style={{ color: 'var(--foodchain-sage-green)', fontWeight: 600 }}>₦{branch.revenue.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-sm mb-1" style={{ color: '#3B2314', opacity: 0.6 }}>Avg Order Value</p>
-                  <p style={{ color: '#3B2314', fontWeight: 600 }}>
+                  <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Avg Order Value</p>
+                  <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                     ₦{branch.orders > 0 ? Math.round(branch.revenue / branch.orders).toLocaleString() : 0}
                   </p>
                 </div>

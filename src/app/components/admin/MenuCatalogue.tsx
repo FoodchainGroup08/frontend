@@ -20,6 +20,20 @@ import {
   toggleMenuItemAvailability,
   type MenuItem,
 } from "@/services/api";
+import { isNetworkError } from "@/utils/demoData";
+
+// Demo menu items reuse the same items from api.ts DEMO_MENU — we import them here
+const DEMO_MENU_ITEMS: MenuItem[] = [
+  { id: '1', name: 'Jollof Rice with Chicken', description: 'Spicy Nigerian jollof rice served with grilled chicken', price: 3500, category: 'Mains', available: true, isActive: true },
+  { id: '2', name: 'Fried Rice Combo', description: 'Delicious fried rice with beef and plantain', price: 3200, category: 'Mains', available: true, isActive: true },
+  { id: '3', name: 'Egusi Soup & Pounded Yam', description: 'Traditional melon soup with smooth pounded yam', price: 2800, category: 'Soups', available: true, isActive: true },
+  { id: '4', name: 'Suya Platter', description: 'Spicy grilled beef suya with onions and tomatoes', price: 4000, category: 'Grills', available: true, isActive: true },
+  { id: '5', name: 'Pepper Soup', description: 'Spicy Nigerian pepper soup with assorted meat', price: 2500, category: 'Soups', available: true, isActive: true },
+  { id: '6', name: 'Grilled Chicken', description: 'Perfectly seasoned grilled chicken', price: 3800, category: 'Grills', available: true, isActive: true },
+  { id: '7', name: 'Fried Plantain', description: 'Sweet fried plantain slices', price: 1200, category: 'Sides', available: true, isActive: true },
+  { id: '8', name: 'Chapman', description: 'Refreshing Nigerian cocktail drink', price: 1500, category: 'Drinks', available: true, isActive: true },
+  { id: '9', name: 'Fresh Coconut Water', description: 'Chilled coconut water', price: 1000, category: 'Drinks', available: true, isActive: true },
+];
 
 const categories = ["Mains", "Soups", "Grills", "Sides", "Drinks"];
 
@@ -44,9 +58,13 @@ export function MenuCatalogue() {
     try {
       const data = await getAllMenuItems();
       setItems(data);
-    } catch {
-      setError("Failed to load menu items");
-      toast.error("Failed to load menu items");
+    } catch (err: any) {
+      if (isNetworkError(err)) {
+        setItems(DEMO_MENU_ITEMS);
+      } else {
+        setError("Failed to load menu items");
+        toast.error("Failed to load menu items");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +135,7 @@ export function MenuCatalogue() {
 
   if (isLoading) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -134,10 +152,10 @@ export function MenuCatalogue() {
 
   if (error) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: '#E8622A' }}>{error}</p>
-          <Button onClick={fetchItems} variant="outline" className="border-[#3B2314]/20" style={{ color: '#3B2314' }}>
+          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
+          <Button onClick={fetchItems} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
             Retry
           </Button>
         </div>
@@ -146,14 +164,14 @@ export function MenuCatalogue() {
   }
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: '#FAF7F2' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl mb-2" style={{ color: '#3B2314', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
               Menu Catalogue
             </h1>
-            <p style={{ color: '#3B2314', opacity: 0.7 }}>
+            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
               Manage all menu items across all branches
             </p>
           </div>
@@ -161,27 +179,27 @@ export function MenuCatalogue() {
           <Button
             onClick={handleAdd}
             className="gap-2 transition-all hover:opacity-90"
-            style={{ backgroundColor: '#F0A500', color: '#1E1E1E' }}
+            style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
           >
             <Plus className="w-4 h-4" />
             Add Menu Item
           </Button>
         </div>
 
-        <Card className="border-[#3B2314]/10" style={{ backgroundColor: 'white' }}>
+        <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
           <CardHeader>
-            <CardTitle style={{ color: '#3B2314' }}>All Menu Items ({items.length})</CardTitle>
+            <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>All Menu Items ({items.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead style={{ color: '#3B2314', fontWeight: 600 }}>Name</TableHead>
-                    <TableHead style={{ color: '#3B2314', fontWeight: 600 }}>Category</TableHead>
-                    <TableHead style={{ color: '#3B2314', fontWeight: 600 }}>Price</TableHead>
-                    <TableHead style={{ color: '#3B2314', fontWeight: 600 }}>Status</TableHead>
-                    <TableHead className="text-right" style={{ color: '#3B2314', fontWeight: 600 }}>Actions</TableHead>
+                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Name</TableHead>
+                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Category</TableHead>
+                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Price</TableHead>
+                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Status</TableHead>
+                    <TableHead className="text-right" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -189,20 +207,20 @@ export function MenuCatalogue() {
                     <TableRow key={item.id}>
                       <TableCell>
                         <div>
-                          <p style={{ color: '#3B2314', fontWeight: 600 }}>
+                          <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                             {item.name}
                           </p>
-                          <p className="text-sm" style={{ color: '#3B2314', opacity: 0.6 }}>
+                          <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
                             {item.description}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className="border-0" style={{ backgroundColor: '#3B2314', color: '#FAF7F2' }}>
+                        <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}>
                           {item.category}
                         </Badge>
                       </TableCell>
-                      <TableCell style={{ color: '#F0A500', fontWeight: 600 }}>
+                      <TableCell style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
                         ₦{item.price.toLocaleString()}
                       </TableCell>
                       <TableCell>
@@ -217,8 +235,8 @@ export function MenuCatalogue() {
                             onClick={() => handleEdit(item)}
                             variant="outline"
                             size="sm"
-                            className="gap-1 border-[#3B2314]/20"
-                            style={{ color: '#3B2314' }}
+                            className="gap-1 border-[var(--foodchain-espresso)]/20"
+                            style={{ color: 'var(--foodchain-espresso)' }}
                           >
                             <Edit className="w-4 h-4" />
                             Edit
@@ -227,8 +245,8 @@ export function MenuCatalogue() {
                             onClick={() => handleDelete(item.id)}
                             variant="outline"
                             size="sm"
-                            className="gap-1 border-[#E8622A]"
-                            style={{ color: '#E8622A' }}
+                            className="gap-1 border-[var(--foodchain-burnt-orange)]"
+                            style={{ color: 'var(--foodchain-burnt-orange)' }}
                           >
                             <Trash2 className="w-4 h-4" />
                             Delete
@@ -244,63 +262,63 @@ export function MenuCatalogue() {
         </Card>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent style={{ backgroundColor: '#FAF7F2' }} className="max-w-2xl">
+          <DialogContent style={{ backgroundColor: 'var(--foodchain-warm-white)' }} className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle style={{ color: '#3B2314' }}>
+              <DialogTitle style={{ color: 'var(--foodchain-espresso)' }}>
                 {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="itemName" style={{ color: '#3B2314' }}>Item Name</Label>
+                <Label htmlFor="itemName" style={{ color: 'var(--foodchain-espresso)' }}>Item Name</Label>
                 <Input
                   id="itemName"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Jollof Rice & Chicken"
-                  className="border-[#3B2314]/20"
-                  style={{ backgroundColor: 'white' }}
+                  className="border-[var(--foodchain-espresso)]/20"
+                  style={{ backgroundColor: 'var(--foodchain-white)' }}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" style={{ color: '#3B2314' }}>Description</Label>
+                <Label htmlFor="description" style={{ color: 'var(--foodchain-espresso)' }}>Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Classic Nigerian jollof rice served with grilled chicken"
                   rows={3}
-                  className="border-[#3B2314]/20 resize-none"
-                  style={{ backgroundColor: 'white' }}
+                  className="border-[var(--foodchain-espresso)]/20 resize-none"
+                  style={{ backgroundColor: 'var(--foodchain-white)' }}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price" style={{ color: '#3B2314' }}>Price (₦)</Label>
+                  <Label htmlFor="price" style={{ color: 'var(--foodchain-espresso)' }}>Price (₦)</Label>
                   <Input
                     id="price"
                     type="number"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
                     placeholder="2500"
-                    className="border-[#3B2314]/20"
-                    style={{ backgroundColor: 'white' }}
+                    className="border-[var(--foodchain-espresso)]/20"
+                    style={{ backgroundColor: 'var(--foodchain-white)' }}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category" style={{ color: '#3B2314' }}>Category</Label>
+                  <Label htmlFor="category" style={{ color: 'var(--foodchain-espresso)' }}>Category</Label>
                   <Select
                     value={formData.category}
                     onValueChange={(value) => setFormData({ ...formData, category: value })}
                   >
                     <SelectTrigger
                       id="category"
-                      className="border-[#3B2314]/20"
-                      style={{ backgroundColor: 'white' }}
+                      className="border-[var(--foodchain-espresso)]/20"
+                      style={{ backgroundColor: 'var(--foodchain-white)' }}
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -313,10 +331,10 @@ export function MenuCatalogue() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-md" style={{ backgroundColor: 'white' }}>
+              <div className="flex items-center justify-between p-4 rounded-md" style={{ backgroundColor: 'var(--foodchain-white)' }}>
                 <div>
-                  <Label htmlFor="itemActive" style={{ color: '#3B2314' }}>Active Status</Label>
-                  <p className="text-sm" style={{ color: '#3B2314', opacity: 0.6 }}>
+                  <Label htmlFor="itemActive" style={{ color: 'var(--foodchain-espresso)' }}>Active Status</Label>
+                  <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
                     Item is {formData.isActive ? 'available' : 'unavailable'}
                   </p>
                 </div>
@@ -332,8 +350,8 @@ export function MenuCatalogue() {
               <Button
                 onClick={() => setIsModalOpen(false)}
                 variant="outline"
-                className="border-[#3B2314]/20"
-                style={{ color: '#3B2314' }}
+                className="border-[var(--foodchain-espresso)]/20"
+                style={{ color: 'var(--foodchain-espresso)' }}
                 disabled={isSaving}
               >
                 Cancel
@@ -342,7 +360,7 @@ export function MenuCatalogue() {
                 onClick={handleSave}
                 disabled={isSaving}
                 className="transition-all hover:opacity-90"
-                style={{ backgroundColor: '#F0A500', color: '#1E1E1E' }}
+                style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
               >
                 {isSaving ? 'Saving...' : editingItem ? 'Save Changes' : 'Add Item'}
               </Button>
