@@ -48,7 +48,7 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12" style={{ backgroundColor: '#1E1E1E' }}>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12" style={{ backgroundColor: '#444' }}>
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 mb-2">
@@ -160,7 +160,7 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
             <CardFooter className="flex flex-col gap-4">
               <Button
                 type="submit"
-                className="w-full transition-all hover:opacity-90 hover:shadow-lg"
+                className="w-full transition-all mt-4 hover:opacity-90 hover:shadow-lg"
                 disabled={isLoading}
                 style={{
                   backgroundColor: '#F0A500',

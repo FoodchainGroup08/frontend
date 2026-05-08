@@ -100,7 +100,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
             <CardFooter className="flex flex-col gap-4">
               <Button
                 type="submit"
-                className="w-full transition-all hover:opacity-90 hover:shadow-lg"
+                className="w-full mt-5 transition-all hover:opacity-90 hover:shadow-lg"
                 disabled={isLoading}
                 style={{
                   backgroundColor: '#F0A500',

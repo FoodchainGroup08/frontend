@@ -140,7 +140,7 @@ export function ForgotPassword({ onNavigateToLogin, onResetSuccess }: ForgotPass
             <CardFooter className="flex flex-col gap-3">
               <Button
                 type="submit"
-                className="w-full transition-all hover:opacity-90 hover:shadow-lg"
+                className="w-full transition-all mt-5 hover:opacity-90 hover:shadow-lg"
                 disabled={isLoading}
                 style={{ backgroundColor: '#F0A500', color: '#1E1E1E' }}
               >
