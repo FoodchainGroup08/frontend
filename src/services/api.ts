@@ -187,13 +187,81 @@ export const getMe = () =>
 export const postForgotPassword = (email: string) =>
   apiClient.post('/auth/forgot-password', { email }).then(r => r.data);
 
+// ─── Demo Data ────────────────────────────────────────────────────────────────
+
+const DEMO_BRANCHES: Branch[] = [
+  {
+    id: 'branch-1',
+    name: 'FoodChain Victoria Island',
+    address: '15 Akin Adesola Street, Victoria Island, Lagos',
+    hours: '8:00 AM - 10:00 PM',
+    rating: 4.8,
+    isOpen: true,
+    isActive: true,
+    distance: '2.3 km'
+  },
+  {
+    id: 'branch-2',
+    name: 'FoodChain Lekki',
+    address: '32 Admiralty Way, Lekki Phase 1, Lagos',
+    hours: '9:00 AM - 11:00 PM',
+    rating: 4.6,
+    isOpen: true,
+    isActive: true,
+    distance: '5.1 km'
+  },
+  {
+    id: 'branch-3',
+    name: 'FoodChain Ikeja',
+    address: '21 Allen Avenue, Ikeja, Lagos',
+    hours: '7:00 AM - 9:00 PM',
+    rating: 4.7,
+    isOpen: false,
+    isActive: true,
+    distance: '8.5 km'
+  }
+];
+
+const DEMO_MENU: MenuItem[] = [
+  { id: '1', name: 'Jollof Rice with Chicken', description: 'Spicy Nigerian jollof rice served with grilled chicken', price: 3500, category: 'Mains', available: true, image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400' },
+  { id: '2', name: 'Fried Rice Combo', description: 'Delicious fried rice with beef and plantain', price: 3200, category: 'Mains', available: true, image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400' },
+  { id: '3', name: 'Egusi Soup & Pounded Yam', description: 'Traditional melon soup with smooth pounded yam', price: 2800, category: 'Soups', available: true, image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=400' },
+  { id: '4', name: 'Suya Platter', description: 'Spicy grilled beef suya with onions and tomatoes', price: 4000, category: 'Grills', available: true, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400' },
+  { id: '5', name: 'Pepper Soup', description: 'Spicy Nigerian pepper soup with assorted meat', price: 2500, category: 'Soups', available: true, image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400' },
+  { id: '6', name: 'Grilled Chicken', description: 'Perfectly seasoned grilled chicken', price: 3800, category: 'Grills', available: true, image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=400' },
+  { id: '7', name: 'Fried Plantain', description: 'Sweet fried plantain slices', price: 1200, category: 'Sides', available: true, image: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?w=400' },
+  { id: '8', name: 'Chapman', description: 'Refreshing Nigerian cocktail drink', price: 1500, category: 'Drinks', available: true, image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400' },
+  { id: '9', name: 'Fresh Coconut Water', description: 'Chilled coconut water', price: 1000, category: 'Drinks', available: true, image: 'https://images.unsplash.com/photo-1564538724971-5aed61b928ba?w=400' }
+];
+
+// Helper to check if we're in demo mode
+const isDemoMode = () => localStorage.getItem('foodchain_demo_mode') === 'true';
+
+// Wrapper to handle network errors with demo fallback
+const withDemoFallback = async <T,>(apiCall: () => Promise<T>, demoData: T): Promise<T> => {
+  try {
+    return await apiCall();
+  } catch (error: any) {
+    if (isDemoMode() || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      return demoData;
+    }
+    throw error;
+  }
+};
+
 // ─── BRANCHES ─────────────────────────────────────────────────────────────────
 
 export const getBranches = () =>
-  apiClient.get<Branch[]>('/branches').then(r => r.data);
+  withDemoFallback(
+    () => apiClient.get<Branch[]>('/branches').then(r => r.data),
+    DEMO_BRANCHES
+  );
 
 export const getBranchesNearby = (lat: number, lng: number) =>
-  apiClient.get<Branch[]>('/branches/nearby', { params: { lat, lng } }).then(r => r.data);
+  withDemoFallback(
+    () => apiClient.get<Branch[]>('/branches/nearby', { params: { lat, lng } }).then(r => r.data),
+    DEMO_BRANCHES
+  );
 
 export const getBranchById = (id: string) =>
   apiClient.get<Branch>(`/branches/${id}`).then(r => r.data);
@@ -210,7 +278,10 @@ export const patchBranchStatus = (id: string, isActive: boolean) =>
 // ─── MENU ─────────────────────────────────────────────────────────────────────
 
 export const getMenuByBranch = (branchId: string) =>
-  apiClient.get<MenuItem[]>(`/menu/branch/${branchId}`).then(r => r.data);
+  withDemoFallback(
+    () => apiClient.get<MenuItem[]>(`/menu/branch/${branchId}`).then(r => r.data),
+    DEMO_MENU
+  );
 
 export const getAllMenuItems = () =>
   apiClient.get<MenuItem[]>('/menu').then(r => r.data);

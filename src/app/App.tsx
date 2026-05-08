@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
-import { useAuth } from "@/context/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
 import { type OrderDetails } from "./components/customer/Checkout";
 import { Login } from "./components/auth/Login";
@@ -473,7 +473,7 @@ function LoadingScreen() {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
-export default function App() {
+function AppRoutes() {
   const { isLoading } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
@@ -511,5 +511,15 @@ export default function App() {
       </Routes>
       <Toaster />
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
