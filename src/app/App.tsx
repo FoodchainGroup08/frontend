@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
+import { useAuth } from "@/context/AuthContext";
+import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
+import { type OrderDetails } from "./components/customer/Checkout";
 import { Login } from "./components/auth/Login";
 import { Register } from "./components/auth/Register";
 import { ForgotPassword } from "./components/auth/ForgotPassword";
@@ -6,7 +10,7 @@ import { CustomerNavbar } from "./components/customer/CustomerNavbar";
 import { BranchSelector } from "./components/customer/BranchSelector";
 import { Menu } from "./components/customer/Menu";
 import { Cart } from "./components/customer/Cart";
-import { Checkout, OrderDetails } from "./components/customer/Checkout";
+import { Checkout } from "./components/customer/Checkout";
 import { OrderConfirmation } from "./components/customer/OrderConfirmation";
 import { OrderTracker } from "./components/customer/OrderTracker";
 import { OrderHistory } from "./components/customer/OrderHistory";
@@ -27,28 +31,7 @@ import { UserManagement } from "./components/admin/UserManagement";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 
-type AuthScreen = "login" | "register" | "forgot-password";
-type CustomerScreen = "branch-selector" | "menu" | "cart" | "checkout" | "order-confirmation" | "order-tracker" | "order-history";
-type KitchenScreen = "queue";
-type ManagerScreen = "dashboard" | "live-orders" | "daily-sales" | "popular-items";
-type AdminScreen = "analytics" | "branches" | "menu-catalogue" | "users";
-type UserRole = "Customer" | "Kitchen Staff" | "Branch Manager" | "Admin";
-
-interface User {
-  name: string;
-  email: string;
-  role: UserRole;
-}
-
-interface Branch {
-  id: string;
-  name: string;
-  address: string;
-  distance: string;
-  hours: string;
-  rating: number;
-  isOpen: boolean;
-}
+// ─── Local types ──────────────────────────────────────────────────────────────
 
 interface CartItem {
   id: string;
@@ -60,420 +43,473 @@ interface CartItem {
   quantity: number;
 }
 
-interface Order {
+type ConfirmationOrder = {
   id: string;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out-for-delivery' | 'delivered';
-  items: Array<{
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-  }>;
-  subtotal: number;
-  deliveryFee: number;
+  items: Array<{ id: string; name: string; price: number; quantity: number }>;
   total: number;
   deliveryAddress: string;
   phoneNumber: string;
   customerName: string;
   paymentMethod: string;
-  specialInstructions: string;
   branchName: string;
   estimatedTime: string;
-  placedAt: string;
+};
+
+type OrderDetailData = {
+  id: string;
+  status: string;
+  items: Array<{ id: string; name: string; price: number; quantity: number }>;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  branchName: string;
+  orderDate: string;
   deliveryDate?: string;
+  customerName: string;
+  phoneNumber: string;
+  deliveryAddress: string;
+  paymentMethod: string;
+  specialInstructions?: string;
+};
+
+type HistoricalOrder = {
+  id: string;
+  status: 'delivered' | 'cancelled';
+  items: Array<{ id: string; name: string; quantity: number }>;
+  total: number;
+  branchName: string;
+  orderDate: string;
+  deliveryDate?: string;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getRoleHome(role: UserRole | undefined): string {
+  switch (role) {
+    case 'Customer': return '/branches';
+    case 'Kitchen Staff': return '/kitchen';
+    case 'Branch Manager': return '/manager';
+    case 'Admin': return '/admin';
+    default: return '/login';
+  }
 }
 
-export default function App() {
-  const [authScreen, setAuthScreen] = useState<AuthScreen>("login");
-  const [customerScreen, setCustomerScreen] = useState<CustomerScreen>("branch-selector");
-  const [kitchenScreen, setKitchenScreen] = useState<KitchenScreen>("queue");
-  const [managerScreen, setManagerScreen] = useState<ManagerScreen>("dashboard");
-  const [adminScreen, setAdminScreen] = useState<AdminScreen>("analytics");
-  const [user, setUser] = useState<User | null>(null);
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+// ─── Route guards ─────────────────────────────────────────────────────────────
+
+function RequireAuth() {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Outlet />;
+}
+
+function RequireRole({ role }: { role: UserRole }) {
+  const { user } = useAuth();
+  if (user?.role !== role) return <Navigate to={getRoleHome(user?.role)} replace />;
+  return <Outlet />;
+}
+
+// ─── Auth page wrappers ───────────────────────────────────────────────────────
+
+function LoginPage() {
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  return (
+    <Login
+      onNavigateToRegister={() => navigate('/register')}
+      onNavigateToForgotPassword={() => navigate('/forgot-password')}
+    />
+  );
+}
+
+function RegisterPage() {
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  return <Register onNavigateToLogin={() => navigate('/login')} />;
+}
+
+function ForgotPasswordPage() {
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  return (
+    <ForgotPassword
+      onNavigateToLogin={() => navigate('/login')}
+      onResetSuccess={() => {
+        navigate('/login');
+        toast.success("Password reset email sent!");
+      }}
+    />
+  );
+}
+
+// ─── Customer Layout ──────────────────────────────────────────────────────────
+
+function CustomerLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [selectedBranch, setSelectedBranch] = useState<ApiBranch | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [orderHistory, setOrderHistory] = useState<Order[]>([]);
-  const [selectedOrderDetail, setSelectedOrderDetail] = useState<Order | null>(null);
+  const [currentOrder, setCurrentOrder] = useState<ConfirmationOrder | null>(null);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
-  const [kitchenOrders, setKitchenOrders] = useState<any[]>([]);
-  const [selectedKitchenOrder, setSelectedKitchenOrder] = useState<any>(null);
-  const [isKitchenOrderDetailOpen, setIsKitchenOrderDetailOpen] = useState(false);
 
-  const handleLogin = (email: string, password: string) => {
-    const mockUser: User = {
-      name: "Demo User",
-      email: email,
-      role: "Customer"
-    };
-    setUser(mockUser);
-    toast.success("Login successful!", {
-      description: `Welcome back, ${mockUser.name}!`
-    });
+  const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+
+  const pathToScreen: Record<string, string> = {
+    '/branches': 'branch-selector',
+    '/menu': 'menu',
+    '/cart': 'cart',
+    '/checkout': 'checkout',
+    '/order-confirmation': 'order-confirmation',
+    '/order-tracker': 'order-tracker',
+    '/order-history': 'order-history',
   };
 
-  const handleRegister = (name: string, email: string, password: string, role: string) => {
-    const newUser: User = {
-      name,
-      email,
-      role: role as UserRole
-    };
-    setUser(newUser);
-    toast.success("Account created successfully!", {
-      description: `Welcome to FoodChain, ${name}!`
-    });
+  const screenToPath: Record<string, string> = {
+    'branch-selector': '/branches',
+    'menu': '/menu',
+    'cart': '/cart',
+    'checkout': '/checkout',
+    'order-confirmation': '/order-confirmation',
+    'order-tracker': '/order-tracker',
+    'order-history': '/order-history',
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setAuthScreen("login");
-    setSelectedBranch(null);
-    setCart([]);
-    setCurrentOrder(null);
-    setCustomerScreen("branch-selector");
-    toast.info("Logged out successfully");
-  };
+  const currentScreen = pathToScreen[location.pathname] ?? 'branch-selector';
 
-  const handleSelectBranch = (branch: Branch) => {
+  const handleSelectBranch = (branch: ApiBranch) => {
     setSelectedBranch(branch);
-    setCustomerScreen("menu");
-    toast.success(`Selected ${branch.name}`, {
-      description: "Browse our menu and start ordering"
-    });
+    navigate('/menu');
+    toast.success(`Selected ${branch.name}`, { description: "Browse our menu and start ordering" });
   };
 
   const handleAddToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
-    const existingItem = cart.find(cartItem => cartItem.id === item.id);
-
-    if (existingItem) {
-      setCart(cart.map(cartItem =>
-        cartItem.id === item.id
-          ? { ...cartItem, quantity: cartItem.quantity + quantity }
-          : cartItem
-      ));
-      toast.success(`Updated ${item.name}`, {
-        description: `Cart quantity: ${existingItem.quantity + quantity}`
-      });
+    const existing = cart.find(c => c.id === item.id);
+    if (existing) {
+      setCart(cart.map(c => c.id === item.id ? { ...c, quantity: c.quantity + quantity } : c));
+      toast.success(`Updated ${item.name}`, { description: `Cart quantity: ${existing.quantity + quantity}` });
     } else {
       setCart([...cart, { ...item, quantity }]);
-      toast.success(`Added ${item.name}`, {
-        description: `${quantity} item${quantity > 1 ? 's' : ''} added to cart`
-      });
+      toast.success(`Added ${item.name}`, { description: `${quantity} item${quantity > 1 ? 's' : ''} added to cart` });
     }
   };
 
   const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      handleRemoveFromCart(itemId);
-      return;
+      const item = cart.find(i => i.id === itemId);
+      setCart(cart.filter(i => i.id !== itemId));
+      if (item) toast.info(`Removed ${item.name} from cart`);
+    } else {
+      setCart(cart.map(i => i.id === itemId ? { ...i, quantity } : i));
     }
-    setCart(cart.map(item =>
-      item.id === itemId ? { ...item, quantity } : item
-    ));
   };
 
   const handleRemoveFromCart = (itemId: string) => {
     const item = cart.find(i => i.id === itemId);
-    setCart(cart.filter(item => item.id !== itemId));
-    if (item) {
-      toast.info(`Removed ${item.name} from cart`);
-    }
+    setCart(cart.filter(i => i.id !== itemId));
+    if (item) toast.info(`Removed ${item.name} from cart`);
   };
 
-  const handlePlaceOrder = (orderDetails: OrderDetails) => {
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const deliveryFee = 500;
-    const total = subtotal + deliveryFee;
-
-    const orderId = `ORD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const now = new Date();
-    const estimatedDelivery = new Date(now.getTime() + 45 * 60000); // 45 minutes from now
-
-    const newOrder: Order = {
-      id: orderId,
-      status: 'confirmed',
-      items: cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity
-      })),
-      subtotal,
-      deliveryFee,
-      total,
-      ...orderDetails,
-      branchName: selectedBranch?.name || 'Unknown Branch',
-      estimatedTime: `${estimatedDelivery.getHours()}:${estimatedDelivery.getMinutes().toString().padStart(2, '0')}`,
-      placedAt: `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`
-    };
-
-    setCurrentOrder(newOrder);
-    setCart([]);
-    setCustomerScreen("order-confirmation");
-    toast.success("Order placed successfully!", {
-      description: `Order #${orderId}`
+  const handlePlaceOrder = (formData: OrderDetails, apiOrder: ApiOrder) => {
+    setCurrentOrder({
+      id: apiOrder.id,
+      items: apiOrder.items,
+      total: apiOrder.total,
+      deliveryAddress: formData.deliveryAddress,
+      phoneNumber: formData.phoneNumber,
+      customerName: formData.customerName,
+      paymentMethod: formData.paymentMethod,
+      branchName: selectedBranch?.name ?? '',
+      estimatedTime: apiOrder.estimatedTime ?? '45 mins',
     });
+    setCart([]);
+    navigate('/order-confirmation');
   };
 
-  const handleViewOrderDetails = (order: any) => {
-    const orderDetail: Order = {
+  const handleViewOrderDetails = (order: HistoricalOrder) => {
+    setSelectedOrderDetail({
       ...order,
-      subtotal: order.total - (order.deliveryFee || 500),
-      deliveryFee: order.deliveryFee || 500,
-      deliveryAddress: order.deliveryAddress || "Sample address",
-      phoneNumber: order.phoneNumber || "080 1234 5678",
-      customerName: order.customerName || user?.name || "Customer",
-      paymentMethod: order.paymentMethod || "card",
-      specialInstructions: order.specialInstructions || "",
-      estimatedTime: order.estimatedTime || "45 mins",
-      placedAt: order.orderDate || order.placedAt
-    };
-    setSelectedOrderDetail(orderDetail);
+      items: order.items.map(i => ({ ...i, price: 0 })),
+      subtotal: order.total > 500 ? order.total - 500 : order.total,
+      deliveryFee: 500,
+      customerName: user?.name ?? '—',
+      phoneNumber: '—',
+      deliveryAddress: '—',
+      paymentMethod: '—',
+    });
     setIsOrderDetailOpen(true);
   };
 
-  const handleKitchenOrderClick = (order: any) => {
-    setSelectedKitchenOrder(order);
-    setIsKitchenOrderDetailOpen(true);
-  };
-
-  const handleKitchenStatusChange = (orderId: string, newStatus: 'preparing' | 'ready') => {
-    setKitchenOrders(kitchenOrders.map(order =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
-    toast.success(`Order status updated to ${newStatus}`);
-  };
-
-  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  if (!user) {
-    if (authScreen === "login") {
-      return (
-        <>
-          <Login
-            onNavigateToRegister={() => setAuthScreen("register")}
-            onNavigateToForgotPassword={() => setAuthScreen("forgot-password")}
-            onLogin={handleLogin}
-          />
-          <Toaster />
-        </>
-      );
-    }
-
-    if (authScreen === "forgot-password") {
-      return (
-        <>
-          <ForgotPassword
-            onNavigateToLogin={() => setAuthScreen("login")}
-            onResetSuccess={() => {
-              setAuthScreen("login");
-              toast.success("Password reset email sent!");
-            }}
-          />
-          <Toaster />
-        </>
-      );
-    }
-
-    return (
-      <>
-        <Register
-          onNavigateToLogin={() => setAuthScreen("login")}
-          onRegister={handleRegister}
-        />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (user.role === "Customer") {
-    return (
-      <>
-        {selectedBranch && (
-          <CustomerNavbar
-            currentScreen={customerScreen}
-            onNavigate={setCustomerScreen}
-            cartItemCount={cartItemCount}
-            userName={user.name}
-            selectedBranch={selectedBranch.name}
-            onLogout={handleLogout}
-          />
-        )}
-
-        {customerScreen === "branch-selector" && (
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'branch-selector':
+        return (
           <BranchSelector
             onSelectBranch={handleSelectBranch}
-            onLogout={handleLogout}
-            userName={user.name}
+            onLogout={logout}
+            userName={user?.name ?? ''}
           />
-        )}
-
-        {customerScreen === "menu" && (
-          <Menu onAddToCart={handleAddToCart} cart={cart} />
-        )}
-
-        {customerScreen === "cart" && (
+        );
+      case 'menu':
+        if (!selectedBranch) return <Navigate to="/branches" replace />;
+        return (
+          <Menu
+            branchId={selectedBranch.id}
+            onAddToCart={handleAddToCart}
+            cart={cart}
+          />
+        );
+      case 'cart':
+        return (
           <Cart
             cart={cart}
             onUpdateQuantity={handleUpdateCartQuantity}
             onRemoveItem={handleRemoveFromCart}
-            onProceedToCheckout={() => setCustomerScreen("checkout")}
-            onContinueShopping={() => setCustomerScreen("menu")}
+            onProceedToCheckout={() => navigate('/checkout')}
+            onContinueShopping={() => navigate('/menu')}
           />
-        )}
-
-        {customerScreen === "checkout" && selectedBranch && (
+        );
+      case 'checkout':
+        if (!selectedBranch) return <Navigate to="/branches" replace />;
+        return (
           <Checkout
             cart={cart}
+            branchId={selectedBranch.id}
             branchName={selectedBranch.name}
             onPlaceOrder={handlePlaceOrder}
-            onGoBack={() => setCustomerScreen("cart")}
+            onGoBack={() => navigate('/cart')}
           />
-        )}
-
-        {customerScreen === "order-confirmation" && currentOrder && (
+        );
+      case 'order-confirmation':
+        if (!currentOrder) return <Navigate to="/branches" replace />;
+        return (
           <OrderConfirmation
             order={currentOrder}
-            onTrackOrder={() => setCustomerScreen("order-tracker")}
-            onBackToMenu={() => setCustomerScreen("menu")}
+            onTrackOrder={() => navigate('/order-tracker')}
+            onBackToMenu={() => navigate('/menu')}
           />
-        )}
-
-        {customerScreen === "order-tracker" && (
-          <OrderTracker
-            activeOrder={currentOrder}
-            onGoBack={() => setCustomerScreen("menu")}
-          />
-        )}
-
-        {customerScreen === "order-history" && (
-          <OrderHistory
-            orders={orderHistory}
-            onViewDetails={handleViewOrderDetails}
-          />
-        )}
-
-        <OrderDetailModal
-          order={selectedOrderDetail}
-          isOpen={isOrderDetailOpen}
-          onClose={() => setIsOrderDetailOpen(false)}
-        />
-
-        <Toaster />
-      </>
-    );
-  }
-
-  if (user.role === "Kitchen Staff") {
-    return (
-      <div className="flex h-screen" style={{ backgroundColor: '#1E1E1E' }}>
-        <KitchenSidebar
-          currentScreen={kitchenScreen}
-          onNavigate={setKitchenScreen}
-          userName={user.name}
-          branchName={selectedBranch?.name || "Victoria Island"}
-          onLogout={handleLogout}
-        />
-        <div className="flex-1 overflow-hidden">
-          <KitchenQueue
-            orders={kitchenOrders}
-            onOrderClick={handleKitchenOrderClick}
-            onStatusChange={handleKitchenStatusChange}
-          />
-        </div>
-        <KitchenOrderDetail
-          order={selectedKitchenOrder}
-          isOpen={isKitchenOrderDetailOpen}
-          onClose={() => setIsKitchenOrderDetailOpen(false)}
-          onStatusChange={handleKitchenStatusChange}
-        />
-        <Toaster />
-      </div>
-    );
-  }
-
-  if (user.role === "Branch Manager") {
-    return (
-      <div className="flex h-screen">
-        <ManagerSidebar
-          currentScreen={managerScreen}
-          onNavigate={setManagerScreen}
-          userName={user.name}
-          branchName={selectedBranch?.name || "Victoria Island"}
-          onLogout={handleLogout}
-        />
-        <div className="flex-1 overflow-hidden">
-          {managerScreen === "dashboard" && <ManagerDashboard />}
-          {managerScreen === "live-orders" && <LiveOrders />}
-          {managerScreen === "daily-sales" && <DailySales />}
-          {managerScreen === "popular-items" && <PopularItems />}
-        </div>
-        <Toaster />
-      </div>
-    );
-  }
-
-  if (user.role === "Admin") {
-    return (
-      <div className="flex h-screen">
-        <AdminSidebar
-          currentScreen={adminScreen}
-          onNavigate={setAdminScreen}
-          userName={user.name}
-          onLogout={handleLogout}
-        />
-        <div className="flex-1 overflow-hidden">
-          {adminScreen === "analytics" && <Analytics />}
-          {adminScreen === "branches" && <BranchManagement />}
-          {adminScreen === "menu-catalogue" && <MenuCatalogue />}
-          {adminScreen === "users" && <UserManagement />}
-        </div>
-        <Toaster />
-      </div>
-    );
-  }
+        );
+      case 'order-tracker':
+        return <OrderTracker onGoBack={() => navigate('/menu')} />;
+      case 'order-history':
+        return <OrderHistory onViewDetails={handleViewOrderDetails} />;
+      default:
+        return <Navigate to="/branches" replace />;
+    }
+  };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="8" fill="#3B2314"/>
-                <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="#F0A500"/>
-                <circle cx="20" cy="20" r="4" fill="#FAF7F2"/>
-              </svg>
-              <div>
-                <h1 className="text-2xl" style={{ color: '#3B2314', fontWeight: 600 }}>FoodChain</h1>
-                <p className="text-sm" style={{ color: '#3B2314', opacity: 0.6 }}>
-                  {user?.role} Dashboard
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 rounded-md transition-colors hover:opacity-90"
-              style={{
-                backgroundColor: '#3B2314',
-                color: '#FAF7F2'
-              }}
-            >
-              Logout
-            </button>
-          </div>
+    <>
+      {selectedBranch && currentScreen !== 'branch-selector' && (
+        <CustomerNavbar
+          currentScreen={currentScreen}
+          onNavigate={s => navigate(screenToPath[s] ?? '/branches')}
+          cartItemCount={cartItemCount}
+          userName={user?.name}
+          selectedBranch={selectedBranch.name}
+          onLogout={logout}
+        />
+      )}
+      {renderScreen()}
+      <OrderDetailModal
+        order={selectedOrderDetail}
+        isOpen={isOrderDetailOpen}
+        onClose={() => setIsOrderDetailOpen(false)}
+      />
+    </>
+  );
+}
 
-          <div className="bg-white rounded-lg shadow-sm border border-[#3B2314]/10 p-8">
-            <h2 className="text-xl mb-4" style={{ color: '#3B2314', fontWeight: 600 }}>
-              Welcome, {user?.name}!
-            </h2>
-            <p style={{ color: '#3B2314', opacity: 0.7 }}>
-              You are logged in as <span style={{ color: '#F0A500', fontWeight: 600 }}>{user?.role}</span>.
-            </p>
-          </div>
-        </div>
+// ─── Kitchen Layout ───────────────────────────────────────────────────────────
+
+function KitchenLayout() {
+  const { user, logout } = useAuth();
+
+  const [selectedKitchenOrder, setSelectedKitchenOrder] = useState<KitchenOrder | null>(null);
+  const [isKitchenOrderDetailOpen, setIsKitchenOrderDetailOpen] = useState(false);
+
+  const handleKitchenStatusChange = (orderId: string, newStatus: 'preparing' | 'ready') => {
+    setSelectedKitchenOrder(prev =>
+      prev?.id === orderId ? { ...prev, status: newStatus } : prev
+    );
+    toast.success(`Order status updated to ${newStatus}`);
+  };
+
+  return (
+    <div className="flex h-screen" style={{ backgroundColor: '#1E1E1E' }}>
+      <KitchenSidebar
+        currentScreen="queue"
+        onNavigate={() => {}}
+        userName={user?.name ?? ''}
+        branchName=""
+        onLogout={logout}
+      />
+      <div className="flex-1 overflow-hidden">
+        <KitchenQueue
+          onOrderClick={(order) => {
+            setSelectedKitchenOrder(order);
+            setIsKitchenOrderDetailOpen(true);
+          }}
+          onStatusChange={handleKitchenStatusChange}
+        />
       </div>
-      <Toaster />
+      <KitchenOrderDetail
+        order={selectedKitchenOrder}
+        isOpen={isKitchenOrderDetailOpen}
+        onClose={() => setIsKitchenOrderDetailOpen(false)}
+        onStatusChange={handleKitchenStatusChange}
+      />
     </div>
+  );
+}
+
+// ─── Manager Layout ───────────────────────────────────────────────────────────
+
+const managerScreenPaths: Record<string, string> = {
+  'dashboard': '/manager',
+  'live-orders': '/manager/live-orders',
+  'daily-sales': '/manager/daily-sales',
+  'popular-items': '/manager/popular-items',
+};
+
+function ManagerLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const pathToScreen: Record<string, string> = {
+    '/manager': 'dashboard',
+    '/manager/live-orders': 'live-orders',
+    '/manager/daily-sales': 'daily-sales',
+    '/manager/popular-items': 'popular-items',
+  };
+  const currentScreen = pathToScreen[location.pathname] ?? 'dashboard';
+
+  return (
+    <div className="flex h-screen">
+      <ManagerSidebar
+        currentScreen={currentScreen}
+        onNavigate={s => navigate(managerScreenPaths[s] ?? '/manager')}
+        userName={user?.name ?? ''}
+        branchName=""
+        onLogout={logout}
+      />
+      <div className="flex-1 overflow-hidden">
+        <Routes>
+          <Route index element={<ManagerDashboard />} />
+          <Route path="live-orders" element={<LiveOrders />} />
+          <Route path="daily-sales" element={<DailySales />} />
+          <Route path="popular-items" element={<PopularItems />} />
+          <Route path="*" element={<Navigate to="/manager" replace />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}
+
+// ─── Admin Layout ─────────────────────────────────────────────────────────────
+
+const adminScreenPaths: Record<string, string> = {
+  'analytics': '/admin',
+  'branches': '/admin/branches',
+  'menu-catalogue': '/admin/menu-catalogue',
+  'users': '/admin/users',
+};
+
+function AdminLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const pathToScreen: Record<string, string> = {
+    '/admin': 'analytics',
+    '/admin/branches': 'branches',
+    '/admin/menu-catalogue': 'menu-catalogue',
+    '/admin/users': 'users',
+  };
+  const currentScreen = pathToScreen[location.pathname] ?? 'analytics';
+
+  return (
+    <div className="flex h-screen">
+      <AdminSidebar
+        currentScreen={currentScreen}
+        onNavigate={s => navigate(adminScreenPaths[s] ?? '/admin')}
+        userName={user?.name ?? ''}
+        onLogout={logout}
+      />
+      <div className="flex-1 overflow-hidden">
+        <Routes>
+          <Route index element={<Analytics />} />
+          <Route path="branches" element={<BranchManagement />} />
+          <Route path="menu-catalogue" element={<MenuCatalogue />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}
+
+// ─── Loading screen ───────────────────────────────────────────────────────────
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF7F2' }}>
+      <div className="text-center">
+        <svg width="48" height="48" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-4 animate-pulse">
+          <rect width="40" height="40" rx="8" fill="#3B2314"/>
+          <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="#F0A500"/>
+          <circle cx="20" cy="20" r="4" fill="#FAF7F2"/>
+        </svg>
+        <p style={{ color: '#3B2314', opacity: 0.7 }}>Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+
+export default function App() {
+  const { isLoading } = useAuth();
+
+  if (isLoading) return <LoadingScreen />;
+
+  return (
+    <>
+      <Routes>
+        {/* Public auth routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        {/* Protected role-based routes */}
+        <Route element={<RequireAuth />}>
+          <Route element={<RequireRole role="Kitchen Staff" />}>
+            <Route path="/kitchen" element={<KitchenLayout />} />
+          </Route>
+
+          <Route element={<RequireRole role="Branch Manager" />}>
+            <Route path="/manager/*" element={<ManagerLayout />} />
+          </Route>
+
+          <Route element={<RequireRole role="Admin" />}>
+            <Route path="/admin/*" element={<AdminLayout />} />
+          </Route>
+
+          {/* Customer catch-all — must be last so specific role paths above take priority */}
+          <Route element={<RequireRole role="Customer" />}>
+            <Route path="/*" element={<CustomerLayout />} />
+          </Route>
+        </Route>
+
+        {/* Fallback — redirect to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+      <Toaster />
+    </>
   );
 }
