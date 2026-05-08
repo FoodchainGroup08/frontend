@@ -4,7 +4,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
@@ -19,14 +19,16 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoCredentials, setShowDemoCredentials] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await login(email, password);
-    } catch {
-      toast.error("Login failed", { description: "Invalid email or password" });
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || "Invalid email or password";
+      toast.error("Login failed", { description: errorMsg });
     } finally {
       setIsLoading(false);
     }
@@ -100,16 +102,26 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
                     Forgot Password?
                   </button>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="border-[#3B2314]/20"
-                  style={{ backgroundColor: 'white' }}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="border-[#3B2314]/20 pr-10"
+                    style={{ backgroundColor: 'white' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    style={{ color: '#3B2314', opacity: 0.5 }}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
@@ -145,7 +157,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
                   <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29V4.95818H0.957275C0.347727 6.17318 0 7.54773 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
                   <path d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z" fill="#EA4335"/>
                 </svg>
-                Sign in with Google
+                Continue with Google
               </Button>
 
               <div className="text-center text-sm">
