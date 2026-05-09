@@ -170,6 +170,47 @@ export interface WsOrderUpdate {
   timestamp: string;
 }
 
+// ─── Response Mappers (backend → frontend shape) ───────────────────────────────
+// Backend uses different field names and paths. These mappers normalise responses
+// so all exported types stay unchanged and no UI component needs to be touched.
+
+function mapBranch(b: any): Branch {
+  return {
+    id: b.id,
+    name: b.name,
+    address: b.address,
+    location: b.address,
+    // Backend nearby endpoint returns distanceKm, standard list does not
+    distance: b.distanceKm != null ? `${Number(b.distanceKm).toFixed(1)} km` : b.distance,
+    // TODO (backend): branch-service does not yet store hours, rating, or isOpen.
+    // These fields must be added to the branch entity and returned in responses.
+    hours: b.hours ?? '—',
+    rating: b.rating ?? 0,
+    isOpen: b.isOpen ?? false,
+    // Backend uses `active`, frontend type uses `isActive`
+    isActive: b.isActive ?? b.active ?? false,
+    // Backend uses `managerId`, frontend type uses `manager`
+    manager: b.manager ?? b.managerId,
+  };
+}
+
+function mapMenuItem(m: any): MenuItem {
+  return {
+    id: m.id,
+    name: m.name,
+    description: m.description ?? '',
+    // Backend uses `basePrice`, frontend type uses `price`
+    price: m.price ?? m.basePrice ?? 0,
+    // Backend returns `categoryName` string, frontend type uses `category`
+    category: m.category ?? m.categoryName ?? '',
+    // Backend uses `active`, frontend type uses `available`
+    available: m.available ?? m.active ?? false,
+    isActive: m.isActive ?? m.active ?? false,
+    imageUrl: m.imageUrl ?? m.image,
+    image: m.image ?? m.imageUrl,
+  };
+}
+
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 export const postRegister = (name: string, email: string, password: string) =>
@@ -310,62 +351,106 @@ const withDemoFallback = async <T,>(apiCall: () => Promise<T>, demoData: T): Pro
 };
 
 // ─── BRANCHES ─────────────────────────────────────────────────────────────────
+// Backend path is /branch (singular). Responses are mapped via mapBranch().
+// List endpoints return a Spring Page object — content array is extracted.
 
 export const getBranches = () =>
   withDemoFallback(
-    () => apiClient.get<Branch[]>('/branches').then(r => r.data),
+    () =>
+      apiClient.get<any>('/branch').then((r) => {
+        const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
+        return items.map(mapBranch);
+      }),
     DEMO_BRANCHES
   );
 
 export const getBranchesNearby = (lat: number, lng: number) =>
   withDemoFallback(
-    () => apiClient.get<Branch[]>('/branches/nearby', { params: { lat, lng } }).then(r => r.data),
+    () =>
+      apiClient
+        .get<any[]>('/branch/nearby', { params: { lat, lng } })
+        .then((r) => (r.data ?? []).map(mapBranch)),
     DEMO_BRANCHES
   );
 
 export const getBranchById = (id: string) =>
-  apiClient.get<Branch>(`/branches/${id}`).then(r => r.data);
+  apiClient.get<any>(`/branch/${id}`).then((r) => mapBranch(r.data));
 
 export const createBranch = (data: Partial<Branch>) =>
-  apiClient.post<Branch>('/branches', data).then(r => r.data);
+  apiClient.post<any>('/branch', data).then((r) => mapBranch(r.data));
 
 export const updateBranch = (id: string, data: Partial<Branch>) =>
-  apiClient.put<Branch>(`/branches/${id}`, data).then(r => r.data);
+  apiClient.put<any>(`/branch/${id}`, data).then((r) => mapBranch(r.data));
 
+// Backend uses separate /activate and /deactivate endpoints.
+// The frontend contract used PATCH /branches/:id/status with { isActive: boolean }.
+// This adapter preserves the same function signature while calling the correct backend endpoints.
 export const patchBranchStatus = (id: string, isActive: boolean) =>
-  apiClient.patch<Branch>(`/branches/${id}/status`, { isActive }).then(r => r.data);
+  apiClient
+    .patch<any>(`/branch/${id}/${isActive ? 'activate' : 'deactivate'}`)
+    .then((r) => mapBranch(r.data));
 
 // ─── MENU ─────────────────────────────────────────────────────────────────────
+// Backend path for items is /menu/items (not /menu).
+// Individual item path is /menu/items/:id (not /menu/:id).
+// Availability toggle is /menu/items/:id/toggle (not /menu/:id/availability).
+// Responses are mapped via mapMenuItem().
+// TODO (backend): GET /menu/branch/:branchId is not yet built — MVP Critical.
+// Until built, getMenuByBranch falls back to demo data in all modes.
 
 export const getMenuByBranch = (branchId: string) =>
   withDemoFallback(
-    () => apiClient.get<MenuItem[]>(`/menu/branch/${branchId}`).then(r => r.data),
+    () =>
+      apiClient
+        .get<any[]>(`/menu/branch/${branchId}`)
+        .then((r) => (r.data ?? []).map(mapMenuItem)),
     DEMO_MENU
   );
 
 export const getAllMenuItems = () =>
-  apiClient.get<MenuItem[]>('/menu').then(r => r.data);
+  apiClient.get<any>('/menu/items').then((r) => {
+    const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
+    return items.map(mapMenuItem);
+  });
 
-export const getCategories = () =>
-  apiClient.get<string[]>('/menu/categories').then(r => r.data);
+// Backend returns CategoryResponse[] objects ({ id, name, displayOrder, active }).
+// Frontend expects string[]. Mapper extracts the name field.
+// Falls back gracefully if backend ever returns plain strings.
+export const getCategories = (): Promise<string[]> =>
+  apiClient.get<any[]>('/menu/categories').then((r) => {
+    const data: any[] = r.data ?? [];
+    return data.map((c) => (typeof c === 'string' ? c : String(c.name ?? c)));
+  });
 
 export const createMenuItem = (data: Partial<MenuItem>) =>
-  apiClient.post<MenuItem>('/menu', data).then(r => r.data);
+  apiClient.post<any>('/menu/items', data).then((r) => mapMenuItem(r.data));
 
 export const updateMenuItem = (id: string, data: Partial<MenuItem>) =>
-  apiClient.put<MenuItem>(`/menu/${id}`, data).then(r => r.data);
+  apiClient.put<any>(`/menu/items/${id}`, data).then((r) => mapMenuItem(r.data));
 
 export const deleteMenuItem = (id: string) =>
-  apiClient.delete(`/menu/${id}`).then(r => r.data);
+  apiClient.delete(`/menu/items/${id}`).then((r) => r.data);
 
 export const toggleMenuItemAvailability = (id: string) =>
-  apiClient.patch<MenuItem>(`/menu/${id}/availability`).then(r => r.data);
+  apiClient.patch<any>(`/menu/items/${id}/toggle`).then((r) => mapMenuItem(r.data));
 
 // ─── ORDERS (Customer) ────────────────────────────────────────────────────────
 
+// TODO (backend): Backend CreateOrderRequest requires customerId (must be extracted
+// from JWT server-side, not sent by client), menuItemName, and unitPrice per item
+// (must be looked up from menu-service server-side). Frontend only sends menuItemId
+// and quantity. The order service must resolve the rest internally.
+// TODO (backend): orderType values — frontend sends 'delivery'|'dine-in'|'takeaway',
+// backend enum is DINE_IN|TAKEAWAY|DELIVERY. Backend must accept both casings or
+// document the exact expected format.
 export const placeOrder = (payload: PlaceOrderPayload) =>
   apiClient.post<Order>('/orders', payload).then(r => r.data);
 
+// TODO (backend): Backend returns Page<OrderListResponse> not Order|null.
+// Backend should accept customerId as a query param (extracted from JWT preferred)
+// and return results filtered to the current user.
+// TODO (backend): OrderListResponse is missing branchName, subtotal, deliveryFee,
+// total, placedAt, customerName, phoneNumber. These fields are required by the UI.
 export const getActiveOrder = () =>
   apiClient.get<Order | null>('/orders/active').then(r => r.data);
 
@@ -378,6 +463,8 @@ export const getOrderById = (id: string) =>
 export const cancelOrder = (id: string) =>
   apiClient.post(`/orders/${id}/cancel`).then(r => r.data);
 
+// TODO (backend): Kitchen service not yet built.
+// Required: GET /kitchen/queue, PATCH /kitchen/orders/:id/status
 // ─── KITCHEN ──────────────────────────────────────────────────────────────────
 
 export const getKitchenQueue = () =>
@@ -386,6 +473,9 @@ export const getKitchenQueue = () =>
 export const updateOrderStatus = (orderId: string, newStatus: 'PREPARING' | 'READY') =>
   apiClient.patch(`/kitchen/orders/${orderId}/status`, { status: newStatus }).then(r => r.data);
 
+// TODO (backend): Manager service not yet built.
+// Required: GET /manager/dashboard, GET /manager/orders/live,
+// GET /manager/sales/daily, GET /manager/items/popular
 // ─── MANAGER ──────────────────────────────────────────────────────────────────
 
 export const getManagerDashboard = () =>
@@ -400,6 +490,9 @@ export const getDailySales = (date: string) =>
 export const getPopularItems = () =>
   apiClient.get<PopularItem[]>('/manager/items/popular').then(r => r.data);
 
+// TODO (backend): Admin analytics and user management service not yet built.
+// Required: GET /admin/analytics, GET /admin/analytics/branches,
+// GET /admin/users, PATCH /admin/users/:id/status
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
 
 export const getAnalytics = (startDate?: string, endDate?: string) =>
