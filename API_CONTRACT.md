@@ -15,7 +15,7 @@ Four services have been partially built (branch, menu/items, menu/categories, or
 
 ### Frontend `.env`
 ```
-VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_BASE_URL=http://localhost:8080/api/v1
 VITE_WS_BASE_URL=ws://localhost:8080
 VITE_GOOGLE_MAPS_API_KEY=optional
 ```
