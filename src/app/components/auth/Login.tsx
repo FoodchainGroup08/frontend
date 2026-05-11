@@ -7,30 +7,58 @@ import { Separator } from "../ui/separator";
 import { ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { postResendVerification } from "@/services/api";
 
 interface LoginProps {
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
+  onVerificationRequired?: (email: string) => void;
 }
 
-export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: LoginProps) {
+export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVerificationRequired }: LoginProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoCredentials, setShowDemoCredentials] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUnverifiedEmail(null);
     setIsLoading(true);
     try {
       await login(email, password);
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.message || err?.message || "Invalid email or password";
-      toast.error("Login failed", { description: errorMsg });
+      const status: number | undefined = err?.response?.status;
+      const serverMsg: string = err?.response?.data?.message ?? err?.message ?? '';
+      if (status === 403 && serverMsg.toLowerCase().includes('verify')) {
+        setUnverifiedEmail(email);
+        if (onVerificationRequired) {
+          onVerificationRequired(email);
+        }
+      } else {
+        const errorMsg = serverMsg || "Invalid email or password";
+        toast.error("Login failed", { description: errorMsg });
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setIsResending(true);
+    try {
+      await postResendVerification(unverifiedEmail);
+      toast.success('Verification email sent', { description: `Check ${unverifiedEmail} for a new link.` });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Could not resend verification email';
+      toast.error('Failed to resend', { description: msg });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -77,6 +105,22 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
+              {unverifiedEmail && (
+                <div className="p-3 rounded-md text-sm space-y-2" style={{ backgroundColor: 'rgba(240, 165, 0, 0.12)', border: '1px solid rgba(240, 165, 0, 0.4)' }}>
+                  <p style={{ color: 'var(--foodchain-espresso)' }}>
+                    Please verify your email before signing in. Check your inbox for <span style={{ fontWeight: 600 }}>{unverifiedEmail}</span>.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={isResending}
+                    className="underline text-xs"
+                    style={{ color: 'var(--foodchain-golden-amber)' }}
+                  >
+                    {isResending ? 'Sending…' : 'Resend verification email'}
+                  </button>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email" style={{ color: 'var(--foodchain-espresso)' }}>Email</Label>
                 <Input

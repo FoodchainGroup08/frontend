@@ -231,16 +231,32 @@ function mapMenuItem(m: any): MenuItem {
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
+// Backend role enum → frontend display string
+function mapUserRole(raw: string): UserRole {
+  switch (raw) {
+    case 'CUSTOMER':          return 'Customer';
+    case 'KITCHEN_STAFF':     return 'Kitchen Staff';
+    case 'BRANCH_MANAGER':    return 'Branch Manager';
+    case 'HEAD_OFFICE_ADMIN': return 'Admin';
+    default:                  return raw as UserRole;
+  }
+}
+
+function mapUser(u: any): User {
+  return { id: u.id, name: u.name, email: u.email, role: mapUserRole(u.role), branchId: u.branchId };
+}
+
 // Backend requires branchId (must be a real branch UUID) and returns only the
 // user — no token. User must verify their email before they can log in.
-export const postRegister = (name: string, email: string, password: string, branchId: string) =>
-  apiClient.post<User>('/auth/register', { name, email, password, branchId }).then(r => r.data);
+export const postRegister = (name: string, email: string, password: string) =>
+  apiClient.post<any>('/auth/register', { name, email, password }).then(r => mapUser(r.data));
 
 export const postLogin = (email: string, password: string) =>
   apiClient.post<any>('/auth/login', { email, password }).then(r => ({
     // Backend returns `accessToken`; `token` is a documented alias — handle both.
     token: (r.data.accessToken ?? r.data.token) as string,
-    user: r.data.user as User,
+    refreshToken: r.data.refreshToken as string | undefined,
+    user: mapUser(r.data.user),
   }));
 
 // Backend requires refreshToken in the body to fully invalidate the session.
@@ -248,7 +264,7 @@ export const postLogout = (refreshToken?: string) =>
   apiClient.post('/auth/logout', refreshToken ? { refreshToken } : {}).then(r => r.data);
 
 export const getMe = () =>
-  apiClient.get<User>('/auth/me').then(r => r.data);
+  apiClient.get<any>('/auth/me').then(r => mapUser(r.data));
 
 export const postForgotPassword = (email: string) =>
   apiClient.post('/auth/forgot-password', { email }).then(r => r.data);
@@ -267,10 +283,12 @@ export const postResendVerification = (email: string) =>
 
 // ─── Demo Data ────────────────────────────────────────────────────────────────
 
+// These are the two real branches seeded in the DB.
+// Shown as fallback when the branch service is unavailable (gateway routing bug returns 500).
 const DEMO_BRANCHES: Branch[] = [
   {
-    id: 'branch-1',
-    name: 'FoodChain Victoria Island',
+    id: '4d800a8a-970b-4b80-a1e6-315106f170a4',
+    name: 'Uptown Express',
     address: '15 Akin Adesola Street, Victoria Island, Lagos',
     hours: '8:00 AM - 10:00 PM',
     rating: 4.8,
@@ -279,84 +297,14 @@ const DEMO_BRANCHES: Branch[] = [
     distance: '2.3 km'
   },
   {
-    id: 'branch-2',
-    name: 'FoodChain Lekki',
+    id: '63ae8d0f-4c7c-48ea-9ec2-805d0e7f9d8d',
+    name: 'Downtown Kitchen',
     address: '32 Admiralty Way, Lekki Phase 1, Lagos',
     hours: '9:00 AM - 11:00 PM',
     rating: 4.6,
     isOpen: true,
     isActive: true,
     distance: '5.1 km'
-  },
-  {
-    id: 'branch-3',
-    name: 'FoodChain Ikeja',
-    address: '21 Allen Avenue, Ikeja, Lagos',
-    hours: '7:00 AM - 9:00 PM',
-    rating: 4.7,
-    isOpen: false,
-    isActive: true,
-    distance: '8.5 km'
-  },
-  {
-    id: 'branch-4',
-    name: 'FoodChain Ikoyi',
-    address: '45 Awolowo Road, Ikoyi, Lagos',
-    hours: '8:00 AM - 10:00 PM',
-    rating: 4.9,
-    isOpen: true,
-    isActive: true,
-    distance: '3.2 km'
-  },
-  {
-    id: 'branch-5',
-    name: 'FoodChain Surulere',
-    address: '18 Adeniran Ogunsanya Street, Surulere, Lagos',
-    hours: '7:00 AM - 10:00 PM',
-    rating: 4.5,
-    isOpen: true,
-    isActive: true,
-    distance: '10.2 km'
-  },
-  {
-    id: 'branch-6',
-    name: 'FoodChain Yaba',
-    address: '52 Herbert Macaulay Way, Yaba, Lagos',
-    hours: '8:00 AM - 9:00 PM',
-    rating: 4.4,
-    isOpen: true,
-    isActive: true,
-    distance: '12.0 km'
-  },
-  {
-    id: 'branch-7',
-    name: 'FoodChain Ajah',
-    address: '7 Lekki-Epe Expressway, Ajah, Lagos',
-    hours: '9:00 AM - 11:00 PM',
-    rating: 4.6,
-    isOpen: true,
-    isActive: true,
-    distance: '15.8 km'
-  },
-  {
-    id: 'branch-8',
-    name: 'FoodChain Maryland',
-    address: '34 Ikorodu Road, Maryland, Lagos',
-    hours: '7:00 AM - 9:00 PM',
-    rating: 4.3,
-    isOpen: true,
-    isActive: true,
-    distance: '11.5 km'
-  },
-  {
-    id: 'branch-9',
-    name: 'FoodChain Festac',
-    address: '22 Second Avenue, Festac Town, Lagos',
-    hours: '8:00 AM - 10:00 PM',
-    rating: 4.5,
-    isOpen: false,
-    isActive: true,
-    distance: '18.3 km'
   }
 ];
 
@@ -416,15 +364,8 @@ const withAsyncDemoFallback = async <T,>(apiCall: () => Promise<T>, getDemoData:
 // when the backend is unavailable and Google Maps Distance Matrix has no API key).
 
 const DEMO_BRANCH_COORDS: Record<string, { lat: number; lng: number }> = {
-  'branch-1': { lat: 6.4281, lng: 3.4219 },  // Victoria Island
-  'branch-2': { lat: 6.4321, lng: 3.5197 },  // Lekki Phase 1
-  'branch-3': { lat: 6.6018, lng: 3.3515 },  // Ikeja
-  'branch-4': { lat: 6.4551, lng: 3.4342 },  // Ikoyi
-  'branch-5': { lat: 6.4979, lng: 3.3579 },  // Surulere
-  'branch-6': { lat: 6.5091, lng: 3.3795 },  // Yaba
-  'branch-7': { lat: 6.4739, lng: 3.6123 },  // Ajah
-  'branch-8': { lat: 6.5528, lng: 3.3621 },  // Maryland
-  'branch-9': { lat: 6.4612, lng: 3.2723 },  // Festac
+  '4d800a8a-970b-4b80-a1e6-315106f170a4': { lat: 6.4281, lng: 3.4219 },  // Uptown Express — Victoria Island
+  '63ae8d0f-4c7c-48ea-9ec2-805d0e7f9d8d': { lat: 6.4321, lng: 3.5197 },  // Downtown Kitchen — Lekki Phase 1
 };
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -544,7 +485,7 @@ function mapOrder(o: any): Order {
 export const getBranches = () =>
   withDemoFallback(
     () =>
-      apiClient.get<any>('/branch').then((r) => {
+      apiClient.get<any>('/v1/branches').then((r) => {
         const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
         return items.map(mapBranch);
       }),
@@ -555,33 +496,33 @@ export const getBranchesNearby = (lat: number, lng: number) =>
   withAsyncDemoFallback(
     () =>
       apiClient
-        .get<any[]>('/branch/nearby', { params: { lat, lng } })
+        .get<any[]>('/branches/nearby', { params: { lat, lng } })
         .then((r) => (r.data ?? []).map(mapBranch)),
     () => demoBranchesNearby(lat, lng)
   );
 
 export const getBranchById = (id: string) =>
-  apiClient.get<any>(`/branch/${id}`).then((r) => mapBranch(r.data));
+  apiClient.get<any>(`/v1/branches/${id}`).then((r) => mapBranch(r.data));
 
 export const createBranch = (data: Partial<Branch>) =>
-  apiClient.post<any>('/branch', data).then((r) => mapBranch(r.data));
+  apiClient.post<any>('/v1/branches', data).then((r) => mapBranch(r.data));
 
 export const updateBranch = (id: string, data: Partial<Branch>) =>
-  apiClient.put<any>(`/branch/${id}`, data).then((r) => mapBranch(r.data));
+  apiClient.put<any>(`/v1/branches/${id}`, data).then((r) => mapBranch(r.data));
 
 // Backend uses separate /activate and /deactivate endpoints.
 // The frontend contract used PATCH /branches/:id/status with { isActive: boolean }.
 // This adapter preserves the same function signature while calling the correct backend endpoints.
 export const patchBranchStatus = (id: string, isActive: boolean) =>
   apiClient
-    .patch<any>(`/branch/${id}/${isActive ? 'activate' : 'deactivate'}`)
+    .patch<any>(`/branches/${id}/${isActive ? 'activate' : 'deactivate'}`)
     .then((r) => mapBranch(r.data));
 
 // Pre-auth branch fetch used on the registration form. Falls back to DEMO_BRANCHES
 // on ANY error (401 because branches require auth through gateway, 500 due to
 // gateway routing bug). In demo mode these are placeholder branches only.
 export const getBranchesPublic = (): Promise<Branch[]> =>
-  apiClient.get<any>('/branch')
+  apiClient.get<any>('/v1/branches')
     .then((r) => {
       const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
       return items.map(mapBranch);
@@ -589,48 +530,84 @@ export const getBranchesPublic = (): Promise<Branch[]> =>
     .catch(() => DEMO_BRANCHES);
 
 // ─── MENU ─────────────────────────────────────────────────────────────────────
-// Backend path for items is /menu/items (not /menu).
-// Individual item path is /menu/items/:id (not /menu/:id).
-// Availability toggle is /menu/items/:id/toggle (not /menu/:id/availability).
-// Responses are mapped via mapMenuItem().
-// TODO (backend): GET /menu/branch/:branchId is not yet built — MVP Critical.
-// Until built, getMenuByBranch falls back to demo data in all modes.
+// All paths include /v1/ — the menu service uses that as an internal prefix.
+// Gateway base is /api so full URL becomes /api/v1/menu/...
+// Branch menu endpoint returns FrontendMenuItemResponse (price/category/available)
+// which already matches MenuItem type — no remapping needed.
+// Admin write endpoints use MenuItemResponse (basePrice/categoryName/active) —
+// mapped via mapMenuItem(). Write ops require HEAD_OFFICE_ADMIN role.
 
+// Customer: all active items for a branch (public catalogue, shared across branches).
+// Falls back to demo menu on 5xx so customers can still browse when service is down.
 export const getMenuByBranch = (branchId: string) =>
   withDemoFallback(
     () =>
       apiClient
-        .get<any[]>(`/menu/branch/${branchId}`)
+        .get<any[]>(`/v1/menu/branch/${branchId}`)
         .then((r) => (r.data ?? []).map(mapMenuItem)),
     DEMO_MENU
   );
 
-export const getAllMenuItems = () =>
-  apiClient.get<any>('/menu/items').then((r) => {
+// Admin: paginated full item list with optional categoryId / active filters.
+export const getAllMenuItems = (params?: { categoryId?: string; active?: boolean; page?: number; size?: number }) =>
+  apiClient.get<any>('/v1/menu/items', { params }).then((r) => {
     const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
     return items.map(mapMenuItem);
   });
 
-// Backend returns CategoryResponse[] objects ({ id, name, displayOrder, active }).
-// Frontend expects string[]. Mapper extracts the name field.
-// Falls back gracefully if backend ever returns plain strings.
+export const getMenuItemById = (id: string) =>
+  apiClient.get<any>(`/v1/menu/items/${id}`).then((r) => mapMenuItem(r.data));
+
+// Returns CategoryResponse[] with id, name, displayOrder, active.
+// namesOnly=true returns plain string[] — used for display-only dropdowns.
 export const getCategories = (): Promise<string[]> =>
-  apiClient.get<any[]>('/menu/categories').then((r) => {
-    const data: any[] = r.data ?? [];
+  apiClient.get<any>('/v1/menu/categories', { params: { namesOnly: true } }).then((r) => {
+    const data: any[] = Array.isArray(r.data) ? r.data : [];
     return data.map((c) => (typeof c === 'string' ? c : String(c.name ?? c)));
   });
 
-export const createMenuItem = (data: Partial<MenuItem>) =>
-  apiClient.post<any>('/menu/items', data).then((r) => mapMenuItem(r.data));
+// Returns full CategoryResponse objects so admin can access category UUIDs.
+export const getCategoriesFull = () =>
+  apiClient.get<any>('/v1/menu/categories').then((r): Array<{ id: string; name: string; displayOrder: number; active: boolean }> =>
+    Array.isArray(r.data) ? r.data : []
+  );
 
-export const updateMenuItem = (id: string, data: Partial<MenuItem>) =>
-  apiClient.put<any>(`/menu/items/${id}`, data).then((r) => mapMenuItem(r.data));
+// Admin write — create/update send basePrice (not price) and categoryId (UUID, not name).
+export const createMenuItem = (data: { name: string; description?: string; categoryId: string; price: number; imageUrl?: string }) =>
+  apiClient.post<any>('/v1/menu/items', {
+    name: data.name,
+    description: data.description,
+    categoryId: data.categoryId,
+    basePrice: data.price,
+    imageUrl: data.imageUrl,
+  }).then((r) => mapMenuItem(r.data));
+
+export const updateMenuItem = (id: string, data: { name?: string; description?: string; categoryId?: string; price?: number; imageUrl?: string }) =>
+  apiClient.put<any>(`/v1/menu/items/${id}`, {
+    name: data.name,
+    description: data.description,
+    categoryId: data.categoryId,
+    basePrice: data.price,
+    imageUrl: data.imageUrl,
+  }).then((r) => mapMenuItem(r.data));
 
 export const deleteMenuItem = (id: string) =>
-  apiClient.delete(`/menu/items/${id}`).then((r) => r.data);
+  apiClient.delete(`/v1/menu/items/${id}`).then((r) => r.data);
+
+export const activateMenuItem = (id: string) =>
+  apiClient.patch<any>(`/v1/menu/items/${id}/activate`).then((r) => mapMenuItem(r.data));
+
+export const deactivateMenuItem = (id: string) =>
+  apiClient.patch<any>(`/v1/menu/items/${id}/deactivate`).then((r) => mapMenuItem(r.data));
 
 export const toggleMenuItemAvailability = (id: string) =>
-  apiClient.patch<any>(`/menu/items/${id}/toggle`).then((r) => mapMenuItem(r.data));
+  apiClient.patch<any>(`/v1/menu/items/${id}/toggle`).then((r) => mapMenuItem(r.data));
+
+export const createCategory = (name: string, displayOrder?: number) =>
+  apiClient.post<any>('/v1/menu/categories', { name, displayOrder }).then((r) => r.data);
+
+export const updateCategory = (id: string, data: { name?: string; displayOrder?: number }) =>
+  apiClient.put<any>(`/v1/menu/categories/${id}`, data).then((r) => r.data);
 
 // ─── ORDERS (Customer) ────────────────────────────────────────────────────────
 

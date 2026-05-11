@@ -124,6 +124,7 @@ function LoginPage() {
     <Login
       onNavigateToRegister={() => navigate('/register')}
       onNavigateToForgotPassword={() => navigate('/forgot-password')}
+      onVerificationRequired={(email) => navigate(`/verify-email?email=${encodeURIComponent(email)}`)}
     />
   );
 }

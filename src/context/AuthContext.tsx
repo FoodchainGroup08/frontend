@@ -5,7 +5,7 @@ interface AuthContextValue {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, branchId: string) => Promise<'logged_in' | 'verify_email'>;
+  register: (name: string, email: string, password: string) => Promise<'logged_in' | 'verify_email'>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -21,11 +21,11 @@ const DEMO_USERS: Record<string, { password: string; user: User }> = {
   },
   'kitchen@demo.com': {
     password: 'Demo@1234',
-    user: { id: '2', name: 'Demo Kitchen Staff', email: 'kitchen@demo.com', role: 'Kitchen Staff', branchId: 'branch-1' }
+    user: { id: '2', name: 'Demo Kitchen Staff', email: 'kitchen@demo.com', role: 'Kitchen Staff', branchId: '4d800a8a-970b-4b80-a1e6-315106f170a4' }
   },
   'manager@demo.com': {
     password: 'Demo@1234',
-    user: { id: '3', name: 'Demo Manager', email: 'manager@demo.com', role: 'Branch Manager', branchId: 'branch-1' }
+    user: { id: '3', name: 'Demo Manager', email: 'manager@demo.com', role: 'Branch Manager', branchId: '4d800a8a-970b-4b80-a1e6-315106f170a4' }
   },
   'admin@demo.com': {
     password: 'Demo@1234',
@@ -133,10 +133,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string, branchId: string): Promise<'logged_in' | 'verify_email'> => {
+  const register = async (name: string, email: string, password: string): Promise<'logged_in' | 'verify_email'> => {
     try {
       // Real API: creates account but does not issue a token — user must verify email first.
-      await postRegister(name, email, password, branchId);
+      await postRegister(name, email, password);
       localStorage.setItem('foodchain_pending_email', email);
       return 'verify_email';
     } catch (error: any) {

@@ -18,27 +18,19 @@ import {
   updateMenuItem,
   deleteMenuItem,
   toggleMenuItemAvailability,
+  getCategoriesFull,
   type MenuItem,
 } from "@/services/api";
 import { isNetworkError } from "@/utils/demoData";
 
-// Demo menu items reuse the same items from api.ts DEMO_MENU — we import them here
 const DEMO_MENU_ITEMS: MenuItem[] = [
   { id: '1', name: 'Jollof Rice with Chicken', description: 'Spicy Nigerian jollof rice served with grilled chicken', price: 3500, category: 'Mains', available: true, isActive: true },
   { id: '2', name: 'Fried Rice Combo', description: 'Delicious fried rice with beef and plantain', price: 3200, category: 'Mains', available: true, isActive: true },
-  { id: '3', name: 'Egusi Soup & Pounded Yam', description: 'Traditional melon soup with smooth pounded yam', price: 2800, category: 'Soups', available: true, isActive: true },
-  { id: '4', name: 'Suya Platter', description: 'Spicy grilled beef suya with onions and tomatoes', price: 4000, category: 'Grills', available: true, isActive: true },
-  { id: '5', name: 'Pepper Soup', description: 'Spicy Nigerian pepper soup with assorted meat', price: 2500, category: 'Soups', available: true, isActive: true },
-  { id: '6', name: 'Grilled Chicken', description: 'Perfectly seasoned grilled chicken', price: 3800, category: 'Grills', available: true, isActive: true },
-  { id: '7', name: 'Fried Plantain', description: 'Sweet fried plantain slices', price: 1200, category: 'Sides', available: true, isActive: true },
-  { id: '8', name: 'Chapman', description: 'Refreshing Nigerian cocktail drink', price: 1500, category: 'Drinks', available: true, isActive: true },
-  { id: '9', name: 'Fresh Coconut Water', description: 'Chilled coconut water', price: 1000, category: 'Drinks', available: true, isActive: true },
 ];
-
-const categories = ["Mains", "Soups", "Grills", "Sides", "Drinks"];
 
 export function MenuCatalogue() {
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,7 +40,7 @@ export function MenuCatalogue() {
     name: "",
     description: "",
     price: 0,
-    category: "Mains",
+    categoryId: "",
     isActive: true
   });
 
@@ -56,8 +48,12 @@ export function MenuCatalogue() {
     setIsLoading(true);
     setError("");
     try {
-      const data = await getAllMenuItems();
+      const [data, cats] = await Promise.all([
+        getAllMenuItems(),
+        getCategoriesFull().catch(() => [] as Array<{ id: string; name: string; displayOrder: number; active: boolean }>),
+      ]);
       setItems(data);
+      setCategories(cats.filter(c => c.active));
     } catch (err: any) {
       if (isNetworkError(err)) {
         setItems(DEMO_MENU_ITEMS);
@@ -76,32 +72,40 @@ export function MenuCatalogue() {
 
   const handleAdd = () => {
     setEditingItem(null);
-    setFormData({ name: "", description: "", price: 0, category: "Mains", isActive: true });
+    setFormData({ name: "", description: "", price: 0, categoryId: categories[0]?.id ?? "", isActive: true });
     setIsModalOpen(true);
   };
 
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
+    const matchedCat = categories.find(c => c.name === item.category);
     setFormData({
       name: item.name,
-      description: item.description,
+      description: item.description ?? "",
       price: item.price,
-      category: item.category,
+      categoryId: matchedCat?.id ?? categories[0]?.id ?? "",
       isActive: item.isActive ?? item.available
     });
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
+    if (!formData.name.trim()) { toast.error("Item name is required"); return; }
+    if (!formData.categoryId) { toast.error("Please select a category"); return; }
     setIsSaving(true);
     try {
-      const apiData = { name: formData.name, description: formData.description, price: formData.price, category: formData.category, available: formData.isActive };
       if (editingItem) {
-        const updated = await updateMenuItem(editingItem.id, apiData);
+        const updated = await updateMenuItem(editingItem.id, {
+          name: formData.name, description: formData.description,
+          categoryId: formData.categoryId, price: formData.price,
+        });
         setItems(items.map(i => i.id === editingItem.id ? updated : i));
         toast.success("Menu item updated");
       } else {
-        const created = await createMenuItem(apiData);
+        const created = await createMenuItem({
+          name: formData.name, description: formData.description,
+          categoryId: formData.categoryId, price: formData.price,
+        });
         setItems([...items, created]);
         toast.success("Menu item added");
       }
@@ -312,19 +316,19 @@ export function MenuCatalogue() {
                 <div className="space-y-2">
                   <Label htmlFor="category" style={{ color: 'var(--foodchain-espresso)' }}>Category</Label>
                   <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    value={formData.categoryId}
+                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
                   >
                     <SelectTrigger
                       id="category"
                       className="border-[var(--foodchain-espresso)]/20"
                       style={{ backgroundColor: 'var(--foodchain-white)' }}
                     >
-                      <SelectValue />
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -3,7 +3,7 @@ import { Mail } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { toast } from 'sonner';
-import { postVerifyEmail } from '@/services/api';
+import { getVerifyEmail, postResendVerification } from '@/services/api';
 
 interface VerifyEmailProps {
   token?: string;
@@ -14,11 +14,12 @@ interface VerifyEmailProps {
 export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProps) {
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (!token) return;
     setStatus('verifying');
-    postVerifyEmail(token)
+    getVerifyEmail(token)
       .then(() => {
         setStatus('success');
         toast.success('Email verified! You can now sign in.');
@@ -29,6 +30,20 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
         setStatus('error');
       });
   }, [token]);
+
+  const handleResend = async () => {
+    if (!email) return;
+    setIsResending(true);
+    try {
+      await postResendVerification(email);
+      toast.success('Verification email sent', { description: `Check ${email} for a new link.` });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Could not resend verification email';
+      toast.error('Failed to resend', { description: msg });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const Logo = () => (
     <div className="mb-8 text-center">
@@ -125,6 +140,16 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
                 </p>
               </CardContent>
               <CardFooter className="flex flex-col gap-3">
+                {email && (
+                  <Button
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="w-full hover:opacity-90"
+                    style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
+                  >
+                    {isResending ? 'Sending…' : 'Resend verification email'}
+                  </Button>
+                )}
                 <Button onClick={onNavigateToLogin} variant="outline" className="w-full border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
                   Back to Login
                 </Button>
