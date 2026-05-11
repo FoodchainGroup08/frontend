@@ -6,6 +6,7 @@ import { type OrderDetails } from "./components/customer/Checkout";
 import { Login } from "./components/auth/Login";
 import { Register } from "./components/auth/Register";
 import { ForgotPassword } from "./components/auth/ForgotPassword";
+import { ResetPassword } from "./components/auth/ResetPassword";
 import { CustomerNavbar } from "./components/customer/CustomerNavbar";
 import { BranchSelector } from "./components/customer/BranchSelector";
 import { Menu } from "./components/customer/Menu";
@@ -146,6 +147,15 @@ function ForgotPasswordPage() {
       }}
     />
   );
+}
+
+function ResetPasswordPage() {
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  const token = new URLSearchParams(location.search).get('token') ?? '';
+  return <ResetPassword token={token} onNavigateToLogin={() => navigate('/login')} />;
 }
 
 // ─── Customer Layout ──────────────────────────────────────────────────────────
@@ -489,6 +499,7 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Protected role-based routes */}
         <Route element={<RequireAuth />}>

@@ -52,7 +52,11 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
     if (!email.trim()) { setError('Email is required'); return; }
     if (!phoneNumber.trim()) { setError('Phone number is required'); return; }
     if (!deliveryLocation.trim()) { setError('Please enter your delivery location'); return; }
-    if (password.length < 4) { setError('Password must be at least 4 characters'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
+    if (!/[A-Z]/.test(password)) { setError('Password must contain at least one uppercase letter'); return; }
+    if (!/[a-z]/.test(password)) { setError('Password must contain at least one lowercase letter'); return; }
+    if (!/\d/.test(password)) { setError('Password must contain at least one digit'); return; }
+    if (!/[@#$!%*?&\-_+=]/.test(password)) { setError('Password must contain at least one special character (@#$!%*?&-_+=)'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
 
     setIsLoading(true);
@@ -215,7 +219,7 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="At least 4 characters"
+                    placeholder="At least 8 characters"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
@@ -235,6 +239,9 @@ export function Register({ onNavigateToLogin }: RegisterProps) {
                     )}
                   </button>
                 </div>
+                <p className="text-xs mt-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.55 }}>
+                  Min. 8 chars · uppercase · lowercase · digit · special (@#$!%*?&amp;-_+=)
+                </p>
               </div>
 
               <div className="space-y-2">

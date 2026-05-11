@@ -228,6 +228,9 @@ export const getMe = () =>
 export const postForgotPassword = (email: string) =>
   apiClient.post('/auth/forgot-password', { email }).then(r => r.data);
 
+export const postResetPassword = (token: string, newPassword: string) =>
+  apiClient.post('/auth/reset-password', { token, newPassword }).then(r => r.data);
+
 // ─── Demo Data ────────────────────────────────────────────────────────────────
 
 const DEMO_BRANCHES: Branch[] = [
