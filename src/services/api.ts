@@ -1,7 +1,10 @@
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import { computeRoadDistancesKm } from './locationService';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 export const TOKEN_KEY = 'foodchain_token';
+export const REFRESH_TOKEN_KEY = 'foodchain_refresh_token';
 
 export const apiClient = axios.create({ baseURL: BASE_URL });
 
@@ -15,8 +18,26 @@ apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.clear();
-      window.location.href = '/login';
+      const storedToken = localStorage.getItem(TOKEN_KEY);
+      const isDemo = localStorage.getItem('foodchain_demo_mode') === 'true';
+
+      // Never force-logout in demo mode — demo tokens aren't JWTs.
+      // For real sessions, only force-logout when the token is provably expired
+      // or not decodable. A 401 from a downstream microservice that is temporarily
+      // unavailable must not kick the user out of a valid session.
+      if (storedToken && !isDemo) {
+        let tokenExpiredOrInvalid = true;
+        try {
+          const { exp } = jwtDecode<{ exp: number }>(storedToken);
+          tokenExpiredOrInvalid = Date.now() >= exp * 1000;
+        } catch {
+          // Non-JWT or corrupted string (e.g. stored "undefined") → treat as invalid
+        }
+        if (tokenExpiredOrInvalid) {
+          localStorage.clear();
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -180,16 +201,13 @@ function mapBranch(b: any): Branch {
     name: b.name,
     address: b.address,
     location: b.address,
-    // Backend nearby endpoint returns distanceKm, standard list does not
     distance: b.distanceKm != null ? `${Number(b.distanceKm).toFixed(1)} km` : b.distance,
-    // TODO (backend): branch-service does not yet store hours, rating, or isOpen.
-    // These fields must be added to the branch entity and returned in responses.
-    hours: b.hours ?? '—',
+    // Branch service returns hoursDisplay when no hours rows are configured.
+    // Fall back through hours → hoursDisplay → placeholder.
+    hours: (b.hours && b.hours !== 'Hours not set') ? b.hours : (b.hoursDisplay && b.hoursDisplay !== 'Hours not set') ? b.hoursDisplay : '—',
     rating: b.rating ?? 0,
     isOpen: b.isOpen ?? false,
-    // Backend uses `active`, frontend type uses `isActive`
     isActive: b.isActive ?? b.active ?? false,
-    // Backend uses `managerId`, frontend type uses `manager`
     manager: b.manager ?? b.managerId,
   };
 }
@@ -213,14 +231,21 @@ function mapMenuItem(m: any): MenuItem {
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
-export const postRegister = (name: string, email: string, password: string) =>
-  apiClient.post<User>('/auth/register', { name, email, password }).then(r => r.data);
+// Backend requires branchId (must be a real branch UUID) and returns only the
+// user — no token. User must verify their email before they can log in.
+export const postRegister = (name: string, email: string, password: string, branchId: string) =>
+  apiClient.post<User>('/auth/register', { name, email, password, branchId }).then(r => r.data);
 
 export const postLogin = (email: string, password: string) =>
-  apiClient.post<{ token: string; user: User }>('/auth/login', { email, password }).then(r => r.data);
+  apiClient.post<any>('/auth/login', { email, password }).then(r => ({
+    // Backend returns `accessToken`; `token` is a documented alias — handle both.
+    token: (r.data.accessToken ?? r.data.token) as string,
+    user: r.data.user as User,
+  }));
 
-export const postLogout = () =>
-  apiClient.post('/auth/logout').then(r => r.data);
+// Backend requires refreshToken in the body to fully invalidate the session.
+export const postLogout = (refreshToken?: string) =>
+  apiClient.post('/auth/logout', refreshToken ? { refreshToken } : {}).then(r => r.data);
 
 export const getMe = () =>
   apiClient.get<User>('/auth/me').then(r => r.data);
@@ -231,8 +256,14 @@ export const postForgotPassword = (email: string) =>
 export const postResetPassword = (token: string, newPassword: string) =>
   apiClient.post('/auth/reset-password', { token, newPassword }).then(r => r.data);
 
-export const postVerifyEmail = (token: string) =>
-  apiClient.post('/auth/verify-email', { token }).then(r => r.data);
+// GET with token as query param — matches the backend endpoint exactly.
+export const getVerifyEmail = (token: string) =>
+  apiClient.get<{ message: string }>('/auth/verify-email', { params: { token } }).then(r => r.data);
+
+// Resends the verification email. Response is always a generic success message
+// regardless of whether the email exists (backend prevents user enumeration).
+export const postResendVerification = (email: string) =>
+  apiClient.post<{ message: string }>('/auth/resend-verification', { email }).then(r => r.data);
 
 // ─── Demo Data ────────────────────────────────────────────────────────────────
 
@@ -344,12 +375,24 @@ const DEMO_MENU: MenuItem[] = [
 // Helper to check if we're in demo mode
 const isDemoMode = () => localStorage.getItem('foodchain_demo_mode') === 'true';
 
-// Wrapper to handle network errors with demo fallback
+// Returns true for any error that means the backend/service is unreachable or
+// temporarily unavailable — used to decide whether to return demo data.
+// Includes all 5xx so the branch service gateway routing bug (500) also falls back.
+const isServiceUnavailable = (error: any): boolean => {
+  const status: number | undefined = error.response?.status;
+  return (
+    error.code === 'ERR_NETWORK' ||
+    !!error.message?.includes('Network Error') ||
+    (status != null && status >= 500)
+  );
+};
+
+// Wrapper to handle network/gateway errors with demo fallback
 const withDemoFallback = async <T,>(apiCall: () => Promise<T>, demoData: T): Promise<T> => {
   try {
     return await apiCall();
   } catch (error: any) {
-    if (isDemoMode() || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+    if (isDemoMode() || isServiceUnavailable(error)) {
       return demoData;
     }
     throw error;
@@ -361,7 +404,7 @@ const withAsyncDemoFallback = async <T,>(apiCall: () => Promise<T>, getDemoData:
   try {
     return await apiCall();
   } catch (error: any) {
-    if (isDemoMode() || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+    if (isDemoMode() || isServiceUnavailable(error)) {
       return await getDemoData();
     }
     throw error;
@@ -397,7 +440,6 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 async function demoBranchesNearby(userLat: number, userLng: number): Promise<Branch[]> {
   // Try Google Maps Distance Matrix first for real road distances
   try {
-    const { computeRoadDistancesKm } = await import('./locationService');
     const destinations = DEMO_BRANCHES.map(b => ({
       id: b.id,
       address: b.address,
@@ -434,6 +476,65 @@ async function demoBranchesNearby(userLat: number, userLng: number): Promise<Bra
       const db = coordsB ? haversineKm(userLat, userLng, coordsB.lat, coordsB.lng) : 999;
       return da - db;
     });
+}
+
+// ─── Order response mappers ───────────────────────────────────────────────────
+
+function normaliseOrderType(raw: string): 'dine-in' | 'takeaway' | 'delivery' {
+  switch (raw?.toUpperCase?.()) {
+    case 'DINE_IN': return 'dine-in';
+    case 'TAKEAWAY': return 'takeaway';
+    case 'DELIVERY': return 'delivery';
+    default: return (raw as any) ?? 'dine-in';
+  }
+}
+
+// Maps backend-only statuses to the nearest frontend-visible value so the
+// order tracker never receives an unknown enum string.
+function normaliseOrderStatus(raw: string): OrderStatus {
+  switch (raw) {
+    case 'RECEIVED':
+    case 'PREPARING':
+    case 'READY':
+    case 'PICKED_UP':
+    case 'SERVED':
+      return raw as OrderStatus;
+    case 'PAYMENT_PENDING': return 'RECEIVED';
+    case 'CONFIRMED':       return 'RECEIVED';
+    case 'COMPLETED':       return 'PICKED_UP';
+    default:                return 'RECEIVED';
+  }
+}
+
+function mapOrderItem(i: any): OrderItem {
+  return {
+    id: i.id ?? i.menuItemId ?? '',
+    name: i.name ?? i.menuItemName ?? '',
+    price: i.price ?? i.unitPrice ?? 0,
+    quantity: i.quantity ?? 1,
+  };
+}
+
+function mapOrder(o: any): Order {
+  return {
+    id: o.id,
+    status: normaliseOrderStatus(o.status),
+    items: (o.items ?? []).map(mapOrderItem),
+    subtotal: o.subtotal ?? o.totalAmount ?? 0,
+    deliveryFee: o.deliveryFee ?? 0,
+    total: o.total ?? o.totalAmount ?? 0,
+    branchId: o.branchId ?? '',
+    branchName: o.branchName ?? '',
+    orderType: normaliseOrderType(o.orderType),
+    tableNumber: o.tableNumber,
+    deliveryAddress: o.deliveryAddress,
+    customerName: o.customerName ?? '',
+    phoneNumber: o.phoneNumber,
+    specialInstructions: o.specialInstructions,
+    estimatedTime: o.estimatedTime,
+    placedAt: o.placedAt ?? o.createdAt ?? new Date().toISOString(),
+    paymentMethod: o.paymentMethod,
+  };
 }
 
 // ─── BRANCHES ─────────────────────────────────────────────────────────────────
@@ -475,6 +576,17 @@ export const patchBranchStatus = (id: string, isActive: boolean) =>
   apiClient
     .patch<any>(`/branch/${id}/${isActive ? 'activate' : 'deactivate'}`)
     .then((r) => mapBranch(r.data));
+
+// Pre-auth branch fetch used on the registration form. Falls back to DEMO_BRANCHES
+// on ANY error (401 because branches require auth through gateway, 500 due to
+// gateway routing bug). In demo mode these are placeholder branches only.
+export const getBranchesPublic = (): Promise<Branch[]> =>
+  apiClient.get<any>('/branch')
+    .then((r) => {
+      const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
+      return items.map(mapBranch);
+    })
+    .catch(() => DEMO_BRANCHES);
 
 // ─── MENU ─────────────────────────────────────────────────────────────────────
 // Backend path for items is /menu/items (not /menu).
@@ -530,21 +642,27 @@ export const toggleMenuItemAvailability = (id: string) =>
 // backend enum is DINE_IN|TAKEAWAY|DELIVERY. Backend must accept both casings or
 // document the exact expected format.
 export const placeOrder = (payload: PlaceOrderPayload) =>
-  apiClient.post<Order>('/orders', payload).then(r => r.data);
+  apiClient.post<any>('/orders', payload).then(r => mapOrder(r.data));
 
-// TODO (backend): Backend returns Page<OrderListResponse> not Order|null.
-// Backend should accept customerId as a query param (extracted from JWT preferred)
-// and return results filtered to the current user.
-// TODO (backend): OrderListResponse is missing branchName, subtotal, deliveryFee,
-// total, placedAt, customerName, phoneNumber. These fields are required by the UI.
-export const getActiveOrder = () =>
-  apiClient.get<Order | null>('/orders/active').then(r => r.data);
+// Backend returns Page<OrderListResponse> (backend bug B7) — extract first item.
+export const getActiveOrder = (): Promise<Order | null> =>
+  apiClient.get<any>('/orders/active').then(r => {
+    const data = r.data;
+    if (data?.content && Array.isArray(data.content)) {
+      return data.content.length > 0 ? mapOrder(data.content[0]) : null;
+    }
+    return data ? mapOrder(data) : null;
+  });
 
-export const getOrderHistory = () =>
-  apiClient.get<Order[]>('/orders/history').then(r => r.data);
+export const getOrderHistory = (): Promise<Order[]> =>
+  apiClient.get<any>('/orders/history').then(r => {
+    const data = r.data;
+    if (data?.content && Array.isArray(data.content)) return data.content.map(mapOrder);
+    return Array.isArray(data) ? data.map(mapOrder) : [];
+  });
 
 export const getOrderById = (id: string) =>
-  apiClient.get<Order>(`/orders/${id}`).then(r => r.data);
+  apiClient.get<any>(`/orders/${id}`).then(r => mapOrder(r.data));
 
 export const cancelOrder = (id: string) =>
   apiClient.post(`/orders/${id}/cancel`).then(r => r.data);

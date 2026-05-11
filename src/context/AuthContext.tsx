@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getMe, postLogin, postLogout, postRegister, TOKEN_KEY, type User } from '@/services/api';
+import { getMe, postLogin, postLogout, postRegister, TOKEN_KEY, REFRESH_TOKEN_KEY, type User } from '@/services/api';
 
 interface AuthContextValue {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<'logged_in' | 'verify_email'>;
+  register: (name: string, email: string, password: string, branchId: string) => Promise<'logged_in' | 'verify_email'>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -66,11 +66,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Try real API
+    // Try real API to get fresh user data.
+    // Only hard-clear the session on 401 (genuinely expired/invalid token).
+    // Network errors and 5xx (e.g. getMe returning 500 due to backend bug B2)
+    // are transient — restore from the localStorage cache so the user stays logged in.
     getMe()
       .then(setUser)
-      .catch(() => {
+      .catch((error: any) => {
+        const status: number | undefined = error.response?.status;
+        const isTransient =
+          status == null ||                        // network error (no response)
+          (status >= 500 && status <= 599);        // backend crash — not the user's fault
+        if (isTransient && storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+            return;
+          } catch {}
+        }
+        // 401 falls here — token is genuinely invalid, clear everything
         localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
         localStorage.removeItem('foodchain_user');
         setToken(null);
       })
@@ -80,9 +95,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       // Try real API first
-      const { token: newToken, user: newUser } = await postLogin(email, password);
+      const resp = await postLogin(email, password);
+      const newToken = resp.token ?? resp.accessToken ?? '';
+      const newUser = resp.user;
       localStorage.setItem(TOKEN_KEY, newToken);
       localStorage.setItem('foodchain_user', JSON.stringify(newUser));
+      if (resp.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, resp.refreshToken);
       localStorage.removeItem('foodchain_demo_mode');
       setToken(newToken);
       setUser(newUser);
@@ -115,10 +133,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<'logged_in' | 'verify_email'> => {
+  const register = async (name: string, email: string, password: string, branchId: string): Promise<'logged_in' | 'verify_email'> => {
     try {
-      // Real API: creates account but does not issue a token — user must verify email first
-      await postRegister(name, email, password);
+      // Real API: creates account but does not issue a token — user must verify email first.
+      await postRegister(name, email, password, branchId);
+      localStorage.setItem('foodchain_pending_email', email);
       return 'verify_email';
     } catch (error: any) {
       // If API is unreachable, create a local demo session so devs can still explore the app
@@ -145,13 +164,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     if (!useDemoMode) {
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY) ?? undefined;
       try {
-        await postLogout();
+        await postLogout(refreshToken);
       } catch {
         // clear state regardless of server response
       }
     }
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem('foodchain_user');
     localStorage.removeItem('foodchain_demo_mode');
     setToken(null);
