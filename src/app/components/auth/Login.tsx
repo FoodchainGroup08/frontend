@@ -45,10 +45,10 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword }: Logi
   };
 
   const demoAccounts = [
-    { role: "Customer", email: "user@demo.com", password: "demo" },
-    { role: "Kitchen Staff", email: "kitchen@demo.com", password: "demo" },
-    { role: "Branch Manager", email: "manager@demo.com", password: "demo" },
-    { role: "Admin", email: "admin@demo.com", password: "demo" }
+    { role: "Customer", email: "user@demo.com", password: "Demo@1234" },
+    { role: "Kitchen Staff", email: "kitchen@demo.com", password: "Demo@1234" },
+    { role: "Branch Manager", email: "manager@demo.com", password: "Demo@1234" },
+    { role: "Admin", email: "admin@demo.com", password: "Demo@1234" }
   ];
 
   return (

@@ -214,7 +214,7 @@ function mapMenuItem(m: any): MenuItem {
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 export const postRegister = (name: string, email: string, password: string) =>
-  apiClient.post<{ token: string; user: User }>('/auth/register', { name, email, password }).then(r => r.data);
+  apiClient.post<User>('/auth/register', { name, email, password }).then(r => r.data);
 
 export const postLogin = (email: string, password: string) =>
   apiClient.post<{ token: string; user: User }>('/auth/login', { email, password }).then(r => r.data);
@@ -230,6 +230,9 @@ export const postForgotPassword = (email: string) =>
 
 export const postResetPassword = (token: string, newPassword: string) =>
   apiClient.post('/auth/reset-password', { token, newPassword }).then(r => r.data);
+
+export const postVerifyEmail = (token: string) =>
+  apiClient.post('/auth/verify-email', { token }).then(r => r.data);
 
 // ─── Demo Data ────────────────────────────────────────────────────────────────
 
@@ -353,6 +356,86 @@ const withDemoFallback = async <T,>(apiCall: () => Promise<T>, demoData: T): Pro
   }
 };
 
+// Like withDemoFallback but accepts an async producer for demo data (e.g. when computing distances)
+const withAsyncDemoFallback = async <T,>(apiCall: () => Promise<T>, getDemoData: () => Promise<T>): Promise<T> => {
+  try {
+    return await apiCall();
+  } catch (error: any) {
+    if (isDemoMode() || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      return await getDemoData();
+    }
+    throw error;
+  }
+};
+
+// ─── Demo branch distance helpers ────────────────────────────────────────────
+// Approximate Lagos coordinates for each demo branch (used for Haversine sorting
+// when the backend is unavailable and Google Maps Distance Matrix has no API key).
+
+const DEMO_BRANCH_COORDS: Record<string, { lat: number; lng: number }> = {
+  'branch-1': { lat: 6.4281, lng: 3.4219 },  // Victoria Island
+  'branch-2': { lat: 6.4321, lng: 3.5197 },  // Lekki Phase 1
+  'branch-3': { lat: 6.6018, lng: 3.3515 },  // Ikeja
+  'branch-4': { lat: 6.4551, lng: 3.4342 },  // Ikoyi
+  'branch-5': { lat: 6.4979, lng: 3.3579 },  // Surulere
+  'branch-6': { lat: 6.5091, lng: 3.3795 },  // Yaba
+  'branch-7': { lat: 6.4739, lng: 3.6123 },  // Ajah
+  'branch-8': { lat: 6.5528, lng: 3.3621 },  // Maryland
+  'branch-9': { lat: 6.4612, lng: 3.2723 },  // Festac
+};
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function demoBranchesNearby(userLat: number, userLng: number): Promise<Branch[]> {
+  // Try Google Maps Distance Matrix first for real road distances
+  try {
+    const { computeRoadDistancesKm } = await import('./locationService');
+    const destinations = DEMO_BRANCHES.map(b => ({
+      id: b.id,
+      address: b.address,
+      ...DEMO_BRANCH_COORDS[b.id],
+    }));
+    const distMap = await computeRoadDistancesKm(userLat, userLng, destinations);
+    if (distMap.size > 0) {
+      return [...DEMO_BRANCHES]
+        .map(b => {
+          const d = distMap.get(b.id);
+          return { ...b, distance: d ? `${d.km.toFixed(1)} km` : b.distance };
+        })
+        .sort((a, b) => {
+          const da = distMap.get(a.id)?.km ?? 999;
+          const db = distMap.get(b.id)?.km ?? 999;
+          return da - db;
+        });
+    }
+  } catch {
+    // fall through to Haversine
+  }
+
+  // Fallback: straight-line Haversine sort
+  return [...DEMO_BRANCHES]
+    .map(b => {
+      const coords = DEMO_BRANCH_COORDS[b.id];
+      const km = coords ? haversineKm(userLat, userLng, coords.lat, coords.lng) : 999;
+      return { ...b, distance: `${km.toFixed(1)} km` };
+    })
+    .sort((a, b) => {
+      const coordsA = DEMO_BRANCH_COORDS[a.id];
+      const coordsB = DEMO_BRANCH_COORDS[b.id];
+      const da = coordsA ? haversineKm(userLat, userLng, coordsA.lat, coordsA.lng) : 999;
+      const db = coordsB ? haversineKm(userLat, userLng, coordsB.lat, coordsB.lng) : 999;
+      return da - db;
+    });
+}
+
 // ─── BRANCHES ─────────────────────────────────────────────────────────────────
 // Backend path is /branch (singular). Responses are mapped via mapBranch().
 // List endpoints return a Spring Page object — content array is extracted.
@@ -368,12 +451,12 @@ export const getBranches = () =>
   );
 
 export const getBranchesNearby = (lat: number, lng: number) =>
-  withDemoFallback(
+  withAsyncDemoFallback(
     () =>
       apiClient
         .get<any[]>('/branch/nearby', { params: { lat, lng } })
         .then((r) => (r.data ?? []).map(mapBranch)),
-    DEMO_BRANCHES
+    () => demoBranchesNearby(lat, lng)
   );
 
 export const getBranchById = (id: string) =>

@@ -7,6 +7,7 @@ import { Login } from "./components/auth/Login";
 import { Register } from "./components/auth/Register";
 import { ForgotPassword } from "./components/auth/ForgotPassword";
 import { ResetPassword } from "./components/auth/ResetPassword";
+import { VerifyEmail } from "./components/auth/VerifyEmail";
 import { CustomerNavbar } from "./components/customer/CustomerNavbar";
 import { BranchSelector } from "./components/customer/BranchSelector";
 import { Menu } from "./components/customer/Menu";
@@ -131,7 +132,23 @@ function RegisterPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
-  return <Register onNavigateToLogin={() => navigate('/login')} />;
+  return (
+    <Register
+      onNavigateToLogin={() => navigate('/login')}
+      onVerificationRequired={(email) => navigate(`/verify-email?email=${encodeURIComponent(email)}`)}
+    />
+  );
+}
+
+function VerifyEmailPage() {
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token') ?? undefined;
+  const email = params.get('email') ?? undefined;
+  return <VerifyEmail token={token} email={email} onNavigateToLogin={() => navigate('/login')} />;
 }
 
 function ForgotPasswordPage() {
@@ -500,6 +517,7 @@ function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
 
         {/* Protected role-based routes */}
         <Route element={<RequireAuth />}>

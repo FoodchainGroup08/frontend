@@ -201,6 +201,67 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
   return 'Current Location, Lagos';
 }
 
+// ─── Road Distance Matrix ──────────────────────────────────────────────────────
+
+export interface DistanceDestination {
+  id: string;
+  address: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface DistanceResult {
+  km: number;
+  text: string;
+}
+
+/**
+ * Computes driving distances from the user's position to each destination.
+ * Uses Google Maps Distance Matrix API when available; returns an empty Map
+ * if the API is unavailable (caller should fall back to Haversine).
+ */
+export async function computeRoadDistancesKm(
+  userLat: number,
+  userLng: number,
+  destinations: DistanceDestination[]
+): Promise<Map<string, DistanceResult>> {
+  const result = new Map<string, DistanceResult>();
+  if (!destinations.length) return result;
+
+  const mapsLoaded = await loadGoogleMaps();
+  if (!mapsLoaded || !window.google?.maps) return result;
+
+  return new Promise((resolve) => {
+    try {
+      const service = new window.google.maps.DistanceMatrixService();
+      service.getDistanceMatrix(
+        {
+          origins: [{ lat: userLat, lng: userLng }],
+          destinations: destinations.map(d => d.address),
+          travelMode: window.google.maps.TravelMode.DRIVING,
+          unitSystem: window.google.maps.UnitSystem.METRIC,
+        },
+        (response: any, status: string) => {
+          if (status !== 'OK' || !response?.rows?.[0]?.elements) {
+            resolve(result);
+            return;
+          }
+          const elements: any[] = response.rows[0].elements;
+          elements.forEach((el: any, i: number) => {
+            if (el.status === 'OK') {
+              const km = el.distance.value / 1000;
+              result.set(destinations[i].id, { km, text: `${km.toFixed(1)} km` });
+            }
+          });
+          resolve(result);
+        }
+      );
+    } catch {
+      resolve(result);
+    }
+  });
+}
+
 // ─── Persistence ───────────────────────────────────────────────────────────────
 
 const LOCATION_KEY = 'foodchain_delivery_location';

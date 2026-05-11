@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getMe, postLogin, postLogout, postRegister, TOKEN_KEY, type User, type UserRole } from '@/services/api';
+import { getMe, postLogin, postLogout, postRegister, TOKEN_KEY, type User } from '@/services/api';
 
 interface AuthContextValue {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<'logged_in' | 'verify_email'>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -16,19 +16,19 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // Demo credentials for when backend is not available
 const DEMO_USERS: Record<string, { password: string; user: User }> = {
   'user@demo.com': {
-    password: 'demo',
+    password: 'Demo@1234',
     user: { id: '1', name: 'Demo Customer', email: 'user@demo.com', role: 'Customer' }
   },
   'kitchen@demo.com': {
-    password: 'demo',
+    password: 'Demo@1234',
     user: { id: '2', name: 'Demo Kitchen Staff', email: 'kitchen@demo.com', role: 'Kitchen Staff', branchId: 'branch-1' }
   },
   'manager@demo.com': {
-    password: 'demo',
+    password: 'Demo@1234',
     user: { id: '3', name: 'Demo Manager', email: 'manager@demo.com', role: 'Branch Manager', branchId: 'branch-1' }
   },
   'admin@demo.com': {
-    password: 'demo',
+    password: 'Demo@1234',
     user: { id: '4', name: 'Demo Admin', email: 'admin@demo.com', role: 'Admin' }
   }
 };
@@ -115,18 +115,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string): Promise<'logged_in' | 'verify_email'> => {
     try {
-      // Try real API first
-      const { token: newToken, user: newUser } = await postRegister(name, email, password);
-      localStorage.setItem(TOKEN_KEY, newToken);
-      localStorage.setItem('foodchain_user', JSON.stringify(newUser));
-      localStorage.removeItem('foodchain_demo_mode');
-      setToken(newToken);
-      setUser(newUser);
-      setUseDemoMode(false);
+      // Real API: creates account but does not issue a token — user must verify email first
+      await postRegister(name, email, password);
+      return 'verify_email';
     } catch (error: any) {
-      // If API fails, create demo user
+      // If API is unreachable, create a local demo session so devs can still explore the app
       if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
         const newUser: User = {
           id: `demo_${Date.now()}`,
@@ -141,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(demoToken);
         setUser(newUser);
         setUseDemoMode(true);
+        return 'logged_in';
       } else {
         throw error;
       }
