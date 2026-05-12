@@ -6,6 +6,7 @@ interface AuthContextValue {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<'logged_in' | 'verify_email'>;
+  completeOAuthLogin: (accessToken: string, refreshToken?: string) => Promise<User>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -181,9 +182,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/login';
   };
 
+  const completeOAuthLogin = async (accessToken: string, refreshToken?: string): Promise<User> => {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    if (refreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    }
+    localStorage.removeItem('foodchain_demo_mode');
+    setToken(accessToken);
+    setUseDemoMode(false);
+
+    const me = await getMe();
+    localStorage.setItem('foodchain_user', JSON.stringify(me));
+    setUser(me);
+    return me;
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, token, login, register, logout, isAuthenticated: !!user, isLoading }}
+      value={{ user, token, login, register, completeOAuthLogin, logout, isAuthenticated: !!user, isLoading }}
     >
       {children}
     </AuthContext.Provider>

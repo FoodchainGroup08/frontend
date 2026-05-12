@@ -7,7 +7,7 @@ import { Separator } from "../ui/separator";
 import { ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { postResendVerification } from "@/services/api";
+import { getGoogleOAuthStartUrl, postResendVerification } from "@/services/api";
 
 interface LoginProps {
   onNavigateToRegister: () => void;
@@ -63,7 +63,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
   };
 
   const handleGoogleLogin = () => {
-    toast.info("Coming soon", { description: "Google sign-in is not yet available" });
+    window.location.href = getGoogleOAuthStartUrl();
   };
 
   const useDemoCredentials = (demoEmail: string, demoPassword: string) => {

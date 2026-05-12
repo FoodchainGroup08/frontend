@@ -8,6 +8,10 @@ export const REFRESH_TOKEN_KEY = 'foodchain_refresh_token';
 
 export const apiClient = axios.create({ baseURL: BASE_URL });
 
+const OAUTH2_BASE_URL = BASE_URL.replace(/\/v1\/?$/, '');
+
+export const getGoogleOAuthStartUrl = () => `${OAUTH2_BASE_URL}/oauth2/authorization/google`;
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) config.headers.Authorization = `Bearer ${token}`;

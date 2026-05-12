@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { LocationPicker } from './LocationPicker';
 import { saveDeliveryLocation } from '@/services/locationService';
+import { getGoogleOAuthStartUrl } from '@/services/api';
 
 interface RegisterProps {
   onNavigateToLogin: () => void;
@@ -83,7 +84,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
   };
 
   const handleGoogleLogin = () => {
-    toast.info('Coming soon', { description: 'Google sign-in is not yet available' });
+    window.location.href = getGoogleOAuthStartUrl();
   };
 
   return (

@@ -117,14 +117,18 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
           </div>
         ) : (
           <div className="grid gap-4 sm:gap-6">
-            {branches.map((branch) => (
+            {branches.map((branch, index) => {
+              const isSuggested = index === 0;
+              return (
               <Card
                 key={branch.id}
                 className="cursor-pointer transition-all hover:shadow-lg border-[var(--foodchain-espresso)]/10"
                 onClick={() => branch.isOpen && onSelectBranch(branch)}
                 style={{
                   backgroundColor: 'var(--foodchain-white)',
-                  opacity: branch.isOpen ? 1 : 0.6
+                  opacity: branch.isOpen ? 1 : 0.6,
+                  borderColor: isSuggested ? 'var(--foodchain-golden-amber)' : undefined,
+                  boxShadow: isSuggested ? '0 0 0 1px rgba(240, 165, 0, 0.2), 0 8px 18px rgba(240, 165, 0, 0.14)' : undefined
                 }}
               >
                 <CardHeader className="pb-3">
@@ -134,6 +138,17 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
                         <CardTitle className="text-lg sm:text-xl" style={{ color: 'var(--foodchain-espresso)' }}>
                           {branch.name}
                         </CardTitle>
+                        {isSuggested && (
+                          <Badge
+                            className="border-0"
+                            style={{
+                              backgroundColor: 'rgba(240, 165, 0, 0.18)',
+                              color: 'var(--foodchain-espresso)'
+                            }}
+                          >
+                            Fastest delivery
+                          </Badge>
+                        )}
                         {branch.isOpen ? (
                           <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
                             Open
@@ -179,7 +194,8 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
