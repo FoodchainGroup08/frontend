@@ -42,9 +42,9 @@ export function ResetPassword({ token, onNavigateToLogin }: ResetPasswordProps) 
 
     setIsLoading(true);
     try {
-      await postResetPassword(token, password);
+      const response = await postResetPassword(token, password);
       setSuccess(true);
-      toast.success('Password updated successfully!');
+      toast.success(response.message || 'Password updated successfully!');
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'The reset link may be invalid or expired';
       setError(msg);

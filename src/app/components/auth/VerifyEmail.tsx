@@ -35,8 +35,8 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
     if (!email) return;
     setIsResending(true);
     try {
-      await postResendVerification(email);
-      toast.success('Verification email sent', { description: `Check ${email} for a new link.` });
+      const response = await postResendVerification(email);
+      toast.success(response.message || 'Verification email sent', { description: `Check ${email} for a new link.` });
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Could not resend verification email';
       toast.error('Failed to resend', { description: msg });

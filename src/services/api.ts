@@ -8,9 +8,8 @@ export const REFRESH_TOKEN_KEY = 'foodchain_refresh_token';
 
 export const apiClient = axios.create({ baseURL: BASE_URL });
 
-const OAUTH2_BASE_URL = BASE_URL.replace(/\/v1\/?$/, '');
-
-export const getGoogleOAuthStartUrl = () => `${OAUTH2_BASE_URL}/oauth2/authorization/google`;
+/** Same prefix as REST API (e.g. .../api/v1). Prod gateway routes /api/v1/** ; /api/oauth2/** is often not exposed. */
+export const getGoogleOAuthStartUrl = () => `${BASE_URL.replace(/\/$/, '')}/oauth2/authorization/google`;
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -23,13 +22,8 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       const storedToken = localStorage.getItem(TOKEN_KEY);
-      const isDemo = localStorage.getItem('foodchain_demo_mode') === 'true';
 
-      // Never force-logout in demo mode — demo tokens aren't JWTs.
-      // For real sessions, only force-logout when the token is provably expired
-      // or not decodable. A 401 from a downstream microservice that is temporarily
-      // unavailable must not kick the user out of a valid session.
-      if (storedToken && !isDemo) {
+      if (storedToken) {
         let tokenExpiredOrInvalid = true;
         try {
           const { exp } = jwtDecode<{ exp: number }>(storedToken);
@@ -56,7 +50,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  branchId?: string;
+  branchId?: string | null;
 }
 
 export interface Branch {
@@ -195,6 +189,18 @@ export interface WsOrderUpdate {
   timestamp: string;
 }
 
+export interface AuthMessageResponse {
+  message: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: User;
+}
+
 // ─── Response Mappers (backend → frontend shape) ───────────────────────────────
 // Backend uses different field names and paths. These mappers normalise responses
 // so all exported types stay unchanged and no UI component needs to be touched.
@@ -242,18 +248,31 @@ function mapUserRole(raw: string): UserRole {
     case 'KITCHEN_STAFF':     return 'Kitchen Staff';
     case 'BRANCH_MANAGER':    return 'Branch Manager';
     case 'HEAD_OFFICE_ADMIN': return 'Admin';
+    case 'ADMIN':             return 'Admin';
     default:                  return raw as UserRole;
   }
 }
 
 function mapUser(u: any): User {
-  return { id: u.id, name: u.name, email: u.email, role: mapUserRole(u.role), branchId: u.branchId };
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: mapUserRole(u.role),
+    branchId: u.branchId ?? null,
+  };
 }
 
-// Backend requires branchId (must be a real branch UUID) and returns only the
-// user — no token. User must verify their email before they can log in.
+// Backend returns the created user only. Customers are not tied to a branch,
+// so branchId is sent as null for the CUSTOMER role.
 export const postRegister = (name: string, email: string, password: string) =>
-  apiClient.post<any>('/auth/register', { name, email, password }).then(r => mapUser(r.data));
+  apiClient.post<any>('/auth/register', {
+    name,
+    email,
+    password,
+    role: 'CUSTOMER',
+    branchId: null,
+  }).then(r => mapUser(r.data));
 
 export const postLogin = (email: string, password: string) =>
   apiClient.post<any>('/auth/login', { email, password }).then(r => ({
@@ -271,19 +290,39 @@ export const getMe = () =>
   apiClient.get<any>('/auth/me').then(r => mapUser(r.data));
 
 export const postForgotPassword = (email: string) =>
-  apiClient.post('/auth/forgot-password', { email }).then(r => r.data);
+  apiClient.post<AuthMessageResponse>('/auth/forgot-password', { email }).then(r => r.data);
 
 export const postResetPassword = (token: string, newPassword: string) =>
-  apiClient.post('/auth/reset-password', { token, newPassword }).then(r => r.data);
+  apiClient.post<AuthMessageResponse>('/auth/reset-password', { token, newPassword }).then(r => r.data);
 
 // GET with token as query param — matches the backend endpoint exactly.
 export const getVerifyEmail = (token: string) =>
-  apiClient.get<{ message: string }>('/auth/verify-email', { params: { token } }).then(r => r.data);
+  apiClient.get<AuthMessageResponse>('/auth/verify-email', { params: { token } }).then(r => r.data);
 
 // Resends the verification email. Response is always a generic success message
 // regardless of whether the email exists (backend prevents user enumeration).
 export const postResendVerification = (email: string) =>
-  apiClient.post<{ message: string }>('/auth/resend-verification', { email }).then(r => r.data);
+  apiClient.post<AuthMessageResponse>('/auth/resend-verification', { email }).then(r => r.data);
+
+export const postRefreshToken = (refreshToken: string): Promise<AuthResponse> =>
+  apiClient.post<any>('/auth/refresh', { refreshToken }).then(r => ({
+    accessToken: r.data.accessToken as string,
+    refreshToken: r.data.refreshToken as string,
+    tokenType: r.data.tokenType as string,
+    expiresIn: r.data.expiresIn as number,
+    user: mapUser(r.data.user),
+  }));
+
+// Exchanges a Google Identity Services credential (ID token) for app tokens.
+export const postGoogleAuth = (credential: string): Promise<AuthResponse> =>
+  apiClient.post<any>('/auth/google', { credential }).then(r => ({
+    accessToken: r.data.accessToken as string,
+    refreshToken: r.data.refreshToken as string,
+    tokenType: r.data.tokenType as string,
+    expiresIn: r.data.expiresIn as number,
+    user: mapUser(r.data.user),
+  }));
+
 
 // ─── Demo Data ────────────────────────────────────────────────────────────────
 
