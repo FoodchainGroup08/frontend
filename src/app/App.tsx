@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
+import { getSavedDeliveryLocation } from "@/services/locationService";
 import { type OrderDetails } from "./components/customer/Checkout";
 import { Login } from "./components/auth/Login";
 import { Register } from "./components/auth/Register";
 import { ForgotPassword } from "./components/auth/ForgotPassword";
 import { ResetPassword } from "./components/auth/ResetPassword";
 import { VerifyEmail } from "./components/auth/VerifyEmail";
+import { SetupLocation } from "./components/auth/SetupLocation";
 import { CustomerNavbar } from "./components/customer/CustomerNavbar";
 import { BranchSelector } from "./components/customer/BranchSelector";
 import { Menu } from "./components/customer/Menu";
@@ -169,7 +171,13 @@ function OAuth2CallbackPage() {
     }
 
     completeOAuthLogin(accessToken, refreshToken)
-      .then((authedUser) => navigate(getRoleHome(authedUser.role), { replace: true }))
+      .then((authedUser) => {
+        if (authedUser.role === 'Customer' && !getSavedDeliveryLocation()) {
+          navigate('/setup-location', { replace: true });
+        } else {
+          navigate(getRoleHome(authedUser.role), { replace: true });
+        }
+      })
       .catch((err: any) => {
         const msg = err?.response?.data?.message ?? err?.message ?? 'Unable to complete Google sign-in';
         toast.error("Google sign-in failed", { description: msg });
@@ -178,6 +186,17 @@ function OAuth2CallbackPage() {
   }, [completeOAuthLogin, location.search, navigate]);
 
   return <LoadingScreen />;
+}
+
+function SetupLocationPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  return (
+    <SetupLocation
+      userName={user?.name}
+      onComplete={() => navigate(getRoleHome(user?.role), { replace: true })}
+    />
+  );
 }
 
 function ForgotPasswordPage() {
@@ -551,6 +570,8 @@ function AppRoutes() {
 
         {/* Protected role-based routes */}
         <Route element={<RequireAuth />}>
+          <Route path="/setup-location" element={<SetupLocationPage />} />
+
           <Route element={<RequireRole role="Kitchen Staff" />}>
             <Route path="/kitchen" element={<KitchenLayout />} />
           </Route>

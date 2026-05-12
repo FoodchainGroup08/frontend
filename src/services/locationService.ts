@@ -178,27 +178,27 @@ export async function searchPlaces(query: string): Promise<PlaceSuggestion[]> {
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
   const mapsLoaded = await loadGoogleMaps();
 
-  if (mapsLoaded && window.google?.maps) {
-    return new Promise(resolve => {
-      try {
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode(
-          { location: { lat, lng } },
-          (results: any[] | null, status: string) => {
-            if (status === 'OK' && results?.[0]) {
-              resolve(results[0].formatted_address as string);
-            } else {
-              resolve('Current Location, Lagos');
-            }
-          }
-        );
-      } catch {
-        resolve('Current Location, Lagos');
-      }
-    });
+  if (!mapsLoaded || !window.google?.maps) {
+    throw new Error('Google Maps not available');
   }
 
-  return 'Current Location, Lagos';
+  return new Promise((resolve, reject) => {
+    try {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode(
+        { location: { lat, lng } },
+        (results: any[] | null, status: string) => {
+          if (status === 'OK' && results?.[0]) {
+            resolve(results[0].formatted_address as string);
+          } else {
+            reject(new Error(`Geocoding failed: ${status}`));
+          }
+        }
+      );
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
 
 // ─── Road Distance Matrix ──────────────────────────────────────────────────────
