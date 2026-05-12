@@ -229,7 +229,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                 <CardFooter className="flex flex-col gap-4">
                   <Button
                     type="submit"
-                    className="w-full transition-all hover:opacity-90 hover:shadow-lg"
+                    className="w-full mt-4 transition-all hover:opacity-90 hover:shadow-lg"
                     disabled={isLoading}
                     style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
                   >
