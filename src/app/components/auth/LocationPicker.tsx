@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation, Loader2, X, CheckCircle } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -31,6 +31,7 @@ export function LocationPicker({
   const [detectedAddress, setDetectedAddress] = useState<string | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,13 +43,16 @@ export function LocationPicker({
   }, [value]);
 
   // ── GPS detection on mount ──────────────────────────────────────────────────
-  useEffect(() => {
+  const detectCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
+      setLocationError('Your browser does not support current location detection.');
       setIsDemoMode(!isGoogleMapsAvailable());
       return;
     }
 
+    setLocationError('');
     setIsDetecting(true);
+    setShowBanner(false);
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -60,19 +64,28 @@ export function LocationPicker({
           setDetectedAddress(address);
           setShowBanner(true);
         } catch {
-          /* silent fail */
+          setLocationError('We could not read your current location. Please try again or enter it manually.');
         } finally {
           setIsDetecting(false);
           setIsDemoMode(!isGoogleMapsAvailable());
         }
       },
-      () => {
+      (error) => {
         setIsDetecting(false);
         setIsDemoMode(!isGoogleMapsAvailable());
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError('Location permission was denied. Allow location access, then try again.');
+          return;
+        }
+        setLocationError('We could not detect your current location. Please try again or enter it manually.');
       },
       { timeout: 8000, maximumAge: 120_000 }
     );
   }, []);
+
+  useEffect(() => {
+    detectCurrentLocation();
+  }, [detectCurrentLocation]);
 
   // ── Input change + debounced search ────────────────────────────────────────
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -274,6 +287,31 @@ export function LocationPicker({
         </div>
 
         {/* ── Suggestions dropdown ──────────────────────────────────────────── */}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={detectCurrentLocation}
+          disabled={isDetecting}
+          className="mt-2 h-9 w-full gap-2 border-[var(--foodchain-espresso)]/20"
+          style={{ color: 'var(--foodchain-espresso)' }}
+        >
+          {isDetecting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Navigation className="w-4 h-4" />
+          )}
+          {isDetecting ? 'Checking current location...' : 'Try current location again'}
+        </Button>
+
+        {locationError && !isDetecting && (
+          <p
+            className="mt-2 text-xs"
+            style={{ color: 'var(--foodchain-rust-red)' }}
+          >
+            {locationError}
+          </p>
+        )}
+
         {showSuggestions && suggestions.length > 0 && (
           <div
             ref={dropdownRef}

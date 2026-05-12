@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { LocationPicker } from './LocationPicker';
 import { saveDeliveryLocation } from '@/services/locationService';
-import { getGoogleOAuthStartUrl } from '@/services/api';
+import { postGoogleAuth } from '@/services/api';
 
 interface RegisterProps {
   onNavigateToLogin: () => void;
@@ -41,7 +41,7 @@ const GoogleIcon = () => (
 );
 
 export function Register({ onNavigateToLogin, onVerificationRequired }: RegisterProps) {
-  const { register } = useAuth();
+  const { register, completeOAuthLogin } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -101,9 +101,38 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
     onVerificationRequired(email.trim());
   };
 
-  const handleGoogleSignUp = () => {
-    window.location.href = getGoogleOAuthStartUrl();
-  };
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const init = () => {
+      window.google?.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: async (response: { credential: string }) => {
+          try {
+            const result = await postGoogleAuth(response.credential);
+            await completeOAuthLogin(result.accessToken, result.refreshToken);
+          } catch (err: any) {
+            toast.error('Google sign-in failed', {
+              description: err?.response?.data?.message ?? err?.message ?? 'Please try again.',
+            });
+          }
+        },
+      });
+      window.google?.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: googleBtnRef.current?.offsetWidth,
+      });
+    };
+
+    if (window.google?.accounts) {
+      init();
+    } else {
+      const script = document.querySelector<HTMLScriptElement>('script[src*="gsi/client"]');
+      script?.addEventListener('load', init, { once: true });
+      return () => script?.removeEventListener('load', init);
+    }
+  }, [completeOAuthLogin]);
 
   return (
     <div
@@ -246,16 +275,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                     </span>
                   </div>
 
-                  <Button
-                    type="button"
-                    onClick={handleGoogleSignUp}
-                    variant="outline"
-                    className="w-full border-[var(--foodchain-espresso)]/20 gap-2"
-                    style={{ color: 'var(--foodchain-espresso)' }}
-                  >
-                    <GoogleIcon />
-                    Continue with Google
-                  </Button>
+                  <div ref={googleBtnRef} className="w-full flex justify-center" />
 
                   <div className="text-center text-sm">
                     <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Already have an account? </span>

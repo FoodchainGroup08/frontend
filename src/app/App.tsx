@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
-import { getSavedDeliveryLocation } from "@/services/locationService";
 import { type OrderDetails } from "./components/customer/Checkout";
 import { Login } from "./components/auth/Login";
 import { Register } from "./components/auth/Register";
@@ -154,39 +153,6 @@ function VerifyEmailPage() {
   return <VerifyEmail token={token} email={email} onNavigateToLogin={() => navigate('/login')} />;
 }
 
-function OAuth2CallbackPage() {
-  const { completeOAuthLogin } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token') ?? undefined;
-
-    if (!accessToken) {
-      toast.error("Google sign-in failed", { description: "Missing access token from callback." });
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    completeOAuthLogin(accessToken, refreshToken)
-      .then((authedUser) => {
-        if (authedUser.role === 'Customer' && !getSavedDeliveryLocation()) {
-          navigate('/setup-location', { replace: true });
-        } else {
-          navigate(getRoleHome(authedUser.role), { replace: true });
-        }
-      })
-      .catch((err: any) => {
-        const msg = err?.response?.data?.message ?? err?.message ?? 'Unable to complete Google sign-in';
-        toast.error("Google sign-in failed", { description: msg });
-        navigate('/login', { replace: true });
-      });
-  }, [completeOAuthLogin, location.search, navigate]);
-
-  return <LoadingScreen />;
-}
 
 function SetupLocationPage() {
   const { user } = useAuth();
@@ -566,7 +532,6 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
         {/* Protected role-based routes */}
         <Route element={<RequireAuth />}>

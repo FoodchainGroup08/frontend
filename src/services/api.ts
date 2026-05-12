@@ -2,14 +2,12 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { computeRoadDistancesKm } from './locationService';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const TOKEN_KEY = 'foodchain_token';
 export const REFRESH_TOKEN_KEY = 'foodchain_refresh_token';
 
 export const apiClient = axios.create({ baseURL: BASE_URL });
 
-/** Same prefix as REST API (e.g. .../api/v1). Prod gateway routes /api/v1/** ; /api/oauth2/** is often not exposed. */
-export const getGoogleOAuthStartUrl = () => `${BASE_URL.replace(/\/$/, '')}/oauth2/authorization/google`;
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -528,7 +526,7 @@ function mapOrder(o: any): Order {
 export const getBranches = () =>
   withDemoFallback(
     () =>
-      apiClient.get<any>('/v1/branches').then((r) => {
+      apiClient.get<any>('/branches').then((r) => {
         const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
         return items.map(mapBranch);
       }),
@@ -545,13 +543,13 @@ export const getBranchesNearby = (lat: number, lng: number) =>
   );
 
 export const getBranchById = (id: string) =>
-  apiClient.get<any>(`/v1/branches/${id}`).then((r) => mapBranch(r.data));
+  apiClient.get<any>(`/branches/${id}`).then((r) => mapBranch(r.data));
 
 export const createBranch = (data: Partial<Branch>) =>
-  apiClient.post<any>('/v1/branches', data).then((r) => mapBranch(r.data));
+  apiClient.post<any>('/branches', data).then((r) => mapBranch(r.data));
 
 export const updateBranch = (id: string, data: Partial<Branch>) =>
-  apiClient.put<any>(`/v1/branches/${id}`, data).then((r) => mapBranch(r.data));
+  apiClient.put<any>(`/branches/${id}`, data).then((r) => mapBranch(r.data));
 
 // Backend uses separate /activate and /deactivate endpoints.
 // The frontend contract used PATCH /branches/:id/status with { isActive: boolean }.
@@ -565,7 +563,7 @@ export const patchBranchStatus = (id: string, isActive: boolean) =>
 // on ANY error (401 because branches require auth through gateway, 500 due to
 // gateway routing bug). In demo mode these are placeholder branches only.
 export const getBranchesPublic = (): Promise<Branch[]> =>
-  apiClient.get<any>('/v1/branches')
+  apiClient.get<any>('/branches')
     .then((r) => {
       const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
       return items.map(mapBranch);
@@ -574,7 +572,7 @@ export const getBranchesPublic = (): Promise<Branch[]> =>
 
 // ─── MENU ─────────────────────────────────────────────────────────────────────
 // All paths include /v1/ — the menu service uses that as an internal prefix.
-// Gateway base is /api so full URL becomes /api/v1/menu/...
+// Gateway base is /api so full URL becomes /api/menu/...
 // Branch menu endpoint returns FrontendMenuItemResponse (price/category/available)
 // which already matches MenuItem type — no remapping needed.
 // Admin write endpoints use MenuItemResponse (basePrice/categoryName/active) —
@@ -586,38 +584,38 @@ export const getMenuByBranch = (branchId: string) =>
   withDemoFallback(
     () =>
       apiClient
-        .get<any[]>(`/v1/menu/branch/${branchId}`)
+        .get<any[]>(`/menu/branch/${branchId}`)
         .then((r) => (r.data ?? []).map(mapMenuItem)),
     DEMO_MENU
   );
 
 // Admin: paginated full item list with optional categoryId / active filters.
 export const getAllMenuItems = (params?: { categoryId?: string; active?: boolean; page?: number; size?: number }) =>
-  apiClient.get<any>('/v1/menu/items', { params }).then((r) => {
+  apiClient.get<any>('/menu/items', { params }).then((r) => {
     const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
     return items.map(mapMenuItem);
   });
 
 export const getMenuItemById = (id: string) =>
-  apiClient.get<any>(`/v1/menu/items/${id}`).then((r) => mapMenuItem(r.data));
+  apiClient.get<any>(`/menu/items/${id}`).then((r) => mapMenuItem(r.data));
 
 // Returns CategoryResponse[] with id, name, displayOrder, active.
 // namesOnly=true returns plain string[] — used for display-only dropdowns.
 export const getCategories = (): Promise<string[]> =>
-  apiClient.get<any>('/v1/menu/categories', { params: { namesOnly: true } }).then((r) => {
+  apiClient.get<any>('/menu/categories', { params: { namesOnly: true } }).then((r) => {
     const data: any[] = Array.isArray(r.data) ? r.data : [];
     return data.map((c) => (typeof c === 'string' ? c : String(c.name ?? c)));
   });
 
 // Returns full CategoryResponse objects so admin can access category UUIDs.
 export const getCategoriesFull = () =>
-  apiClient.get<any>('/v1/menu/categories').then((r): Array<{ id: string; name: string; displayOrder: number; active: boolean }> =>
+  apiClient.get<any>('/menu/categories').then((r): Array<{ id: string; name: string; displayOrder: number; active: boolean }> =>
     Array.isArray(r.data) ? r.data : []
   );
 
 // Admin write — create/update send basePrice (not price) and categoryId (UUID, not name).
 export const createMenuItem = (data: { name: string; description?: string; categoryId: string; price: number; imageUrl?: string }) =>
-  apiClient.post<any>('/v1/menu/items', {
+  apiClient.post<any>('/menu/items', {
     name: data.name,
     description: data.description,
     categoryId: data.categoryId,
@@ -626,7 +624,7 @@ export const createMenuItem = (data: { name: string; description?: string; categ
   }).then((r) => mapMenuItem(r.data));
 
 export const updateMenuItem = (id: string, data: { name?: string; description?: string; categoryId?: string; price?: number; imageUrl?: string }) =>
-  apiClient.put<any>(`/v1/menu/items/${id}`, {
+  apiClient.put<any>(`/menu/items/${id}`, {
     name: data.name,
     description: data.description,
     categoryId: data.categoryId,
@@ -635,22 +633,22 @@ export const updateMenuItem = (id: string, data: { name?: string; description?: 
   }).then((r) => mapMenuItem(r.data));
 
 export const deleteMenuItem = (id: string) =>
-  apiClient.delete(`/v1/menu/items/${id}`).then((r) => r.data);
+  apiClient.delete(`/menu/items/${id}`).then((r) => r.data);
 
 export const activateMenuItem = (id: string) =>
-  apiClient.patch<any>(`/v1/menu/items/${id}/activate`).then((r) => mapMenuItem(r.data));
+  apiClient.patch<any>(`/menu/items/${id}/activate`).then((r) => mapMenuItem(r.data));
 
 export const deactivateMenuItem = (id: string) =>
-  apiClient.patch<any>(`/v1/menu/items/${id}/deactivate`).then((r) => mapMenuItem(r.data));
+  apiClient.patch<any>(`/menu/items/${id}/deactivate`).then((r) => mapMenuItem(r.data));
 
 export const toggleMenuItemAvailability = (id: string) =>
-  apiClient.patch<any>(`/v1/menu/items/${id}/toggle`).then((r) => mapMenuItem(r.data));
+  apiClient.patch<any>(`/menu/items/${id}/toggle`).then((r) => mapMenuItem(r.data));
 
 export const createCategory = (name: string, displayOrder?: number) =>
-  apiClient.post<any>('/v1/menu/categories', { name, displayOrder }).then((r) => r.data);
+  apiClient.post<any>('/menu/categories', { name, displayOrder }).then((r) => r.data);
 
 export const updateCategory = (id: string, data: { name?: string; displayOrder?: number }) =>
-  apiClient.put<any>(`/v1/menu/categories/${id}`, data).then((r) => r.data);
+  apiClient.put<any>(`/menu/categories/${id}`, data).then((r) => r.data);
 
 // ─── ORDERS (Customer) ────────────────────────────────────────────────────────
 
