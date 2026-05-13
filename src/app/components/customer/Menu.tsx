@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { Plus, Minus, Search } from "lucide-react";
+import { Plus, Minus, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-import { getMenuByBranch, type MenuItem } from "@/services/api";
+import { getMenuByBranch, getCategories, type MenuItem } from "@/services/api";
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -20,6 +19,15 @@ interface MenuProps {
   branchId: string;
 }
 
+const ITEMS_PER_PAGE = 9;
+
+function getPageNumbers(current: number, total: number): (number | '…')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, '…', total];
+  if (current >= total - 3) return [1, '…', total - 4, total - 3, total - 2, total - 1, total];
+  return [1, '…', current - 1, current, current + 1, '…', total];
+}
+
 export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,8 +35,14 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [categories, setCategories] = useState<string[]>(['All']);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const categories = ["All", "Mains", "Soups", "Grills", "Sides", "Drinks"];
+  useEffect(() => {
+    getCategories()
+      .then(cats => setCategories(['All', ...cats]))
+      .catch(() => { /* keep ["All"] */ });
+  }, []);
 
   const fetchMenu = async () => {
     setIsLoading(true);
@@ -48,12 +62,23 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
     if (branchId) fetchMenu();
   }, [branchId]);
 
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
+
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handleQuantityChange = (itemId: string, delta: number) => {
     const currentQty = quantities[itemId] || 0;
@@ -80,7 +105,7 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
             Menu
           </h1>
 
-          <div className="relative mb-6">
+          <div className="relative mb-5">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--foodchain-espresso)', opacity: 0.4 }} />
             <Input
               type="text"
@@ -92,20 +117,31 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
             />
           </div>
 
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap border border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
-              {categories.map(category => (
-                <TabsTrigger
+          {/* Category pills — custom scrollable row, no native scrollbar */}
+          <div
+            className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+          >
+            {categories.map(category => {
+              const active = selectedCategory === category;
+              return (
+                <button
                   key={category}
-                  value={category}
-                  className="data-[state=active]:bg-[var(--foodchain-golden-amber)] data-[state=active]:text-[var(--foodchain-charcoal)]"
-                  style={{ color: 'var(--foodchain-espresso)' }}
+                  onClick={() => setSelectedCategory(category)}
+                  className="flex-shrink-0 whitespace-nowrap rounded-full text-sm font-medium transition-all px-4 py-2"
+                  style={{
+                    backgroundColor: active ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-white)',
+                    color: active ? 'var(--foodchain-charcoal)' : 'var(--foodchain-espresso)',
+                    border: active ? '1.5px solid transparent' : '1.5px solid rgba(59,35,20,0.15)',
+                    fontWeight: active ? 600 : 400,
+                    boxShadow: active ? '0 2px 8px rgba(240,165,0,0.25)' : 'none',
+                  }}
                 >
                   {category}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {isLoading ? (
@@ -128,7 +164,7 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: 'rgba(59,35,20,0.08)' }}>
               <Search className="w-8 h-8" style={{ color: 'var(--foodchain-espresso)' }} />
             </div>
             <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
@@ -139,94 +175,163 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filteredItems.map((item) => {
-              const cartQty = getCartQuantity(item.id);
-              const selectedQty = quantities[item.id] || 0;
+          <>
+            {/* Results info */}
+            <p className="text-sm mb-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length} items
+            </p>
 
-              return (
-                <Card
-                  key={item.id}
-                  className="border-[var(--foodchain-espresso)]/10 flex flex-col overflow-hidden"
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {paginatedItems.map((item) => {
+                const cartQty = getCartQuantity(item.id);
+                const selectedQty = quantities[item.id] || 0;
+
+                return (
+                  <Card
+                    key={item.id}
+                    className="border-[var(--foodchain-espresso)]/10 flex flex-col overflow-hidden"
+                    style={{
+                      backgroundColor: 'var(--foodchain-white)',
+                      opacity: item.available ? 1 : 0.6
+                    }}
+                  >
+                    <div className="aspect-video w-full overflow-hidden bg-gray-100">
+                      <ImageWithFallback
+                        src={item.imageUrl || item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <CardTitle className="text-lg" style={{ color: 'var(--foodchain-espresso)' }}>
+                          {item.name}
+                        </CardTitle>
+                        {!item.available && (
+                          <Badge className="border-0 flex-shrink-0" style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' }}>
+                            Unavailable
+                          </Badge>
+                        )}
+                      </div>
+                      <CardDescription className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                        {item.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-end">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xl" style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
+                          ₦{item.price.toLocaleString()}
+                        </span>
+                        {cartQty > 0 && (
+                          <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
+                            {cartQty} in cart
+                          </Badge>
+                        )}
+                      </div>
+
+                      {item.available && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center border rounded-md" style={{ borderColor: 'rgba(59,35,20,0.2)' }}>
+                            <button
+                              onClick={() => handleQuantityChange(item.id, -1)}
+                              className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
+                              disabled={selectedQty === 0}
+                            >
+                              <Minus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
+                            </button>
+                            <span className="px-4 text-center min-w-[3rem]" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                              {selectedQty}
+                            </span>
+                            <button
+                              onClick={() => handleQuantityChange(item.id, 1)}
+                              className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
+                            >
+                              <Plus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
+                            </button>
+                          </div>
+                          <Button
+                            onClick={() => handleAddToCart(item)}
+                            disabled={selectedQty === 0}
+                            className="flex-1 transition-all hover:opacity-90"
+                            style={{
+                              backgroundColor: selectedQty > 0 ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
+                              color: selectedQty > 0 ? 'var(--foodchain-charcoal)' : 'var(--foodchain-warm-white)',
+                              opacity: selectedQty === 0 ? 0.5 : 1
+                            }}
+                          >
+                            Add to Cart
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center justify-center w-9 h-9 rounded-full transition-all"
                   style={{
-                    backgroundColor: 'var(--foodchain-white)',
-                    opacity: item.available ? 1 : 0.6
+                    backgroundColor: currentPage === 1 ? 'transparent' : 'var(--foodchain-white)',
+                    border: '1.5px solid rgba(59,35,20,0.15)',
+                    color: 'var(--foodchain-espresso)',
+                    opacity: currentPage === 1 ? 0.35 : 1,
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  <div className="aspect-video w-full overflow-hidden bg-gray-100">
-                    <ImageWithFallback
-                      src={item.imageUrl || item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <CardTitle className="text-lg" style={{ color: 'var(--foodchain-espresso)' }}>
-                        {item.name}
-                      </CardTitle>
-                      {!item.available && (
-                        <Badge className="border-0 flex-shrink-0" style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' }}>
-                          Unavailable
-                        </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
-                      {item.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col justify-end">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xl" style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
-                        ₦{item.price.toLocaleString()}
-                      </span>
-                      {cartQty > 0 && (
-                        <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
-                          {cartQty} in cart
-                        </Badge>
-                      )}
-                    </div>
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
 
-                    {item.available && (
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center border rounded-md" style={{ borderColor: 'var(--foodchain-espresso)', opacity: 0.2 }}>
-                          <button
-                            onClick={() => handleQuantityChange(item.id, -1)}
-                            className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
-                            disabled={selectedQty === 0}
-                          >
-                            <Minus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
-                          </button>
-                          <span className="px-4 text-center min-w-[3rem]" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                            {selectedQty}
-                          </span>
-                          <button
-                            onClick={() => handleQuantityChange(item.id, 1)}
-                            className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
-                          >
-                            <Plus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
-                          </button>
-                        </div>
-                        <Button
-                          onClick={() => handleAddToCart(item)}
-                          disabled={selectedQty === 0}
-                          className="flex-1 transition-all hover:opacity-90"
-                          style={{
-                            backgroundColor: selectedQty > 0 ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
-                            color: selectedQty > 0 ? 'var(--foodchain-charcoal)' : 'var(--foodchain-warm-white)',
-                            opacity: selectedQty === 0 ? 0.5 : 1
-                          }}
-                        >
-                          Add to Cart
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                {getPageNumbers(currentPage, totalPages).map((page, idx) =>
+                  page === '…' ? (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="w-9 h-9 flex items-center justify-center text-sm"
+                      style={{ color: 'var(--foodchain-espresso)', opacity: 0.4 }}
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page as number)}
+                      className="w-9 h-9 rounded-full text-sm font-medium transition-all"
+                      style={{
+                        backgroundColor: currentPage === page ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-white)',
+                        color: currentPage === page ? 'var(--foodchain-charcoal)' : 'var(--foodchain-espresso)',
+                        border: currentPage === page ? '1.5px solid transparent' : '1.5px solid rgba(59,35,20,0.15)',
+                        fontWeight: currentPage === page ? 600 : 400,
+                        boxShadow: currentPage === page ? '0 2px 8px rgba(240,165,0,0.25)' : 'none',
+                      }}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center justify-center w-9 h-9 rounded-full transition-all"
+                  style={{
+                    backgroundColor: currentPage === totalPages ? 'transparent' : 'var(--foodchain-white)',
+                    border: '1.5px solid rgba(59,35,20,0.15)',
+                    color: 'var(--foodchain-espresso)',
+                    opacity: currentPage === totalPages ? 0.35 : 1,
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

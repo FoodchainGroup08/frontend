@@ -16,23 +16,32 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (res) => res,
-  (error) => {
-    if (error.response?.status === 401) {
-      const storedToken = localStorage.getItem(TOKEN_KEY);
-
-      if (storedToken) {
-        let tokenExpiredOrInvalid = true;
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+      if (refreshToken) {
+        originalRequest._retry = true;
         try {
-          const { exp } = jwtDecode<{ exp: number }>(storedToken);
-          tokenExpiredOrInvalid = Date.now() >= exp * 1000;
+          // Use raw axios (not apiClient) to avoid interceptor loop
+          const r = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
+          const newAccessToken = r.data.accessToken as string;
+          const newRefreshToken = r.data.refreshToken as string | undefined;
+          localStorage.setItem(TOKEN_KEY, newAccessToken);
+          if (newRefreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+          originalRequest.headers = {
+            ...originalRequest.headers,
+            Authorization: `Bearer ${newAccessToken}`,
+          };
+          return apiClient(originalRequest);
         } catch {
-          // Non-JWT or corrupted string (e.g. stored "undefined") → treat as invalid
-        }
-        if (tokenExpiredOrInvalid) {
           localStorage.clear();
           window.location.href = '/login';
+          return Promise.reject(error);
         }
       }
+      localStorage.clear();
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

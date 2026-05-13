@@ -20,6 +20,8 @@ interface TrackedOrder {
   branchName: string;
   estimatedTime: string;
   placedAt: string;
+  deliveryAddress?: string;
+  orderType?: string;
 }
 
 interface OrderTrackerProps {
@@ -54,6 +56,8 @@ function mapApiOrder(order: Order): TrackedOrder {
     branchName: order.branchName,
     estimatedTime: order.estimatedTime ?? '45 mins',
     placedAt: order.placedAt,
+    deliveryAddress: order.deliveryAddress,
+    orderType: order.orderType,
   };
 }
 
@@ -276,7 +280,7 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
               })}
             </div>
 
-            <div className="p-4 rounded-md" style={{ backgroundColor: 'var(--foodchain-golden-amber)', opacity: 0.15 }}>
+            <div className="p-4 rounded-md" style={{ backgroundColor: 'rgba(240, 165, 0, 0.12)' }}>
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
                 <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
@@ -296,13 +300,35 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm mb-2" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
                 Branch
               </p>
               <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
                 {activeOrder.branchName}
               </p>
             </div>
+
+            {activeOrder.orderType && (
+              <div>
+                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                  Order Type
+                </p>
+                <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600, textTransform: 'capitalize' }}>
+                  {activeOrder.orderType.replace('-', ' ')}
+                </p>
+              </div>
+            )}
+
+            {activeOrder.deliveryAddress && (
+              <div>
+                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                  Delivery Address
+                </p>
+                <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                  {activeOrder.deliveryAddress}
+                </p>
+              </div>
+            )}
 
             <div>
               <p className="text-sm mb-2" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
@@ -313,7 +339,7 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
                   <div key={item.id} className="flex items-center gap-2">
                     <ChevronRight className="w-4 h-4" style={{ color: 'var(--foodchain-golden-amber)' }} />
                     <span style={{ color: 'var(--foodchain-espresso)' }}>
-                      {item.name} × {item.quantity}
+                      {item.name || 'Menu item'} × {item.quantity}
                     </span>
                   </div>
                 ))}

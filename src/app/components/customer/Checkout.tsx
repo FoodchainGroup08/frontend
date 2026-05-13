@@ -35,6 +35,7 @@ export interface OrderDetails {
   customerName: string;
   paymentMethod: string;
   specialInstructions: string;
+  total: number;
 }
 
 export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }: CheckoutProps) {
@@ -108,6 +109,7 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
         deliveryAddress,
         paymentMethod,
         specialInstructions,
+        total,
       };
       onPlaceOrder(formData, order);
       toast.success("Order placed successfully!", { description: `Order #${order.id}` });

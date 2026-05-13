@@ -55,7 +55,7 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
           <CardContent className="space-y-6">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-md" style={{ backgroundColor: 'var(--foodchain-golden-amber)', opacity: 0.1 }}>
+                <div className="p-2 rounded-md" style={{ backgroundColor: 'rgba(240, 165, 0, 0.12)' }}>
                   <Clock className="w-5 h-5" style={{ color: 'var(--foodchain-golden-amber)' }} />
                 </div>
                 <div>
@@ -69,7 +69,7 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-md" style={{ backgroundColor: 'var(--foodchain-golden-amber)', opacity: 0.1 }}>
+                <div className="p-2 rounded-md" style={{ backgroundColor: 'rgba(240, 165, 0, 0.12)' }}>
                   <MapPin className="w-5 h-5" style={{ color: 'var(--foodchain-golden-amber)' }} />
                 </div>
                 <div>

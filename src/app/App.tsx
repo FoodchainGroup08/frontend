@@ -266,8 +266,9 @@ function CustomerLayout() {
   const handlePlaceOrder = (formData: OrderDetails, apiOrder: ApiOrder) => {
     setCurrentOrder({
       id: apiOrder.id,
-      items: apiOrder.items,
-      total: apiOrder.total,
+      // Use cart items for names/prices — the API response may not return them correctly.
+      items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+      total: formData.total,
       deliveryAddress: formData.deliveryAddress,
       phoneNumber: formData.phoneNumber,
       customerName: formData.customerName,
