@@ -5,8 +5,8 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-import { getOrderHistory, type Order } from "@/services/api";
-import { isNetworkError, DEMO_ORDER_HISTORY } from "@/utils/demoData";
+import { getOrderHistory, getOrderById, type Order } from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface HistoricalOrder {
   id: string;
@@ -45,6 +45,7 @@ function mapApiOrder(order: Order): HistoricalOrder {
 }
 
 export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps) {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<HistoricalOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,15 +54,14 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
     setIsLoading(true);
     setError("");
     try {
-      const data = await getOrderHistory();
-      setOrders(data.map(mapApiOrder));
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setOrders(DEMO_ORDER_HISTORY.map(mapApiOrder));
-      } else {
-        setError("Failed to load order history");
-        toast.error("Failed to load order history");
-      }
+      // /orders/history returns a summary page (no items, no branchName).
+      // Fetch full detail for each so the history cards can display items and branch.
+      const summaries = await getOrderHistory(user?.id);
+      const full = await Promise.all(summaries.map(s => getOrderById(s.id)));
+      setOrders(full.map(mapApiOrder));
+    } catch {
+      setError("Failed to load order history");
+      toast.error("Failed to load order history");
     } finally {
       setIsLoading(false);
     }

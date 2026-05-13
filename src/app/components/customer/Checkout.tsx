@@ -59,9 +59,15 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
 
     const payload = {
       branchId,
+      branchName,
       orderType: "delivery" as const,
       deliveryAddress,
-      items: cart.map(item => ({ menuItemId: item.id, quantity: item.quantity })),
+      items: cart.map(item => ({
+        menuItemId: item.id,
+        menuItemName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      })),
       customerName,
       phoneNumber,
       paymentMethod,
