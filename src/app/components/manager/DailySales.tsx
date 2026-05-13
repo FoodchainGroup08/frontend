@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calendar as CalendarIcon, DollarSign, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -9,6 +9,22 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { toast } from "sonner";
 import { getDailySales, type HourlySales } from "@/services/api";
 import { isNetworkError, DEMO_HOURLY_SALES } from "@/utils/demoData";
+
+function DatePicker({ date, onChange }: { date: Date; onChange: (d: Date) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="border-[var(--foodchain-espresso)]/20 gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+          <CalendarIcon className="w-4 h-4" />
+          {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="end">
+        <Calendar mode="single" selected={date} onSelect={(d) => d && onChange(d)} initialFocus />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export function DailySales() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -39,9 +55,7 @@ export function DailySales() {
     fetchData(selectedDate);
   }, [selectedDate]);
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) setSelectedDate(date);
-  };
+  const handleDateChange = useCallback((date: Date) => setSelectedDate(date), []);
 
   const totalRevenue = hourlyData.reduce((sum, item) => sum + item.revenue, 0);
   const totalOrders = hourlyData.reduce((sum, item) => sum + item.orders, 0);
@@ -59,28 +73,6 @@ export function DailySales() {
   const afternoonLabel = hourlyData.length > 0 ? `${hourlyData[third]?.hour ?? ''} - ${hourlyData[third * 2 - 1]?.hour ?? ''}` : '—';
   const eveningLabel = hourlyData.length > 0 ? `${hourlyData[third * 2]?.hour ?? ''} - ${hourlyData[hourlyData.length - 1]?.hour ?? ''}` : '—';
 
-  const datePickerButton = (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="border-[var(--foodchain-espresso)]/20 gap-2"
-          style={{ color: 'var(--foodchain-espresso)' }}
-        >
-          <CalendarIcon className="w-4 h-4" />
-          {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="end">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={handleDateChange}
-          initialFocus
-        />
-      </PopoverContent>
-    </Popover>
-  );
 
   if (isLoading) {
     return (
@@ -91,7 +83,7 @@ export function DailySales() {
               <Skeleton className="h-10 w-48 mb-2" />
               <Skeleton className="h-5 w-64" />
             </div>
-            {datePickerButton}
+            <DatePicker date={selectedDate} onChange={handleDateChange} />
           </div>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
             <Skeleton className="h-28 w-full rounded-lg" />
@@ -133,7 +125,7 @@ export function DailySales() {
             </p>
           </div>
 
-          {datePickerButton}
+          <DatePicker date={selectedDate} onChange={handleDateChange} />
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">

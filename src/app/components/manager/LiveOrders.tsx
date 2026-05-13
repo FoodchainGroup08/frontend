@@ -14,10 +14,12 @@ interface LiveOrder {
   id: string;
   status: 'received' | 'preparing' | 'ready' | 'out-for-delivery';
   items: Array<{ id: string; name: string; quantity: number }>;
+  itemCount?: number;
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   tableNumber?: string;
   receivedAt: string;
   customerName?: string;
+  total?: number;
 }
 
 function mapOrderStatus(status: string): LiveOrder['status'] {
@@ -32,10 +34,12 @@ function mapApiOrder(o: Order): LiveOrder {
     id: o.id,
     status: mapOrderStatus(o.status),
     items: o.items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity })),
+    itemCount: o.itemCount,
     orderType: o.orderType,
-    tableNumber: o.tableNumber,
+    tableNumber: o.tableNumber ?? undefined,
     receivedAt: o.placedAt,
-    customerName: o.customerName,
+    customerName: o.customerName || undefined,
+    total: o.total,
   };
 }
 
@@ -140,14 +144,25 @@ export function LiveOrders() {
         </CardHeader>
         <CardContent>
           <div className="space-y-1">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex items-center gap-2 text-sm">
-                <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
-                <span style={{ color: 'var(--foodchain-espresso)' }}>
-                  {item.quantity}× {item.name}
-                </span>
-              </div>
-            ))}
+            {order.items.length > 0
+              ? order.items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2 text-sm">
+                    <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
+                    <span style={{ color: 'var(--foodchain-espresso)' }}>
+                      {item.quantity}× {item.name}
+                    </span>
+                  </div>
+                ))
+              : (
+                <div className="flex items-center gap-2 text-sm">
+                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
+                  <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                    {order.itemCount ?? '—'} {(order.itemCount ?? 0) === 1 ? 'item' : 'items'}
+                    {order.total ? ` · ₦${order.total.toLocaleString()}` : ''}
+                  </span>
+                </div>
+              )
+            }
           </div>
         </CardContent>
       </Card>
