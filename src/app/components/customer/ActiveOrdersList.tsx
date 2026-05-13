@@ -1,0 +1,167 @@
+import { useEffect, useState } from "react";
+import { Package, ChevronRight, ArrowLeft, Clock } from "lucide-react";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
+import { toast } from "sonner";
+import { getActiveOrders, type Order, type OrderStatus } from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
+
+interface ActiveOrdersListProps {
+  onSelectOrder: (orderId: string) => void;
+  onGoBack: () => void;
+}
+
+function statusLabel(s: OrderStatus): string {
+  switch (s) {
+    case 'RECEIVED':  return 'Confirmed';
+    case 'PREPARING': return 'Preparing';
+    case 'READY':     return 'Ready for Pickup';
+    case 'PICKED_UP': return 'Out for Delivery';
+    case 'SERVED':    return 'Delivered';
+    default:          return s;
+  }
+}
+
+function statusStyle(s: OrderStatus): React.CSSProperties {
+  switch (s) {
+    case 'RECEIVED':  return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
+    case 'PREPARING': return { backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' };
+    case 'READY':     return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
+    case 'PICKED_UP': return { backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' };
+    case 'SERVED':    return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
+    default:          return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
+  }
+}
+
+export function ActiveOrdersList({ onSelectOrder, onGoBack }: ActiveOrdersListProps) {
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchOrders = () => {
+    setIsLoading(true);
+    setError('');
+    getActiveOrders()
+      .then(all => {
+        // If the backend returns customerId, scope to the current user.
+        // Otherwise trust the API is already scoped via JWT.
+        const mine = user?.id
+          ? all.filter(o => !o.customerId || o.customerId === user.id)
+          : all;
+        setOrders(mine);
+      })
+      .catch(() => {
+        setError('Failed to load active orders');
+        toast.error('Failed to load active orders');
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => { fetchOrders(); }, []);
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Button
+            onClick={onGoBack}
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+            style={{ color: 'var(--foodchain-espresso)' }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+            Track Orders
+          </h1>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-lg" />)}
+          </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
+            <Button
+              onClick={fetchOrders}
+              variant="outline"
+              className="border-[var(--foodchain-espresso)]/20"
+              style={{ color: 'var(--foodchain-espresso)' }}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : orders.length === 0 ? (
+          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+            <CardContent className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'rgba(59,35,20,0.08)' }}>
+                <Package className="w-10 h-10" style={{ color: 'var(--foodchain-espresso)' }} />
+              </div>
+              <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                No Active Orders
+              </h3>
+              <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                You don't have any orders in progress right now.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {orders.map(order => {
+              const items = order.items ?? [];
+              const visibleItems = items.slice(0, 2).map(i => i.name || 'Item').join(', ');
+              const extra = Math.max(0, items.length - 2);
+              const placedTime = new Date(order.placedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+              return (
+                <Card
+                  key={order.id}
+                  className="cursor-pointer transition-all hover:shadow-md border-[var(--foodchain-espresso)]/10"
+                  onClick={() => onSelectOrder(order.id)}
+                  style={{ backgroundColor: 'var(--foodchain-white)' }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className="text-xs font-mono" style={{ color: 'var(--foodchain-espresso)', opacity: 0.45 }}>
+                            #{(order.id ?? '').slice(-8).toUpperCase() || '—'}
+                          </span>
+                          <Badge className="border-0 text-xs" style={statusStyle(order.status)}>
+                            {statusLabel(order.status)}
+                          </Badge>
+                        </div>
+                        <p className="text-base font-semibold" style={{ color: 'var(--foodchain-espresso)' }}>
+                          {order.branchName}
+                        </p>
+                        <p className="text-sm truncate mt-0.5" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                          {visibleItems}{extra > 0 ? ` & ${extra} more` : ''}
+                        </p>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <span className="text-sm font-semibold" style={{ color: 'var(--foodchain-golden-amber)' }}>
+                            ₦{order.total.toLocaleString()}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.45 }}>
+                            <Clock className="w-3 h-3" />
+                            {placedTime}
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--foodchain-espresso)', opacity: 0.3 }} />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

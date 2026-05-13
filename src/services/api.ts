@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const TOKEN_KEY = 'foodchain_token';
@@ -109,6 +108,7 @@ export interface Order {
   orderType: 'delivery' | 'dine-in' | 'takeaway';
   tableNumber?: string;
   deliveryAddress?: string;
+  customerId?: string;
   customerName: string;
   phoneNumber?: string;
   specialInstructions?: string;
@@ -392,26 +392,27 @@ function normaliseOrderStatus(raw: string): OrderStatus {
 function mapOrderItem(i: any): OrderItem {
   return {
     id: i.id ?? i.menuItemId ?? '',
-    name: i.name ?? i.menuItemName ?? '',
-    price: i.price ?? i.unitPrice ?? 0,
+    name: i.name ?? i.menuItemName ?? i.itemName ?? i.productName ?? i.menuItem?.name ?? '',
+    price: i.price ?? i.unitPrice ?? i.basePrice ?? 0,
     quantity: i.quantity ?? 1,
   };
 }
 
 function mapOrder(o: any): Order {
   return {
-    id: o.id,
+    id: o.id ?? o.orderId ?? '',
     status: normaliseOrderStatus(o.status),
     items: (o.items ?? []).map(mapOrderItem),
     itemCount: o.itemCount,
     subtotal: o.subtotal ?? o.totalAmount ?? 0,
     deliveryFee: o.deliveryFee ?? 0,
     total: o.total ?? o.totalAmount ?? 0,
-    branchId: o.branchId ?? '',
-    branchName: o.branchName ?? '',
+    branchId: o.branchId ?? o.branch?.id ?? '',
+    branchName: o.branchName ?? o.branch?.name ?? o.branchDetails?.name ?? '',
     orderType: normaliseOrderType(o.orderType),
     tableNumber: o.tableNumber,
     deliveryAddress: o.deliveryAddress,
+    customerId: o.customerId ?? o.userId ?? o.customer?.id,
     customerName: o.customerName ?? '',
     phoneNumber: o.phoneNumber,
     specialInstructions: o.specialInstructions,
@@ -558,14 +559,14 @@ export const deleteMenuItemImage = (id: string) =>
 export const placeOrder = (payload: PlaceOrderPayload) =>
   apiClient.post<any>('/orders', payload).then(r => mapOrder(r.data));
 
-// Backend returns Page<OrderListResponse> (backend bug B7) — extract first item.
-export const getActiveOrder = (): Promise<Order | null> =>
+export const getActiveOrders = (): Promise<Order[]> =>
   apiClient.get<any>('/orders/active').then(r => {
     const data = r.data;
-    if (data?.content && Array.isArray(data.content)) {
-      return data.content.length > 0 ? mapOrder(data.content[0]) : null;
-    }
-    return data ? mapOrder(data) : null;
+    let orders: Order[];
+    if (data?.content && Array.isArray(data.content)) orders = data.content.map(mapOrder);
+    else if (Array.isArray(data)) orders = data.map(mapOrder);
+    else orders = data ? [mapOrder(data)] : [];
+    return orders.filter(o => !o.id.startsWith('demo_'));
   });
 
 export const getOrderHistory = (): Promise<Order[]> =>

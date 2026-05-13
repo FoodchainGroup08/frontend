@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { placeOrder, type Order } from "@/services/api";
 import { LocationPicker } from "../auth/LocationPicker";
 import { getSavedDeliveryLocation, saveDeliveryLocation } from "@/services/locationService";
-import { isNetworkError, saveDemoActiveOrder } from "@/utils/demoData";
 import { useAuth } from "@/context/AuthContext";
 
 interface CartItem {
@@ -35,6 +34,8 @@ export interface OrderDetails {
   customerName: string;
   paymentMethod: string;
   specialInstructions: string;
+  subtotal: number;
+  deliveryFee: number;
   total: number;
 }
 
@@ -68,37 +69,7 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
     };
 
     try {
-      let order: Order;
-
-      try {
-        order = await placeOrder(payload);
-      } catch (apiErr: any) {
-        if (isNetworkError(apiErr)) {
-          // Demo fallback — create an in-memory order
-          order = {
-            id: `demo_order_${Date.now()}`,
-            status: "RECEIVED",
-            items: cart.map(item => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })),
-            subtotal,
-            deliveryFee,
-            total,
-            branchId,
-            branchName,
-            orderType: "delivery",
-            deliveryAddress,
-            customerName,
-            phoneNumber,
-            paymentMethod,
-            specialInstructions,
-            estimatedTime: "45 mins",
-            placedAt: new Date().toISOString(),
-          };
-          // Persist so OrderTracker can pick it up
-          saveDemoActiveOrder(order);
-        } else {
-          throw apiErr;
-        }
-      }
+      const order = await placeOrder(payload);
 
       // Persist the address for future orders
       saveDeliveryLocation(deliveryAddress);
@@ -109,6 +80,8 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
         deliveryAddress,
         paymentMethod,
         specialInstructions,
+        subtotal,
+        deliveryFee,
         total,
       };
       onPlaceOrder(formData, order);

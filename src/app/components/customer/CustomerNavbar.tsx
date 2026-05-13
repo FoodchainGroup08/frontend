@@ -51,13 +51,13 @@ export function CustomerNavbar({
             </button>
 
             <button
-              onClick={() => onNavigate('order-tracker')}
+              onClick={() => onNavigate('active-orders')}
               className={`px-3 py-2 rounded-md text-sm transition-colors hidden sm:block ${
-                currentScreen === 'order-tracker' ? 'opacity-100' : 'opacity-70 hover:opacity-100'
+                currentScreen === 'active-orders' || currentScreen === 'order-tracker' ? 'opacity-100' : 'opacity-70 hover:opacity-100'
               }`}
               style={{ color: 'var(--foodchain-warm-white)' }}
             >
-              Track Order
+              Track Orders
             </button>
 
             <button

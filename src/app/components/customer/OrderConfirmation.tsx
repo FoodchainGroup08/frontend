@@ -12,6 +12,8 @@ interface Order {
     price: number;
     quantity: number;
   }>;
+  subtotal: number;
+  deliveryFee: number;
   total: number;
   deliveryAddress: string;
   phoneNumber: string;
@@ -145,6 +147,19 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Subtotal</span>
+                <span style={{ color: 'var(--foodchain-espresso)' }}>₦{order.subtotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Delivery Fee</span>
+                <span style={{ color: 'var(--foodchain-espresso)' }}>₦{order.deliveryFee.toLocaleString()}</span>
               </div>
             </div>
 

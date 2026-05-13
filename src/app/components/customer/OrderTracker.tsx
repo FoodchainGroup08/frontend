@@ -6,9 +6,8 @@ import { Progress } from "../ui/progress";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-import { getActiveOrder, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
+import { getOrderById, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
 import { useOrderTracker } from "@/hooks/useOrderTracker";
-import { isNetworkError, getDemoActiveOrder } from "@/utils/demoData";
 
 type LocalStatus = 'confirmed' | 'preparing' | 'ready' | 'out-for-delivery' | 'delivered';
 
@@ -25,6 +24,7 @@ interface TrackedOrder {
 }
 
 interface OrderTrackerProps {
+  orderId: string;
   onGoBack?: () => void;
 }
 
@@ -61,7 +61,7 @@ function mapApiOrder(order: Order): TrackedOrder {
   };
 }
 
-export function OrderTracker({ onGoBack }: OrderTrackerProps) {
+export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
   const [activeOrder, setActiveOrder] = useState<TrackedOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -71,24 +71,19 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
     setIsLoading(true);
     setError("");
     try {
-      const order = await getActiveOrder();
-      setActiveOrder(order ? mapApiOrder(order) : null);
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        const demoOrder = getDemoActiveOrder();
-        setActiveOrder(demoOrder ? mapApiOrder(demoOrder) : null);
-      } else {
-        setError("Failed to load order");
-        toast.error("Failed to load active order");
-      }
+      const order = await getOrderById(orderId);
+      setActiveOrder(mapApiOrder(order));
+    } catch {
+      setError("Failed to load order");
+      toast.error("Failed to load order");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrder();
-  }, []);
+    if (orderId) fetchOrder();
+  }, [orderId]);
 
   useEffect(() => {
     if (activeOrder) {
@@ -339,7 +334,7 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
                   <div key={item.id} className="flex items-center gap-2">
                     <ChevronRight className="w-4 h-4" style={{ color: 'var(--foodchain-golden-amber)' }} />
                     <span style={{ color: 'var(--foodchain-espresso)' }}>
-                      {item.name || 'Menu item'} × {item.quantity}
+                      {item.name || 'Unknown item'} × {item.quantity}
                     </span>
                   </div>
                 ))}

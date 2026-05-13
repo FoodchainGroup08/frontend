@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getMe, postLogin, postLogout, postRegister, updateProfile, TOKEN_KEY, REFRESH_TOKEN_KEY, type User } from '@/services/api';
+import { jwtDecode } from 'jwt-decode';
+import { getMe, postLogin, postLogout, postRegister, postRefreshToken, updateProfile, TOKEN_KEY, REFRESH_TOKEN_KEY, type User } from '@/services/api';
 
 interface AuthContextValue {
   user: User | null;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Bootstrap: load stored token and hydrate user
   useEffect(() => {
     const stored = localStorage.getItem(TOKEN_KEY);
     const storedUser = localStorage.getItem('foodchain_user');
@@ -38,16 +40,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch((error: any) => {
         const status: number | undefined = error.response?.status;
-        const isTransient =
-          status == null ||
-          (status >= 500 && status <= 599);
+        const isTransient = status == null || (status >= 500 && status <= 599);
 
         if (isTransient && storedUser) {
           try {
             setUser(JSON.parse(storedUser));
             return;
           } catch {
-            // Fall through and clear the broken local cache.
+            // fall through and clear broken cache
           }
         }
 
@@ -59,9 +59,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
+  // Proactive token refresh — fires 1 minute before the access token expires.
+  // Creates a self-renewing cycle: new token → new timer → new token → ...
+  // Keeps users logged in as long as their refresh token is valid, even when idle.
+  useEffect(() => {
+    if (!token) return;
+    let timerId: ReturnType<typeof setTimeout>;
+    try {
+      const { exp } = jwtDecode<{ exp: number }>(token);
+      const refreshAt = exp * 1000 - Date.now() - 60_000;
+      if (refreshAt <= 0) return; // already near expiry — reactive 401 interceptor covers it
+      timerId = setTimeout(async () => {
+        const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+        if (!storedRefresh) return;
+        try {
+          const r = await postRefreshToken(storedRefresh);
+          localStorage.setItem(TOKEN_KEY, r.accessToken);
+          if (r.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, r.refreshToken);
+          setToken(r.accessToken);
+          if (r.user) setUser(r.user);
+        } catch {
+          // Proactive refresh failed — the 401 interceptor in apiClient will handle the next request
+        }
+      }, refreshAt);
+    } catch {
+      // Non-JWT or malformed token — skip
+    }
+    return () => clearTimeout(timerId);
+  }, [token]);
+
   const login = async (email: string, password: string) => {
     const resp = await postLogin(email, password);
-    const newToken = resp.token ?? resp.accessToken ?? '';
+    const newToken = resp.token ?? '';
     const newUser = resp.user;
 
     localStorage.setItem(TOKEN_KEY, newToken);
@@ -122,9 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const completeOAuthLogin = async (accessToken: string, refreshToken?: string): Promise<User> => {
     localStorage.setItem(TOKEN_KEY, accessToken);
-    if (refreshToken) {
-      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    }
+    if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
     setToken(accessToken);
 
     const me = await getMe();

@@ -15,6 +15,7 @@ import { Menu } from "./components/customer/Menu";
 import { Cart } from "./components/customer/Cart";
 import { Checkout } from "./components/customer/Checkout";
 import { OrderConfirmation } from "./components/customer/OrderConfirmation";
+import { ActiveOrdersList } from "./components/customer/ActiveOrdersList";
 import { OrderTracker } from "./components/customer/OrderTracker";
 import { OrderHistory } from "./components/customer/OrderHistory";
 import { OrderDetailModal } from "./components/customer/OrderDetailModal";
@@ -51,6 +52,8 @@ interface CartItem {
 type ConfirmationOrder = {
   id: string;
   items: Array<{ id: string; name: string; price: number; quantity: number }>;
+  subtotal: number;
+  deliveryFee: number;
   total: number;
   deliveryAddress: string;
   phoneNumber: string;
@@ -201,6 +204,7 @@ function CustomerLayout() {
   const [selectedBranch, setSelectedBranch] = useState<ApiBranch | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentOrder, setCurrentOrder] = useState<ConfirmationOrder | null>(null);
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
 
@@ -212,6 +216,7 @@ function CustomerLayout() {
     '/cart': 'cart',
     '/checkout': 'checkout',
     '/order-confirmation': 'order-confirmation',
+    '/active-orders': 'active-orders',
     '/order-tracker': 'order-tracker',
     '/order-history': 'order-history',
     '/profile': 'profile',
@@ -223,6 +228,7 @@ function CustomerLayout() {
     'cart': '/cart',
     'checkout': '/checkout',
     'order-confirmation': '/order-confirmation',
+    'active-orders': '/active-orders',
     'order-tracker': '/order-tracker',
     'order-history': '/order-history',
     'profile': '/profile',
@@ -268,6 +274,8 @@ function CustomerLayout() {
       id: apiOrder.id,
       // Use cart items for names/prices — the API response may not return them correctly.
       items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+      subtotal: formData.subtotal,
+      deliveryFee: formData.deliveryFee,
       total: formData.total,
       deliveryAddress: formData.deliveryAddress,
       phoneNumber: formData.phoneNumber,
@@ -276,6 +284,7 @@ function CustomerLayout() {
       branchName: selectedBranch?.name ?? '',
       estimatedTime: apiOrder.estimatedTime ?? '45 mins',
     });
+    setTrackingOrderId(apiOrder.id);
     setCart([]);
     navigate('/order-confirmation');
   };
@@ -343,8 +352,21 @@ function CustomerLayout() {
             onBackToMenu={() => navigate('/menu')}
           />
         );
+      case 'active-orders':
+        return (
+          <ActiveOrdersList
+            onSelectOrder={(id) => { setTrackingOrderId(id); navigate('/order-tracker'); }}
+            onGoBack={() => navigate('/menu')}
+          />
+        );
       case 'order-tracker':
-        return <OrderTracker onGoBack={() => navigate('/menu')} />;
+        if (!trackingOrderId) return <Navigate to="/active-orders" replace />;
+        return (
+          <OrderTracker
+            orderId={trackingOrderId}
+            onGoBack={() => navigate('/active-orders')}
+          />
+        );
       case 'order-history':
         return <OrderHistory onViewDetails={handleViewOrderDetails} onBrowseMenu={() => navigate('/menu')} />;
       case 'profile':
