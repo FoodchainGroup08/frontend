@@ -210,6 +210,39 @@ export interface SystemUser {
   branchId?: string;
 }
 
+// ─── AI Food Suggestions ──────────────────────────────────────────────────────
+
+export interface FoodSuggestionRequest {
+  branchId: string;
+  branchName: string;
+  budget?: number;
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert';
+  appetite?: 'light' | 'heavy';
+  dietaryPreferences?: string[];
+  peopleCount?: number;
+  fulfillmentType?: 'pickup' | 'delivery' | 'dine-in';
+  limit?: number;
+}
+
+export interface FoodSuggestionItem {
+  menuItemId: string;
+  menuItemName: string;
+  price: number;
+  reason: string;
+  branchId: string;
+  branchName: string;
+  estimatedTotalCost: number;
+  optionalAddOns: string[];
+}
+
+export interface FoodSuggestionResponse {
+  message: string;
+  readyForSuggestions: boolean;
+  questions: string[];
+  suggestions: FoodSuggestionItem[];
+  estimatedTotalCost: number;
+}
+
 export interface WsOrderUpdate {
   orderId: string;
   branchId: string;
@@ -534,8 +567,8 @@ export const createCategory = (name: string, displayOrder?: number) =>
 export const updateCategory = (id: string, data: { name?: string; displayOrder?: number }) =>
   apiClient.put<any>(`/menu/categories/${id}`, data).then((r) => r.data);
 
-export const getMenuSuggestions = (params?: { preferences?: string[]; limit?: number }) =>
-  apiClient.post<any>('/menu/suggestions', params ?? {}).then((r) => (r.data ?? []).map(mapMenuItem));
+export const getFoodSuggestions = (request: FoodSuggestionRequest): Promise<FoodSuggestionResponse> =>
+  apiClient.post<FoodSuggestionResponse>('/menu/suggestions', request).then((r) => r.data);
 
 export const uploadMenuItemImage = async (id: string, file: File) => {
   const formData = new FormData();

@@ -20,6 +20,7 @@ import { OrderTracker } from "./components/customer/OrderTracker";
 import { OrderHistory } from "./components/customer/OrderHistory";
 import { OrderDetailModal } from "./components/customer/OrderDetailModal";
 import { CustomerProfile } from "./components/customer/CustomerProfile";
+import { AISuggestions } from "./components/customer/AISuggestions";
 import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
 import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
@@ -220,6 +221,7 @@ function CustomerLayout() {
     '/order-tracker': 'order-tracker',
     '/order-history': 'order-history',
     '/profile': 'profile',
+    '/ai-suggestions': 'ai-suggestions',
   };
 
   const screenToPath: Record<string, string> = {
@@ -232,6 +234,7 @@ function CustomerLayout() {
     'order-tracker': '/order-tracker',
     'order-history': '/order-history',
     'profile': '/profile',
+    'ai-suggestions': '/ai-suggestions',
   };
 
   const currentScreen = pathToScreen[location.pathname] ?? 'branch-selector';
@@ -371,6 +374,16 @@ function CustomerLayout() {
         return <OrderHistory onViewDetails={handleViewOrderDetails} onBrowseMenu={() => navigate('/menu')} />;
       case 'profile':
         return <CustomerProfile onGoBack={() => navigate(-1)} />;
+      case 'ai-suggestions':
+        if (!selectedBranch) return <Navigate to="/branches" replace />;
+        return (
+          <AISuggestions
+            branchId={selectedBranch.id}
+            branchName={selectedBranch.name}
+            onAddToCart={handleAddToCart}
+            onGoToCart={() => navigate('/cart')}
+          />
+        );
       default:
         return <Navigate to="/branches" replace />;
     }
