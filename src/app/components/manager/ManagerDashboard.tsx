@@ -1,22 +1,49 @@
-import { useEffect, useState } from "react";
-import { ShoppingCart, DollarSign, TrendingUp, Clock } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { ShoppingCart, DollarSign, TrendingUp, Clock, Calendar as CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
 import { toast } from "sonner";
 import { getManagerDashboard, type ManagerDashboard as DashboardData } from "@/services/api";
 import { isNetworkError, DEMO_MANAGER_DASHBOARD } from "@/utils/demoData";
+
+function DatePicker({ date, onChange }: { date: Date | null; onChange: (d: Date | null) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="border-[var(--foodchain-espresso)]/20 gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+          <CalendarIcon className="w-4 h-4" />
+          {date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today'}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="end">
+        <Calendar mode="single" selected={date ?? undefined} onSelect={(d) => onChange(d ?? null)} initialFocus />
+        {date && (
+          <div className="p-2 border-t">
+            <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => onChange(null)}>
+              Back to Today
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export function ManagerDashboard() {
   const [stats, setStats] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = async (date?: Date | null) => {
     setIsLoading(true);
     setError("");
+    const dateStr = date ? date.toISOString().split('T')[0] : undefined;
     try {
-      const data = await getManagerDashboard();
+      const data = await getManagerDashboard(dateStr);
       setStats(data);
     } catch (err: any) {
       if (isNetworkError(err)) {
@@ -30,16 +57,26 @@ export function ManagerDashboard() {
     }
   };
 
+  const handleDateChange = useCallback((date: Date | null) => {
+    setSelectedDate(date);
+    fetchStats(date);
+  }, []);
+
   useEffect(() => {
-    fetchStats();
+    fetchStats(null);
   }, []);
 
   if (isLoading) {
     return (
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8">
-          <Skeleton className="h-10 w-48 mb-2" />
-          <Skeleton className="h-5 w-72 mb-8" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <Skeleton className="h-10 w-48 mb-2" />
+              <Skeleton className="h-5 w-72" />
+            </div>
+            <DatePicker date={selectedDate} onChange={handleDateChange} />
+          </div>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
           </div>
@@ -55,11 +92,16 @@ export function ManagerDashboard() {
   if (error || !stats) {
     return (
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
-        <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error || "No data available"}</p>
-          <Button onClick={fetchStats} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
-            Retry
-          </Button>
+        <div className="p-6 sm:p-8">
+          <div className="flex justify-end mb-8">
+            <DatePicker date={selectedDate} onChange={handleDateChange} />
+          </div>
+          <div className="text-center">
+            <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error || "No data available"}</p>
+            <Button onClick={() => fetchStats(selectedDate)} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -94,13 +136,18 @@ export function ManagerDashboard() {
   return (
     <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="p-6 sm:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-            Dashboard
-          </h1>
-          <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
-            Overview of today's performance • {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+              Dashboard
+            </h1>
+            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+              {selectedDate
+                ? `Performance for ${selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
+                : `Today's performance • ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`}
+            </p>
+          </div>
+          <DatePicker date={selectedDate} onChange={handleDateChange} />
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">

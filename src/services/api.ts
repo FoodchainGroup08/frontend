@@ -89,6 +89,7 @@ export interface Order {
   id: string;
   status: OrderStatus;
   items: OrderItem[];
+  itemCount?: number;
   subtotal: number;
   deliveryFee: number;
   total: number;
@@ -137,6 +138,20 @@ export interface ManagerDashboard {
   averageOrderValue: number;
   ordersChange?: number;
   revenueChange?: number;
+}
+
+export interface ManagerHistoryDay {
+  branchId: string;
+  date: string;
+  totalOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  inProgressOrders: number;
+  totalRevenue: number;
+  avgOrderValue: number;
+  dineInCount: number;
+  takeawayCount: number;
+  deliveryCount: number;
 }
 
 export interface HourlySales {
@@ -502,6 +517,7 @@ function mapOrder(o: any): Order {
     id: o.id,
     status: normaliseOrderStatus(o.status),
     items: (o.items ?? []).map(mapOrderItem),
+    itemCount: o.itemCount,
     subtotal: o.subtotal ?? o.totalAmount ?? 0,
     deliveryFee: o.deliveryFee ?? 0,
     total: o.total ?? o.totalAmount ?? 0,
@@ -690,27 +706,47 @@ export const cancelOrder = (id: string) =>
 // ─── KITCHEN ──────────────────────────────────────────────────────────────────
 
 export const getKitchenQueue = () =>
-  apiClient.get<KitchenOrder[]>('/kitchen/queue').then(r => r.data);
+  apiClient.get<any>('/kitchen/queue').then(r => {
+    const data = r.data;
+    if (data?.content && Array.isArray(data.content)) return data.content as KitchenOrder[];
+    return (Array.isArray(data) ? data : []) as KitchenOrder[];
+  });
 
 export const updateOrderStatus = (orderId: string, newStatus: 'PREPARING' | 'READY') =>
   apiClient.patch(`/kitchen/orders/${orderId}/status`, { status: newStatus }).then(r => r.data);
 
-// TODO (backend): Manager service not yet built.
-// Required: GET /manager/dashboard, GET /manager/orders/live,
-// GET /manager/sales/daily, GET /manager/items/popular
 // ─── MANAGER ──────────────────────────────────────────────────────────────────
 
-export const getManagerDashboard = () =>
-  apiClient.get<ManagerDashboard>('/manager/dashboard').then(r => r.data);
+export const getManagerDashboard = (date?: string) =>
+  apiClient.get<any>('/manager/dashboard', { params: date ? { date } : undefined })
+    .then(r => r.data as ManagerDashboard);
 
 export const getManagerLiveOrders = () =>
-  apiClient.get<Order[]>('/manager/orders/live').then(r => r.data);
+  apiClient.get<any>('/manager/orders/live').then(r => {
+    const data = r.data;
+    const rows: any[] = data?.content ?? (Array.isArray(data) ? data : []);
+    return rows.map(mapOrder);
+  });
 
-export const getDailySales = (date: string) =>
-  apiClient.get<HourlySales[]>('/manager/sales/daily', { params: { date } }).then(r => r.data);
+export const getDailySales = (date?: string) =>
+  apiClient.get<any>('/manager/sales/daily', { params: date ? { date } : undefined }).then(r => {
+    const data = r.data;
+    return (Array.isArray(data) ? data : data?.content ?? []) as HourlySales[];
+  });
 
-export const getPopularItems = () =>
-  apiClient.get<PopularItem[]>('/manager/items/popular').then(r => r.data);
+export const getPopularItems = (date?: string) =>
+  apiClient.get<any>('/manager/items/popular', { params: date ? { date } : undefined }).then(r => {
+    const data = r.data;
+    return (Array.isArray(data) ? data : data?.content ?? []) as PopularItem[];
+  });
+
+export const getManagerHistory = (from?: string, to?: string) =>
+  apiClient.get<any>('/manager/summary/history', {
+    params: { ...(from && { from }), ...(to && { to }) },
+  }).then(r => {
+    const data = r.data;
+    return (Array.isArray(data) ? data : data?.content ?? []) as ManagerHistoryDay[];
+  });
 
 // TODO (backend): Admin analytics and user management service not yet built.
 // Required: GET /admin/analytics, GET /admin/analytics/branches,

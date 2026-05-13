@@ -1,24 +1,51 @@
-import { useState, useEffect } from "react";
-import { Award, TrendingUp } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Award, TrendingUp, Calendar as CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { getPopularItems, type PopularItem } from "@/services/api";
 import { isNetworkError, DEMO_POPULAR_ITEMS } from "@/utils/demoData";
 
+function DatePicker({ date, onChange }: { date: Date | null; onChange: (d: Date | null) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="border-[var(--foodchain-espresso)]/20 gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+          <CalendarIcon className="w-4 h-4" />
+          {date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today'}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="end">
+        <Calendar mode="single" selected={date ?? undefined} onSelect={(d) => onChange(d ?? null)} initialFocus />
+        {date && (
+          <div className="p-2 border-t">
+            <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => onChange(null)}>
+              Back to Today
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function PopularItems() {
   const [items, setItems] = useState<PopularItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const fetchItems = async () => {
+  const fetchItems = async (date?: Date | null) => {
     setIsLoading(true);
     setError("");
+    const dateStr = date ? date.toISOString().split('T')[0] : undefined;
     try {
-      const data = await getPopularItems();
+      const data = await getPopularItems(dateStr);
       setItems(data);
     } catch (err: any) {
       if (isNetworkError(err)) {
@@ -32,8 +59,13 @@ export function PopularItems() {
     }
   };
 
+  const handleDateChange = useCallback((date: Date | null) => {
+    setSelectedDate(date);
+    fetchItems(date);
+  }, []);
+
   useEffect(() => {
-    fetchItems();
+    fetchItems(null);
   }, []);
 
   const sortedByQuantity = [...items].sort((a, b) => b.quantitySold - a.quantitySold).slice(0, 8);
@@ -47,8 +79,13 @@ export function PopularItems() {
     return (
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8">
-          <Skeleton className="h-10 w-48 mb-2" />
-          <Skeleton className="h-5 w-72 mb-8" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <Skeleton className="h-10 w-48 mb-2" />
+              <Skeleton className="h-5 w-72" />
+            </div>
+            <DatePicker date={selectedDate} onChange={handleDateChange} />
+          </div>
           <Skeleton className="h-[460px] w-full rounded-lg mb-8" />
           <div className="grid gap-4">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
@@ -61,11 +98,16 @@ export function PopularItems() {
   if (error) {
     return (
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
-        <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
-          <Button onClick={fetchItems} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
-            Retry
-          </Button>
+        <div className="p-6 sm:p-8">
+          <div className="flex justify-end mb-8">
+            <DatePicker date={selectedDate} onChange={handleDateChange} />
+          </div>
+          <div className="text-center">
+            <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
+            <Button onClick={() => fetchItems(selectedDate)} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -74,13 +116,18 @@ export function PopularItems() {
   return (
     <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="p-6 sm:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-            Popular Items
-          </h1>
-          <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
-            Top-selling menu items ranked by quantity sold today
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+              Popular Items
+            </h1>
+            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+              Top-selling items {selectedDate
+                ? `for ${selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
+                : 'today'}
+            </p>
+          </div>
+          <DatePicker date={selectedDate} onChange={handleDateChange} />
         </div>
 
         <Card className="border-[var(--foodchain-espresso)]/10 mb-8" style={{ backgroundColor: 'var(--foodchain-white)' }}>
