@@ -1,4 +1,4 @@
-import { ShoppingCart, History, MapPin, User } from "lucide-react";
+import { ShoppingCart, History, MapPin, User, Sparkles } from "lucide-react";
 import { Badge } from "../ui/badge";
 
 interface CustomerNavbarProps {
@@ -58,6 +58,21 @@ export function CustomerNavbar({
               style={{ color: 'var(--foodchain-warm-white)' }}
             >
               Track Order
+            </button>
+
+            <button
+              onClick={() => onNavigate('ai-suggestions')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all hidden sm:flex ${
+                currentScreen === 'ai-suggestions' ? 'opacity-100' : 'opacity-70 hover:opacity-100'
+              }`}
+              style={{
+                color: currentScreen === 'ai-suggestions'
+                  ? 'var(--foodchain-golden-amber)'
+                  : 'var(--foodchain-warm-white)',
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Suggest
             </button>
 
             <button
