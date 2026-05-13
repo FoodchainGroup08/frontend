@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { getManagerLiveOrders, type Order, type WsOrderUpdate } from "@/services/api";
 import { useManagerOrders } from "@/hooks/useManagerOrders";
 import { useAuth } from "@/context/AuthContext";
-import { isNetworkError, DEMO_LIVE_MANAGER_ORDERS } from "@/utils/demoData";
 
 interface LiveOrder {
   id: string;
@@ -78,13 +77,9 @@ export function LiveOrders() {
     try {
       const data = await getManagerLiveOrders();
       setOrders(data.map(mapApiOrder));
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setOrders(DEMO_LIVE_MANAGER_ORDERS.map(mapApiOrder));
-      } else {
-        setError("Failed to load live orders");
-        toast.error("Failed to load live orders");
-      }
+    } catch {
+      setError("Failed to load live orders");
+      toast.error("Failed to load live orders");
     } finally {
       setIsLoading(false);
     }
@@ -97,9 +92,14 @@ export function LiveOrders() {
   useManagerOrders(branchId, (data) => {
     const msg = data as WsOrderUpdate;
     if (msg.orderId && msg.newStatus) {
-      setOrders(prev => prev.map(o =>
-        o.id === msg.orderId ? { ...o, status: mapOrderStatus(msg.newStatus) } : o
-      ));
+      const TERMINAL = new Set(['SERVED', 'PICKED_UP', 'CANCELLED', 'COMPLETED']);
+      if (TERMINAL.has(msg.newStatus)) {
+        setOrders(prev => prev.filter(o => o.id !== msg.orderId));
+      } else {
+        setOrders(prev => prev.map(o =>
+          o.id === msg.orderId ? { ...o, status: mapOrderStatus(msg.newStatus) } : o
+        ));
+      }
     } else {
       fetchOrders();
     }

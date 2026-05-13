@@ -8,7 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { getDailySales, type HourlySales } from "@/services/api";
-import { isNetworkError, DEMO_HOURLY_SALES } from "@/utils/demoData";
 
 function DatePicker({ date, onChange }: { date: Date; onChange: (d: Date) => void }) {
   return (
@@ -39,13 +38,9 @@ export function DailySales() {
       const dateStr = date.toISOString().split('T')[0];
       const data = await getDailySales(dateStr);
       setHourlyData(data);
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setHourlyData(DEMO_HOURLY_SALES);
-      } else {
-        setError("Failed to load daily sales");
-        toast.error("Failed to load daily sales");
-      }
+    } catch {
+      setError("Failed to load daily sales");
+      toast.error("Failed to load daily sales");
     } finally {
       setIsLoading(false);
     }

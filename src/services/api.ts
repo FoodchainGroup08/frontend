@@ -806,7 +806,12 @@ export const getManagerLiveOrders = () =>
   apiClient.get<any>('/manager/orders/live').then(r => {
     const data = r.data;
     const rows: any[] = data?.content ?? (Array.isArray(data) ? data : []);
-    return rows.map(mapOrder);
+    return rows.map(o => ({
+      ...mapOrder(o),
+      total: Math.round((o.total ?? 0) / 100),
+      subtotal: Math.round((o.subtotal ?? o.totalAmount ?? 0) / 100),
+      deliveryFee: Math.round((o.deliveryFee ?? 0) / 100),
+    }));
   });
 
 export const getDailySales = (date?: string) =>

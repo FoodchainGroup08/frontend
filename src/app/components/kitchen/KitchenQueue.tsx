@@ -15,23 +15,21 @@ interface KitchenQueueProps {
   onStatusChange: (orderId: string, newStatus: 'preparing' | 'ready') => void;
 }
 
-type StatusFilter = 'all' | KitchenOrder['status'];
+// Only the three active statuses live in the kitchen queue.
+// picked-up and served are terminal — the backend removes them from the queue immediately.
+type StatusFilter = 'all' | 'received' | 'preparing' | 'ready';
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All Orders' },
   { value: 'received', label: 'Received' },
   { value: 'preparing', label: 'Preparing' },
   { value: 'ready', label: 'Ready' },
-  { value: 'picked-up', label: 'Picked Up' },
-  { value: 'served', label: 'Served' },
 ];
 
-const STATUS_COLORS: Record<KitchenOrder['status'], { bg: string; text: string }> = {
+const STATUS_COLORS: Record<'received' | 'preparing' | 'ready', { bg: string; text: string }> = {
   received: { bg: 'var(--foodchain-espresso)', text: 'var(--foodchain-warm-white)' },
   preparing: { bg: 'var(--foodchain-golden-amber)', text: 'var(--foodchain-charcoal)' },
-  ready: { bg: 'var(--foodchain-sage-green)', text: 'var(--foodchain-white)' },
-  'picked-up': { bg: 'var(--foodchain-espresso)', text: 'var(--foodchain-warm-white)' },
-  served: { bg: 'var(--foodchain-espresso)', text: 'var(--foodchain-warm-white)' },
+  ready:     { bg: 'var(--foodchain-sage-green)', text: 'var(--foodchain-white)' },
 };
 
 const mapKitchenStatus = (status: string): KitchenOrder['status'] => {
@@ -70,10 +68,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       ...data.preparing.orders,
       ...data.ready.orders,
     ];
-    setOrders(prev => {
-      const local = prev.filter(o => o.status === 'picked-up' || o.status === 'served');
-      return [...local, ...serverOrders];
-    });
+    setOrders(serverOrders);
     const totals = {
       received: data.received.total,
       preparing: data.preparing.total,
@@ -115,39 +110,67 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   useKitchenQueue(branchId, (data) => {
     const msg = data as WsOrderUpdate;
     if (msg.orderId && msg.newStatus) {
-      setOrders(prev => prev.map(o =>
-        o.id === msg.orderId
-          ? { ...o, status: mapKitchenStatus(msg.newStatus), isNew: false }
-          : o
-      ));
+      const mapped = mapKitchenStatus(msg.newStatus);
+      if (mapped === 'picked-up' || mapped === 'served') {
+        // Terminal — remove from queue (backend already dropped it)
+        setOrders(prev => prev.filter(o => o.id !== msg.orderId));
+      } else {
+        setOrders(prev => prev.map(o =>
+          o.id === msg.orderId ? { ...o, status: mapped, isNew: false } : o
+        ));
+      }
     } else {
-      // New order arrived — refresh the queue
       fetchQueue();
     }
   });
 
-  const handleStatusChange = async (orderId: string, newStatus: KitchenOrder['status']) => {
+  const handleStatusChange = async (orderId: string, newStatus: 'preparing' | 'ready' | 'picked-up' | 'served') => {
     if (updatingOrders.has(orderId)) return;
     const staffId = user?.id ?? '';
     setUpdatingOrders(prev => new Set(prev).add(orderId));
+
+    const isTerminal = newStatus === 'picked-up' || newStatus === 'served';
+
+    const applyLocally = () => {
+      if (isTerminal) {
+        // Backend marks COMPLETED and drops it from the queue
+        setOrders(prev => prev.filter(o => o.id !== orderId));
+        setServerTotals(prev => ({ ...prev, ready: Math.max(0, prev.ready - 1) }));
+      } else {
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        if (newStatus === 'preparing') {
+          setServerTotals(prev => ({
+            ...prev,
+            received: Math.max(0, prev.received - 1),
+            preparing: prev.preparing + 1,
+          }));
+        } else if (newStatus === 'ready') {
+          setServerTotals(prev => ({
+            ...prev,
+            preparing: Math.max(0, prev.preparing - 1),
+            ready: prev.ready + 1,
+          }));
+          onStatusChange(orderId, 'ready');
+        }
+      }
+    };
+
     try {
       if (newStatus === 'preparing') await acceptKitchenOrder(orderId, staffId);
-      else if (newStatus === 'ready') await readyKitchenOrder(orderId, staffId);
+      else if (newStatus === 'ready')     await readyKitchenOrder(orderId, staffId);
       else if (newStatus === 'picked-up') await pickupKitchenOrder(orderId, staffId);
-      else if (newStatus === 'served') await serveKitchenOrder(orderId, staffId);
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      onStatusChange(orderId, newStatus as 'preparing' | 'ready');
-      toast.success(`Order marked as ${newStatus}`);
+      else if (newStatus === 'served')    await serveKitchenOrder(orderId, staffId);
+      applyLocally();
+      toast.success(isTerminal ? 'Order completed' : `Order marked as ${newStatus}`);
     } catch (err: any) {
       if (isNetworkError(err)) {
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-        onStatusChange(orderId, newStatus as 'preparing' | 'ready');
-        toast.success(`Order marked as ${newStatus}`);
+        applyLocally();
+        toast.success(isTerminal ? 'Order completed' : `Order marked as ${newStatus}`);
       } else if (err?.response?.status === 409) {
-        toast.info("Order already updated — refreshing queue");
+        toast.info('Order already updated — refreshing queue');
         fetchQueue();
       } else {
-        toast.error("Failed to update order status");
+        toast.error('Failed to update order status');
       }
     } finally {
       setUpdatingOrders(prev => { const s = new Set(prev); s.delete(orderId); return s; });
@@ -158,16 +181,11 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     return Math.floor((currentTime - new Date(receivedAt).getTime()) / 60000);
   };
 
-  const localPickedUp = orders.filter(o => o.status === 'picked-up').length;
-  const localServed = orders.filter(o => o.status === 'served').length;
-
   const statusCounts: Record<StatusFilter, number> = {
+    all: serverTotals.received + serverTotals.preparing + serverTotals.ready,
     received: serverTotals.received,
     preparing: serverTotals.preparing,
     ready: serverTotals.ready,
-    'picked-up': localPickedUp,
-    served: localServed,
-    all: serverTotals.received + serverTotals.preparing + serverTotals.ready + localPickedUp + localServed,
   };
 
   const filtered = statusFilter === 'all' ? orders : orders.filter(o => o.status === statusFilter);
@@ -179,7 +197,8 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   const renderOrderCard = (order: KitchenOrder) => {
     const elapsedMinutes = getElapsedTime(order.receivedAt);
     const isOverdue = elapsedMinutes > 15;
-    const statusColors = STATUS_COLORS[order.status];
+    const statusColors = STATUS_COLORS[order.status as 'received' | 'preparing' | 'ready']
+      ?? STATUS_COLORS.received;
 
     return (
       <Card

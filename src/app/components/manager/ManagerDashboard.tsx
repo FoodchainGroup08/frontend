@@ -7,7 +7,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { toast } from "sonner";
 import { getManagerDashboard, type ManagerDashboard as DashboardData } from "@/services/api";
-import { isNetworkError, DEMO_MANAGER_DASHBOARD } from "@/utils/demoData";
 
 function DatePicker({ date, onChange }: { date: Date | null; onChange: (d: Date | null) => void }) {
   return (
@@ -45,13 +44,9 @@ export function ManagerDashboard() {
     try {
       const data = await getManagerDashboard(dateStr);
       setStats(data);
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setStats(DEMO_MANAGER_DASHBOARD);
-      } else {
-        setError("Failed to load dashboard stats");
-        toast.error("Failed to load dashboard stats");
-      }
+    } catch {
+      setError("Failed to load dashboard stats");
+      toast.error("Failed to load dashboard stats");
     } finally {
       setIsLoading(false);
     }
@@ -259,8 +254,8 @@ export function ManagerDashboard() {
                           {hasData ? `${delivery} orders (${pct(delivery)}%)` : '—'}
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                        <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-golden-amber)', width: `${pct(delivery)}%` }} />
+                      <div className="w-full h-3 rounded-full" style={{ backgroundColor: 'rgba(59,35,20,0.12)' }}>
+                        <div className="h-3 rounded-full" style={{ backgroundColor: 'var(--foodchain-golden-amber)', width: `${pct(delivery)}%` }} />
                       </div>
                     </div>
 
@@ -271,8 +266,8 @@ export function ManagerDashboard() {
                           {hasData ? `${dineIn} orders (${pct(dineIn)}%)` : '—'}
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                        <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-sage-green)', width: `${pct(dineIn)}%` }} />
+                      <div className="w-full h-3 rounded-full" style={{ backgroundColor: 'rgba(59,35,20,0.12)' }}>
+                        <div className="h-3 rounded-full" style={{ backgroundColor: 'var(--foodchain-sage-green)', width: `${pct(dineIn)}%` }} />
                       </div>
                     </div>
 
@@ -283,8 +278,8 @@ export function ManagerDashboard() {
                           {hasData ? `${takeaway} orders (${pct(takeaway)}%)` : '—'}
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                        <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', width: `${pct(takeaway)}%` }} />
+                      <div className="w-full h-3 rounded-full" style={{ backgroundColor: 'rgba(59,35,20,0.12)' }}>
+                        <div className="h-3 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', width: `${pct(takeaway)}%` }} />
                       </div>
                     </div>
                   </>
