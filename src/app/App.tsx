@@ -36,6 +36,8 @@ import { Analytics } from "./components/admin/Analytics";
 import { BranchManagement } from "./components/admin/BranchManagement";
 import { MenuCatalogue } from "./components/admin/MenuCatalogue";
 import { UserManagement } from "./components/admin/UserManagement";
+import { Reports } from "./components/admin/Reports";
+import { AdminNotifications } from "./components/admin/AdminNotifications";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 
@@ -528,6 +530,8 @@ const adminScreenPaths: Record<string, string> = {
   'branches': '/admin/branches',
   'menu-catalogue': '/admin/menu-catalogue',
   'users': '/admin/users',
+  'reports': '/admin/reports',
+  'notifications': '/admin/notifications',
 };
 
 function AdminLayout() {
@@ -540,6 +544,8 @@ function AdminLayout() {
     '/admin/branches': 'branches',
     '/admin/menu-catalogue': 'menu-catalogue',
     '/admin/users': 'users',
+    '/admin/reports': 'reports',
+    '/admin/notifications': 'notifications',
   };
   const currentScreen = pathToScreen[location.pathname] ?? 'analytics';
 
@@ -557,6 +563,8 @@ function AdminLayout() {
           <Route path="branches" element={<BranchManagement />} />
           <Route path="menu-catalogue" element={<MenuCatalogue />} />
           <Route path="users" element={<UserManagement />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="notifications" element={<AdminNotifications />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>
