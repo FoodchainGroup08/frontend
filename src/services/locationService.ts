@@ -262,6 +262,46 @@ export async function computeRoadDistancesKm(
   });
 }
 
+// ─── Forward Geocoding ────────────────────────────────────────────────────────
+
+/**
+ * Converts an address string to lat/lng.
+ * Prefers the Google Maps Geocoder SDK (already loaded by LocationPicker).
+ * Falls back to the REST API if the SDK isn't available.
+ */
+export async function geocodeAddressText(address: string): Promise<{ lat: number; lng: number } | null> {
+  const mapsLoaded = await loadGoogleMaps();
+
+  if (mapsLoaded && window.google?.maps) {
+    return new Promise((resolve) => {
+      try {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ address }, (results: any[], status: string) => {
+          if (status === 'OK' && results?.[0]) {
+            const loc = results[0].geometry.location;
+            resolve({ lat: typeof loc.lat === 'function' ? loc.lat() : loc.lat, lng: typeof loc.lng === 'function' ? loc.lng() : loc.lng });
+          } else {
+            resolve(null);
+          }
+        });
+      } catch {
+        resolve(null);
+      }
+    });
+  }
+
+  if (!GOOGLE_MAPS_KEY) return null;
+  try {
+    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_KEY}`);
+    const data = await res.json();
+    if (data.status === 'OK' && data.results?.[0]) {
+      const { lat, lng } = data.results[0].geometry.location;
+      return { lat, lng };
+    }
+  } catch {}
+  return null;
+}
+
 // ─── Persistence ───────────────────────────────────────────────────────────────
 
 const LOCATION_KEY = 'foodchain_delivery_location';

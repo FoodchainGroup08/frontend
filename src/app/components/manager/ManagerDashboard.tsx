@@ -198,7 +198,9 @@ export function ManagerDashboard() {
                   </div>
                   <div>
                     <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Average Prep Time</p>
-                    <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>12 mins</p>
+                    <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                      {stats.averagePrepTime != null ? `${stats.averagePrepTime} mins` : '—'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -210,7 +212,11 @@ export function ManagerDashboard() {
                   </div>
                   <div>
                     <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Peak Hour Orders</p>
-                    <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>28 orders (1-2 PM)</p>
+                    <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                      {stats.peakHourOrders != null && stats.peakHour
+                        ? `${stats.peakHourOrders} orders (${stats.peakHour})`
+                        : '—'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -222,7 +228,9 @@ export function ManagerDashboard() {
                   </div>
                   <div>
                     <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Completion Rate</p>
-                    <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>98.6%</p>
+                    <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                      {stats.completionRate != null ? `${stats.completionRate}%` : '—'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -234,35 +242,54 @@ export function ManagerDashboard() {
               <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>Order Type Breakdown</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)' }}>Delivery</span>
-                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>65 orders (46%)</span>
-                </div>
-                <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                  <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-golden-amber)', width: '46%' }} />
-                </div>
-              </div>
+              {(() => {
+                const delivery = stats.deliveryCount ?? 0;
+                const dineIn = stats.dineInCount ?? 0;
+                const takeaway = stats.takeawayCount ?? 0;
+                const total = delivery + dineIn + takeaway;
+                const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
+                const hasData = total > 0;
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)' }}>Dine-In</span>
-                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>52 orders (37%)</span>
-                </div>
-                <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                  <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-sage-green)', width: '37%' }} />
-                </div>
-              </div>
+                return (
+                  <>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm" style={{ color: 'var(--foodchain-espresso)' }}>Delivery</span>
+                        <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                          {hasData ? `${delivery} orders (${pct(delivery)}%)` : '—'}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                        <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-golden-amber)', width: `${pct(delivery)}%` }} />
+                      </div>
+                    </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)' }}>Takeaway</span>
-                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>25 orders (17%)</span>
-                </div>
-                <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                  <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', width: '17%' }} />
-                </div>
-              </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm" style={{ color: 'var(--foodchain-espresso)' }}>Dine-In</span>
+                        <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                          {hasData ? `${dineIn} orders (${pct(dineIn)}%)` : '—'}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                        <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-sage-green)', width: `${pct(dineIn)}%` }} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm" style={{ color: 'var(--foodchain-espresso)' }}>Takeaway</span>
+                        <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                          {hasData ? `${takeaway} orders (${pct(takeaway)}%)` : '—'}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                        <div className="h-2 rounded-full" style={{ backgroundColor: 'var(--foodchain-espresso)', width: `${pct(takeaway)}%` }} />
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>

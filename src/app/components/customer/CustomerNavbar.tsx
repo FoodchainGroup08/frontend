@@ -99,6 +99,13 @@ export function CustomerNavbar({
                   <p className="text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Customer</p>
                 </div>
                 <button
+                  onClick={() => onNavigate('profile')}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
+                  style={{ color: 'var(--foodchain-espresso)' }}
+                >
+                  My Profile
+                </button>
+                <button
                   onClick={onLogout}
                   className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
                   style={{ color: 'var(--foodchain-espresso)' }}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getMe, postLogin, postLogout, postRegister, TOKEN_KEY, REFRESH_TOKEN_KEY, type User } from '@/services/api';
+import { getMe, postLogin, postLogout, postRegister, updateProfile, TOKEN_KEY, REFRESH_TOKEN_KEY, type User } from '@/services/api';
 
 interface AuthContextValue {
   user: User | null;
@@ -8,6 +8,7 @@ interface AuthContextValue {
   register: (name: string, email: string, password: string) => Promise<'logged_in' | 'verify_email'>;
   completeOAuthLogin: (accessToken: string, refreshToken?: string) => Promise<User>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -69,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setToken(newToken);
     setUser(newUser);
+    await syncPendingLocation();
   };
 
   const register = async (name: string, email: string, password: string): Promise<'logged_in' | 'verify_email'> => {
@@ -94,6 +96,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/login';
   };
 
+  const syncPendingLocation = async () => {
+    const raw = localStorage.getItem('foodchain_pending_location');
+    if (!raw) return;
+    try {
+      const { addressLine, latitude, longitude } = JSON.parse(raw);
+      if (addressLine && latitude != null && longitude != null) {
+        await updateProfile({ addressLine, latitude, longitude });
+        const me = await getMe();
+        localStorage.setItem('foodchain_user', JSON.stringify(me));
+        setUser(me);
+      }
+    } catch {
+      // silent — don't block login if this fails
+    } finally {
+      localStorage.removeItem('foodchain_pending_location');
+    }
+  };
+
+  const refreshUser = async () => {
+    const me = await getMe();
+    localStorage.setItem('foodchain_user', JSON.stringify(me));
+    setUser(me);
+  };
+
   const completeOAuthLogin = async (accessToken: string, refreshToken?: string): Promise<User> => {
     localStorage.setItem(TOKEN_KEY, accessToken);
     if (refreshToken) {
@@ -104,12 +130,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const me = await getMe();
     localStorage.setItem('foodchain_user', JSON.stringify(me));
     setUser(me);
+    await syncPendingLocation();
     return me;
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, token, login, register, completeOAuthLogin, logout, isAuthenticated: !!user, isLoading }}
+      value={{ user, token, login, register, completeOAuthLogin, logout, refreshUser, isAuthenticated: !!user, isLoading }}
     >
       {children}
     </AuthContext.Provider>
