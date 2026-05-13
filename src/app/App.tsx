@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
@@ -21,6 +21,7 @@ import { OrderHistory } from "./components/customer/OrderHistory";
 import { OrderDetailModal } from "./components/customer/OrderDetailModal";
 import { CustomerProfile } from "./components/customer/CustomerProfile";
 import { AISuggestions } from "./components/customer/AISuggestions";
+import { AIFoodAssistantModal } from "./components/customer/AIFoodAssistantModal";
 import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
 import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
@@ -205,6 +206,9 @@ function CustomerLayout() {
   const [selectedBranch, setSelectedBranch] = useState<ApiBranch | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentOrder, setCurrentOrder] = useState<ConfirmationOrder | null>(null);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  // Track which branches have already shown the AI modal this session
+  const aiModalShownFor = useRef(new Set<string>());
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
@@ -243,6 +247,12 @@ function CustomerLayout() {
     setSelectedBranch(branch);
     navigate('/menu');
     toast.success(`Selected ${branch.name}`, { description: "Browse our menu and start ordering" });
+    // Open the AI assistant once per branch per session, unless the user dismissed it permanently
+    const permanentlyDismissed = localStorage.getItem('foodchain_ai_assistant_dismissed') === 'true';
+    if (!permanentlyDismissed && !aiModalShownFor.current.has(branch.id)) {
+      aiModalShownFor.current.add(branch.id);
+      setIsAIModalOpen(true);
+    }
   };
 
   const handleAddToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
@@ -407,6 +417,16 @@ function CustomerLayout() {
         isOpen={isOrderDetailOpen}
         onClose={() => setIsOrderDetailOpen(false)}
       />
+      {selectedBranch && (
+        <AIFoodAssistantModal
+          isOpen={isAIModalOpen}
+          onClose={() => setIsAIModalOpen(false)}
+          branchId={selectedBranch.id}
+          branchName={selectedBranch.name}
+          onAddToCart={handleAddToCart}
+          onGoToCart={() => { setIsAIModalOpen(false); navigate('/cart'); }}
+        />
+      )}
     </>
   );
 }
