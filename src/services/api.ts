@@ -702,10 +702,139 @@ export const getManagerHistory = (from?: string, to?: string) =>
     }));
   });
 
-// TODO (backend): Admin analytics and user management service not yet built.
-// Required: GET /admin/analytics, GET /admin/analytics/branches,
-// GET /admin/users, PATCH /admin/users/:id/status
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
+
+// ── Admin analytics types ─────────────────────────────────────────────────────
+
+export interface AdminOverview {
+  startDate: string;
+  endDate: string;
+  totalOrders: number;
+  totalRevenue: number;
+  avgOrderValue: number;
+  completionRate: number;
+  cancellationRate: number;
+  revenueGrowthPercent: number;
+  ordersGrowthPercent: number;
+  topPerformingBranch: string | null;
+  fastestBranch: string | null;
+  slowestBranch: string | null;
+  totalBranches: number;
+}
+
+export interface AdminPopularItem {
+  id: string;
+  name: string;
+  quantitySold: number;
+  revenue: number;
+}
+
+export interface BranchComparison {
+  branchId: string;
+  name?: string;
+  totalOrders: number;
+  totalRevenue: number;
+  avgOrderValue: number;
+  completionRate: number;
+  cancellationRate: number;
+  avgPreparationTimeMinutes: number | null;
+  topItems: AdminPopularItem[];
+}
+
+export interface TrendDataPoint {
+  period: string;
+  revenue: number;
+  orders: number;
+  avgPreparationTimeMinutes: number | null;
+  completionRate: number | null;
+}
+
+export interface AdminTrends {
+  startDate: string;
+  endDate: string;
+  interval: string;
+  branchId: string | null;
+  dataPoints: TrendDataPoint[];
+}
+
+export interface OrdersByStatusEntry {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
+export interface AdminOperational {
+  ordersByStatus: OrdersByStatusEntry[];
+  ordersByHour: Array<{ hour: string; revenue: number; orders: number }>;
+  peakHour: string | null;
+  totalOrders: number;
+}
+
+// ── Report types ──────────────────────────────────────────────────────────────
+
+export type ReportType = 'BRANCH_PERFORMANCE' | 'SALES_SUMMARY' | 'ORDER_SUMMARY';
+
+export interface GenerateReportRequest {
+  reportType: ReportType;
+  branchId?: string | null;
+  startDate: string;
+  endDate: string;
+  requestedBy?: string;
+}
+
+export interface Report {
+  id: number;
+  reportType: string;
+  branchId: string | null;
+  startDate: string;
+  endDate: string;
+  generatedAt: string;
+  generatedBy: string | null;
+  totalOrders: number | null;
+  completedOrders: number | null;
+  cancelledOrders: number | null;
+  inProgressOrders: number | null;
+  totalRevenue: number | null;
+  avgOrderValue: number | null;
+  dineInCount: number | null;
+  takeawayCount: number | null;
+  deliveryCount: number | null;
+  completionRate: number;
+  cancellationRate: number;
+}
+
+export interface ReportListItem {
+  id: number;
+  reportType: string;
+  branchId: string | null;
+  startDate: string;
+  endDate: string;
+  generatedAt: string;
+  generatedBy: string | null;
+  totalRevenue: number | null;
+  totalOrders: number | null;
+}
+
+// ── Notification types ────────────────────────────────────────────────────────
+
+export interface AdminNotification {
+  id: number;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  channel: string | null;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+  status: string;
+  isRead: boolean;
+  retryCount: number;
+  sentAt: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+// ── Admin API functions ───────────────────────────────────────────────────────
 
 export const getAnalytics = (startDate?: string, endDate?: string) =>
   apiClient.get<Analytics>('/admin/analytics', { params: { startDate, endDate } }).then(r => r.data);
@@ -713,11 +842,101 @@ export const getAnalytics = (startDate?: string, endDate?: string) =>
 export const getBranchAnalytics = (startDate?: string, endDate?: string) =>
   apiClient.get<BranchAnalytics[]>('/admin/analytics/branches', { params: { startDate, endDate } }).then(r => r.data);
 
+export const getAdminOverview = (startDate?: string, endDate?: string): Promise<AdminOverview> =>
+  apiClient.get<any>('/admin/analytics/overview', { params: { startDate, endDate } }).then(r => ({
+    ...r.data,
+    totalRevenue: Number(r.data.totalRevenue ?? 0),
+    avgOrderValue: Number(r.data.avgOrderValue ?? 0),
+  }));
+
+export const getBranchComparison = (startDate?: string, endDate?: string): Promise<BranchComparison[]> =>
+  apiClient.get<any[]>('/admin/analytics/compare', { params: { startDate, endDate } }).then(r =>
+    (r.data ?? []).map((b: any) => ({
+      ...b,
+      totalRevenue: Number(b.totalRevenue ?? 0),
+      avgOrderValue: Number(b.avgOrderValue ?? 0),
+    }))
+  );
+
+export const getAdminTrends = (startDate?: string, endDate?: string, interval?: string): Promise<AdminTrends> =>
+  apiClient.get<any>('/admin/analytics/trends', { params: { startDate, endDate, interval } }).then(r => ({
+    ...r.data,
+    dataPoints: (r.data.dataPoints ?? []).map((p: any) => ({
+      ...p,
+      revenue: Number(p.revenue ?? 0),
+    })),
+  }));
+
+export const getAdminOperational = (startDate?: string, endDate?: string): Promise<AdminOperational> =>
+  apiClient.get<AdminOperational>('/admin/analytics/operational', { params: { startDate, endDate } }).then(r => r.data);
+
+export const getAdminPopularItems = (startDate?: string, endDate?: string, limit = 10): Promise<AdminPopularItem[]> =>
+  apiClient.get<AdminPopularItem[]>('/admin/analytics/popular-items', { params: { startDate, endDate, limit } }).then(r => r.data ?? []);
+
 export const getAllUsers = (role?: string) =>
   apiClient.get<SystemUser[]>('/admin/users', { params: role ? { role } : undefined }).then(r => r.data);
 
 export const patchUserStatus = (userId: string, status: 'active' | 'inactive') =>
   apiClient.patch(`/admin/users/${userId}/status`, { status }).then(r => r.data);
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+
+export const generateReport = (req: GenerateReportRequest): Promise<Report> =>
+  apiClient.post<any>('/reports/generate', req).then(r => ({
+    ...r.data,
+    totalRevenue: Number(r.data.totalRevenue ?? 0),
+    avgOrderValue: Number(r.data.avgOrderValue ?? 0),
+  }));
+
+export const getReports = (page = 0, size = 20): Promise<{ content: ReportListItem[]; totalElements: number; totalPages: number }> =>
+  apiClient.get<any>('/reports', { params: { page, size } }).then(r => ({
+    content: (r.data?.content ?? []).map((item: any) => ({
+      ...item,
+      totalRevenue: Number(item.totalRevenue ?? 0),
+    })),
+    totalElements: r.data?.totalElements ?? 0,
+    totalPages: r.data?.totalPages ?? 0,
+  }));
+
+export const getReportById = (id: number): Promise<Report> =>
+  apiClient.get<any>(`/reports/${id}`).then(r => ({
+    ...r.data,
+    totalRevenue: Number(r.data.totalRevenue ?? 0),
+    avgOrderValue: Number(r.data.avgOrderValue ?? 0),
+  }));
+
+export const getReportsByBranch = (branchId: string): Promise<Report[]> =>
+  apiClient.get<any[]>(`/reports/branch/${branchId}`).then(r =>
+    (r.data ?? []).map((item: any) => ({
+      ...item,
+      totalRevenue: Number(item.totalRevenue ?? 0),
+      avgOrderValue: Number(item.avgOrderValue ?? 0),
+    }))
+  );
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+export const getNotifications = (page = 0, size = 20): Promise<{ content: AdminNotification[]; totalElements: number; totalPages: number }> =>
+  apiClient.get<any>('/notifications', { params: { page, size } }).then(r => {
+    const page_data = r.data?.data ?? r.data;
+    return {
+      content: page_data?.content ?? [],
+      totalElements: page_data?.totalElements ?? 0,
+      totalPages: page_data?.totalPages ?? 0,
+    };
+  });
+
+export const getUnreadNotificationCount = (): Promise<number> =>
+  apiClient.get<any>('/notifications/unread-count').then(r => r.data?.data ?? r.data ?? 0);
+
+export const markNotificationRead = (id: number): Promise<AdminNotification> =>
+  apiClient.patch<any>(`/notifications/${id}/read`).then(r => r.data?.data ?? r.data);
+
+export const markAllNotificationsRead = (): Promise<number> =>
+  apiClient.patch<any>('/notifications/read-all').then(r => r.data?.data ?? r.data ?? 0);
+
+export const deleteNotification = (id: number): Promise<void> =>
+  apiClient.delete(`/notifications/${id}`).then(() => undefined);
 
 // ─── IMAGE UPLOAD ─────────────────────────────────────────────────────────────
 

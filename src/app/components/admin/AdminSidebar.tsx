@@ -1,4 +1,6 @@
-import { BarChart3, Building2, UtensilsCrossed, Users, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BarChart3, Building2, UtensilsCrossed, Users, User, FileText, Bell } from "lucide-react";
+import { getUnreadNotificationCount } from "@/services/api";
 
 interface AdminSidebarProps {
   currentScreen: string;
@@ -13,11 +15,23 @@ export function AdminSidebar({
   userName,
   onLogout
 }: AdminSidebarProps) {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    getUnreadNotificationCount().then(setUnreadCount).catch(() => {});
+    const interval = setInterval(() => {
+      getUnreadNotificationCount().then(setUnreadCount).catch(() => {});
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const navItems = [
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'branches', label: 'Branches', icon: Building2 },
     { id: 'menu-catalogue', label: 'Menu Catalogue', icon: UtensilsCrossed },
-    { id: 'users', label: 'Users', icon: Users }
+    { id: 'users', label: 'Users', icon: Users },
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount > 0 ? unreadCount : undefined },
   ];
 
   return (
@@ -52,7 +66,13 @@ export function AdminSidebar({
               }}
             >
               <Icon className="w-5 h-5" />
-              <span style={{ fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+              <span className="flex-1 text-left" style={{ fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+              {item.badge != null && (
+                <span className="min-w-5 h-5 rounded-full flex items-center justify-center px-1.5 text-xs font-semibold"
+                  style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'white' }}>
+                  {item.badge > 99 ? '99+' : item.badge}
+                </span>
+              )}
             </button>
           );
         })}
