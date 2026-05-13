@@ -86,7 +86,15 @@ export interface MenuItem {
   image?: string;
 }
 
-export type OrderStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'PICKED_UP' | 'SERVED';
+export type OrderStatus =
+  | 'RECEIVED'
+  | 'CONFIRMED'
+  | 'PREPARING'
+  | 'READY'
+  | 'PICKED_UP'
+  | 'SERVED'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 export interface OrderItem {
   id: string;
@@ -121,14 +129,23 @@ export interface Order {
 
 export interface PlaceOrderPayload {
   branchId: string;
+  branchName?: string;
   orderType: 'delivery' | 'dine-in' | 'takeaway';
   tableNumber?: string;
   deliveryAddress?: string;
-  items: Array<{ menuItemId: string; quantity: number }>;
   customerName?: string;
+  customerEmail?: string;
   phoneNumber?: string;
   paymentMethod?: string;
   specialInstructions?: string;
+  notes?: string;
+  items: Array<{
+    menuItemId: string;
+    menuItemName?: string;
+    quantity: number;
+    unitPrice?: number;
+    specialInstructions?: string;
+  }>;
 }
 
 export interface KitchenOrder {
@@ -410,14 +427,15 @@ function normaliseOrderType(raw: string): 'dine-in' | 'takeaway' | 'delivery' {
 function normaliseOrderStatus(raw: string): OrderStatus {
   switch (raw) {
     case 'RECEIVED':
+    case 'CONFIRMED':
     case 'PREPARING':
     case 'READY':
     case 'PICKED_UP':
     case 'SERVED':
+    case 'COMPLETED':
+    case 'CANCELLED':
       return raw as OrderStatus;
     case 'PAYMENT_PENDING': return 'RECEIVED';
-    case 'CONFIRMED':       return 'RECEIVED';
-    case 'COMPLETED':       return 'PICKED_UP';
     default:                return 'RECEIVED';
   }
 }
@@ -582,28 +600,36 @@ export const deleteMenuItemImage = (id: string) =>
 
 // ─── ORDERS (Customer) ────────────────────────────────────────────────────────
 
-// TODO (backend): Backend CreateOrderRequest requires customerId (must be extracted
-// from JWT server-side, not sent by client), menuItemName, and unitPrice per item
-// (must be looked up from menu-service server-side). Frontend only sends menuItemId
-// and quantity. The order service must resolve the rest internally.
-// TODO (backend): orderType values — frontend sends 'delivery'|'dine-in'|'takeaway',
-// backend enum is DINE_IN|TAKEAWAY|DELIVERY. Backend must accept both casings or
-// document the exact expected format.
+// customerId is resolved from the JWT by the gateway — never send it in the body.
+// A fresh idempotency key is generated per call; retries should use the same key
+// (callers that need retry-safe placement should generate the key themselves and
+// pass it via a wrapper — this default is fine for the normal one-shot checkout flow).
 export const placeOrder = (payload: PlaceOrderPayload) =>
-  apiClient.post<any>('/orders', payload).then(r => mapOrder(r.data));
+  apiClient.post<any>('/orders', payload, {
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+  }).then(r => mapOrder(r.data));
 
-export const getActiveOrders = (): Promise<Order[]> =>
-  apiClient.get<any>('/orders/active').then(r => {
+// /orders/active returns a summary page (no items, no branchName).
+// Pass customerId so the backend scopes to the current user via the query param
+// (the gateway also enforces this via JWT, but the param avoids needing a second
+// call to filter client-side when the backend returns the full tenant's orders).
+export const getActiveOrders = (customerId?: string): Promise<Order[]> =>
+  apiClient.get<any>('/orders/active', {
+    params: { ...(customerId && { customerId }), size: 20 },
+  }).then(r => {
     const data = r.data;
     let orders: Order[];
     if (data?.content && Array.isArray(data.content)) orders = data.content.map(mapOrder);
     else if (Array.isArray(data)) orders = data.map(mapOrder);
     else orders = data ? [mapOrder(data)] : [];
-    return orders.filter(o => !o.id.startsWith('demo_'));
+    return orders;
   });
 
-export const getOrderHistory = (): Promise<Order[]> =>
-  apiClient.get<any>('/orders/history').then(r => {
+// Same summary page shape as /orders/active.
+export const getOrderHistory = (customerId?: string): Promise<Order[]> =>
+  apiClient.get<any>('/orders/history', {
+    params: { ...(customerId && { customerId }), size: 20 },
+  }).then(r => {
     const data = r.data;
     if (data?.content && Array.isArray(data.content)) return data.content.map(mapOrder);
     return Array.isArray(data) ? data.map(mapOrder) : [];
@@ -612,8 +638,8 @@ export const getOrderHistory = (): Promise<Order[]> =>
 export const getOrderById = (id: string) =>
   apiClient.get<any>(`/orders/${id}`).then(r => mapOrder(r.data));
 
-export const cancelOrder = (id: string) =>
-  apiClient.post(`/orders/${id}/cancel`).then(r => r.data);
+export const cancelOrder = (id: string, cancelledBy?: string, reason?: string) =>
+  apiClient.post(`/orders/${id}/cancel`, { cancelledBy, reason }).then(r => r.data);
 
 // TODO (backend): Kitchen service not yet built.
 // Required: GET /kitchen/queue, PATCH /kitchen/orders/:id/status
