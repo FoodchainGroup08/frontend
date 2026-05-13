@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
@@ -15,11 +15,13 @@ import { Menu } from "./components/customer/Menu";
 import { Cart } from "./components/customer/Cart";
 import { Checkout } from "./components/customer/Checkout";
 import { OrderConfirmation } from "./components/customer/OrderConfirmation";
+import { ActiveOrdersList } from "./components/customer/ActiveOrdersList";
 import { OrderTracker } from "./components/customer/OrderTracker";
 import { OrderHistory } from "./components/customer/OrderHistory";
 import { OrderDetailModal } from "./components/customer/OrderDetailModal";
 import { CustomerProfile } from "./components/customer/CustomerProfile";
 import { AISuggestions } from "./components/customer/AISuggestions";
+import { AIFoodAssistantModal } from "./components/customer/AIFoodAssistantModal";
 import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
 import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
@@ -52,6 +54,8 @@ interface CartItem {
 type ConfirmationOrder = {
   id: string;
   items: Array<{ id: string; name: string; price: number; quantity: number }>;
+  subtotal: number;
+  deliveryFee: number;
   total: number;
   deliveryAddress: string;
   phoneNumber: string;
@@ -202,6 +206,10 @@ function CustomerLayout() {
   const [selectedBranch, setSelectedBranch] = useState<ApiBranch | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentOrder, setCurrentOrder] = useState<ConfirmationOrder | null>(null);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  // Track which branches have already shown the AI modal this session
+  const aiModalShownFor = useRef(new Set<string>());
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
 
@@ -213,6 +221,7 @@ function CustomerLayout() {
     '/cart': 'cart',
     '/checkout': 'checkout',
     '/order-confirmation': 'order-confirmation',
+    '/active-orders': 'active-orders',
     '/order-tracker': 'order-tracker',
     '/order-history': 'order-history',
     '/profile': 'profile',
@@ -225,6 +234,7 @@ function CustomerLayout() {
     'cart': '/cart',
     'checkout': '/checkout',
     'order-confirmation': '/order-confirmation',
+    'active-orders': '/active-orders',
     'order-tracker': '/order-tracker',
     'order-history': '/order-history',
     'profile': '/profile',
@@ -237,6 +247,12 @@ function CustomerLayout() {
     setSelectedBranch(branch);
     navigate('/menu');
     toast.success(`Selected ${branch.name}`, { description: "Browse our menu and start ordering" });
+    // Open the AI assistant once per branch per session, unless the user dismissed it permanently
+    const permanentlyDismissed = localStorage.getItem('foodchain_ai_assistant_dismissed') === 'true';
+    if (!permanentlyDismissed && !aiModalShownFor.current.has(branch.id)) {
+      aiModalShownFor.current.add(branch.id);
+      setIsAIModalOpen(true);
+    }
   };
 
   const handleAddToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
@@ -271,6 +287,8 @@ function CustomerLayout() {
       id: apiOrder.id,
       // Use cart items for names/prices — the API response may not return them correctly.
       items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+      subtotal: formData.subtotal,
+      deliveryFee: formData.deliveryFee,
       total: formData.total,
       deliveryAddress: formData.deliveryAddress,
       phoneNumber: formData.phoneNumber,
@@ -279,6 +297,7 @@ function CustomerLayout() {
       branchName: selectedBranch?.name ?? '',
       estimatedTime: apiOrder.estimatedTime ?? '45 mins',
     });
+    setTrackingOrderId(apiOrder.id);
     setCart([]);
     navigate('/order-confirmation');
   };
@@ -346,8 +365,21 @@ function CustomerLayout() {
             onBackToMenu={() => navigate('/menu')}
           />
         );
+      case 'active-orders':
+        return (
+          <ActiveOrdersList
+            onSelectOrder={(id) => { setTrackingOrderId(id); navigate('/order-tracker'); }}
+            onGoBack={() => navigate('/menu')}
+          />
+        );
       case 'order-tracker':
-        return <OrderTracker onGoBack={() => navigate('/menu')} />;
+        if (!trackingOrderId) return <Navigate to="/active-orders" replace />;
+        return (
+          <OrderTracker
+            orderId={trackingOrderId}
+            onGoBack={() => navigate('/active-orders')}
+          />
+        );
       case 'order-history':
         return <OrderHistory onViewDetails={handleViewOrderDetails} onBrowseMenu={() => navigate('/menu')} />;
       case 'profile':
@@ -385,6 +417,16 @@ function CustomerLayout() {
         isOpen={isOrderDetailOpen}
         onClose={() => setIsOrderDetailOpen(false)}
       />
+      {selectedBranch && (
+        <AIFoodAssistantModal
+          isOpen={isAIModalOpen}
+          onClose={() => setIsAIModalOpen(false)}
+          branchId={selectedBranch.id}
+          branchName={selectedBranch.name}
+          onAddToCart={handleAddToCart}
+          onGoToCart={() => { setIsAIModalOpen(false); navigate('/cart'); }}
+        />
+      )}
     </>
   );
 }

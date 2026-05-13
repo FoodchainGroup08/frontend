@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const TOKEN_KEY = 'foodchain_token';
@@ -87,7 +86,15 @@ export interface MenuItem {
   image?: string;
 }
 
-export type OrderStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'PICKED_UP' | 'SERVED';
+export type OrderStatus =
+  | 'RECEIVED'
+  | 'CONFIRMED'
+  | 'PREPARING'
+  | 'READY'
+  | 'PICKED_UP'
+  | 'SERVED'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 export interface OrderItem {
   id: string;
@@ -109,6 +116,7 @@ export interface Order {
   orderType: 'delivery' | 'dine-in' | 'takeaway';
   tableNumber?: string;
   deliveryAddress?: string;
+  customerId?: string;
   customerName: string;
   phoneNumber?: string;
   specialInstructions?: string;
@@ -121,19 +129,28 @@ export interface Order {
 
 export interface PlaceOrderPayload {
   branchId: string;
+  branchName?: string;
   orderType: 'delivery' | 'dine-in' | 'takeaway';
   tableNumber?: string;
   deliveryAddress?: string;
-  items: Array<{ menuItemId: string; quantity: number }>;
   customerName?: string;
+  customerEmail?: string;
   phoneNumber?: string;
   paymentMethod?: string;
   specialInstructions?: string;
+  notes?: string;
+  items: Array<{
+    menuItemId: string;
+    menuItemName?: string;
+    quantity: number;
+    unitPrice?: number;
+    specialInstructions?: string;
+  }>;
 }
 
 export interface KitchenOrder {
   id: string;
-  status: 'received' | 'preparing' | 'ready';
+  status: 'received' | 'preparing' | 'ready' | 'picked-up' | 'served';
   items: Array<{ id: string; name: string; quantity: number; specialInstructions?: string }>;
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   tableNumber?: string;
@@ -142,6 +159,76 @@ export interface KitchenOrder {
   isUrgent?: boolean;
   customerName?: string;
 }
+
+const normalizeKitchenStatus = (status?: string): KitchenOrder['status'] => {
+  const value = status?.toLowerCase().replace('_', '-');
+  if (value === 'preparing' || value === 'ready' || value === 'picked-up' || value === 'served') return value;
+  return 'received';
+};
+
+const normalizeKitchenOrderType = (orderType?: string): KitchenOrder['orderType'] => {
+  const value = orderType?.toLowerCase().replace('_', '-');
+  if (value === 'dine-in' || value === 'delivery') return value;
+  return 'takeaway';
+};
+
+const mapKitchenOrder = (order: any): KitchenOrder => ({
+  id: order.id ?? order.orderId,
+  status: normalizeKitchenStatus(order.displayStatus ?? order.status),
+  items: Array.isArray(order.items)
+    ? order.items.map((item: any) => ({
+        id: item.id ?? item.menuItemId,
+        name: item.name ?? item.menuItemName ?? 'Menu item',
+        quantity: item.quantity ?? 1,
+        specialInstructions: item.specialInstructions ?? undefined,
+      }))
+    : [],
+  orderType: normalizeKitchenOrderType(order.displayOrderType ?? order.orderType),
+  tableNumber: order.tableNumber ?? undefined,
+  receivedAt: order.receivedAt ?? order.createdAt ?? new Date().toISOString(),
+  isNew: order.isNew,
+  isUrgent: order.isUrgent,
+  customerName: order.customerName ?? undefined,
+});
+
+const looksLikeKitchenOrder = (value: any) =>
+  value && typeof value === 'object' && !Array.isArray(value) &&
+  (value.orderId || value.id) &&
+  (Array.isArray(value.items) || value.status || value.displayStatus);
+
+const extractKitchenOrders = (data: any): any[] => {
+  if (Array.isArray(data)) {
+    return data.some(looksLikeKitchenOrder) ? data : [];
+  }
+
+  if (!data || typeof data !== 'object') return [];
+
+  const directCandidates = [
+    data.content,
+    data.orders,
+    data.queue,
+    data.data,
+    data.data?.content,
+    data.data?.orders,
+    data.data?.queue,
+    data.result,
+    data.result?.content,
+    data.result?.orders,
+    data.result?.queue,
+  ];
+
+  for (const candidate of directCandidates) {
+    const orders = extractKitchenOrders(candidate);
+    if (orders.length > 0) return orders;
+  }
+
+  for (const value of Object.values(data)) {
+    const orders = extractKitchenOrders(value);
+    if (orders.length > 0) return orders;
+  }
+
+  return [];
+};
 
 export interface ManagerDashboard {
   totalOrders: number;
@@ -410,14 +497,15 @@ function normaliseOrderType(raw: string): 'dine-in' | 'takeaway' | 'delivery' {
 function normaliseOrderStatus(raw: string): OrderStatus {
   switch (raw) {
     case 'RECEIVED':
+    case 'CONFIRMED':
     case 'PREPARING':
     case 'READY':
     case 'PICKED_UP':
     case 'SERVED':
+    case 'COMPLETED':
+    case 'CANCELLED':
       return raw as OrderStatus;
     case 'PAYMENT_PENDING': return 'RECEIVED';
-    case 'CONFIRMED':       return 'RECEIVED';
-    case 'COMPLETED':       return 'PICKED_UP';
     default:                return 'RECEIVED';
   }
 }
@@ -425,26 +513,27 @@ function normaliseOrderStatus(raw: string): OrderStatus {
 function mapOrderItem(i: any): OrderItem {
   return {
     id: i.id ?? i.menuItemId ?? '',
-    name: i.name ?? i.menuItemName ?? '',
-    price: i.price ?? i.unitPrice ?? 0,
+    name: i.name ?? i.menuItemName ?? i.itemName ?? i.productName ?? i.menuItem?.name ?? '',
+    price: i.price ?? i.unitPrice ?? i.basePrice ?? 0,
     quantity: i.quantity ?? 1,
   };
 }
 
 function mapOrder(o: any): Order {
   return {
-    id: o.id,
+    id: o.id ?? o.orderId ?? '',
     status: normaliseOrderStatus(o.status),
     items: (o.items ?? []).map(mapOrderItem),
     itemCount: o.itemCount,
     subtotal: o.subtotal ?? o.totalAmount ?? 0,
     deliveryFee: o.deliveryFee ?? 0,
     total: o.total ?? o.totalAmount ?? 0,
-    branchId: o.branchId ?? '',
-    branchName: o.branchName ?? '',
+    branchId: o.branchId ?? o.branch?.id ?? '',
+    branchName: o.branchName ?? o.branch?.name ?? o.branchDetails?.name ?? '',
     orderType: normaliseOrderType(o.orderType),
     tableNumber: o.tableNumber,
     deliveryAddress: o.deliveryAddress,
+    customerId: o.customerId ?? o.userId ?? o.customer?.id,
     customerName: o.customerName ?? '',
     phoneNumber: o.phoneNumber,
     specialInstructions: o.specialInstructions,
@@ -581,28 +670,45 @@ export const deleteMenuItemImage = (id: string) =>
 
 // ─── ORDERS (Customer) ────────────────────────────────────────────────────────
 
-// TODO (backend): Backend CreateOrderRequest requires customerId (must be extracted
-// from JWT server-side, not sent by client), menuItemName, and unitPrice per item
-// (must be looked up from menu-service server-side). Frontend only sends menuItemId
-// and quantity. The order service must resolve the rest internally.
-// TODO (backend): orderType values — frontend sends 'delivery'|'dine-in'|'takeaway',
-// backend enum is DINE_IN|TAKEAWAY|DELIVERY. Backend must accept both casings or
-// document the exact expected format.
+// customerId is resolved from the JWT by the gateway — never send it in the body.
+// A fresh idempotency key is generated per call; retries should use the same key
+// (callers that need retry-safe placement should generate the key themselves and
+// pass it via a wrapper — this default is fine for the normal one-shot checkout flow).
 export const placeOrder = (payload: PlaceOrderPayload) =>
-  apiClient.post<any>('/orders', payload).then(r => mapOrder(r.data));
+  apiClient.post<any>('/orders', payload, {
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+  }).then(r => mapOrder(r.data));
 
-// Backend returns Page<OrderListResponse> (backend bug B7) — extract first item.
-export const getActiveOrder = (): Promise<Order | null> =>
+<<<<<<< Updated upstream
+// /orders/active returns a summary page (no items, no branchName).
+// Pass customerId so the backend scopes to the current user via the query param
+// (the gateway also enforces this via JWT, but the param avoids needing a second
+// call to filter client-side when the backend returns the full tenant's orders).
+export const getActiveOrders = (customerId?: string): Promise<Order[]> =>
+  apiClient.get<any>('/orders/active', {
+    params: { ...(customerId && { customerId }), size: 20 },
+  }).then(r => {
+=======
+export const getActiveOrders = (): Promise<Order[]> =>
   apiClient.get<any>('/orders/active').then(r => {
+>>>>>>> Stashed changes
     const data = r.data;
-    if (data?.content && Array.isArray(data.content)) {
-      return data.content.length > 0 ? mapOrder(data.content[0]) : null;
-    }
-    return data ? mapOrder(data) : null;
+    let orders: Order[];
+    if (data?.content && Array.isArray(data.content)) orders = data.content.map(mapOrder);
+    else if (Array.isArray(data)) orders = data.map(mapOrder);
+    else orders = data ? [mapOrder(data)] : [];
+<<<<<<< Updated upstream
+    return orders;
+=======
+    return orders.filter(o => !o.id.startsWith('demo_'));
+>>>>>>> Stashed changes
   });
 
-export const getOrderHistory = (): Promise<Order[]> =>
-  apiClient.get<any>('/orders/history').then(r => {
+// Same summary page shape as /orders/active.
+export const getOrderHistory = (customerId?: string): Promise<Order[]> =>
+  apiClient.get<any>('/orders/history', {
+    params: { ...(customerId && { customerId }), size: 20 },
+  }).then(r => {
     const data = r.data;
     if (data?.content && Array.isArray(data.content)) return data.content.map(mapOrder);
     return Array.isArray(data) ? data.map(mapOrder) : [];
@@ -611,22 +717,89 @@ export const getOrderHistory = (): Promise<Order[]> =>
 export const getOrderById = (id: string) =>
   apiClient.get<any>(`/orders/${id}`).then(r => mapOrder(r.data));
 
-export const cancelOrder = (id: string) =>
-  apiClient.post(`/orders/${id}/cancel`).then(r => r.data);
+export const cancelOrder = (id: string, cancelledBy?: string, reason?: string) =>
+  apiClient.post(`/orders/${id}/cancel`, { cancelledBy, reason }).then(r => r.data);
 
-// TODO (backend): Kitchen service not yet built.
-// Required: GET /kitchen/queue, PATCH /kitchen/orders/:id/status
 // ─── KITCHEN ──────────────────────────────────────────────────────────────────
 
-export const getKitchenQueue = () =>
-  apiClient.get<any>('/kitchen/queue').then(r => {
-    const data = r.data;
-    if (data?.content && Array.isArray(data.content)) return data.content as KitchenOrder[];
-    return (Array.isArray(data) ? data : []) as KitchenOrder[];
+export interface KitchenStatusGroup {
+  total: number;
+  page: number;
+  size: number;
+  orders: KitchenOrder[];
+}
+
+export interface KitchenQueuePage {
+  branchId: string;
+  page: number;
+  size: number;
+  received: KitchenStatusGroup;
+  preparing: KitchenStatusGroup;
+  ready: KitchenStatusGroup;
+}
+
+// Handles both the new paginated shape ({ orders: [...], total: N })
+// and the old shape where a status group is a plain array.
+const parseStatusGroup = (g: any, fallbackSize: number): KitchenStatusGroup => {
+  if (Array.isArray(g)) {
+    const orders = g.map(mapKitchenOrder);
+    return { total: orders.length, page: 0, size: fallbackSize, orders };
+  }
+  if (!g || typeof g !== 'object') return { total: 0, page: 0, size: fallbackSize, orders: [] };
+  const orders = Array.isArray(g.orders) ? g.orders.map(mapKitchenOrder) : [];
+  return { total: g.total ?? orders.length, page: g.page ?? 0, size: g.size ?? fallbackSize, orders };
+};
+
+export const getKitchenQueue = (page = 0, size = 20): Promise<KitchenQueuePage> =>
+  apiClient.get<any>('/kitchen/queue', { params: { page, size } }).then(r => {
+    const d = r.data;
+
+    if (d && typeof d === 'object') {
+      // Accept both lowercase and uppercase keys (RECEIVED / received).
+      // Also fires when groups are plain arrays (old format) — parseStatusGroup handles both.
+      const receivedRaw  = d.received  ?? d.RECEIVED;
+      const preparingRaw = d.preparing ?? d.PREPARING;
+      const readyRaw     = d.ready     ?? d.READY;
+
+      if (receivedRaw !== undefined || preparingRaw !== undefined || readyRaw !== undefined) {
+        return {
+          branchId: d.branchId ?? '',
+          page: d.page ?? page,
+          size: d.size ?? size,
+          received:  parseStatusGroup(receivedRaw,  size),
+          preparing: parseStatusGroup(preparingRaw, size),
+          ready:     parseStatusGroup(readyRaw,     size),
+        };
+      }
+    }
+
+    // True legacy fallback: flat array or unrecognised envelope.
+    // extractKitchenOrders stops at the first array it finds, so split by status
+    // here rather than relying on the extractor to merge multiple groups.
+    const allOrders = extractKitchenOrders(d).map(mapKitchenOrder);
+    const byStatus = (s: KitchenOrder['status']) => allOrders.filter(o => o.status === s);
+    const makeGroup = (orders: KitchenOrder[]): KitchenStatusGroup => ({ total: orders.length, page: 0, size, orders });
+    return {
+      branchId: '',
+      page,
+      size,
+      received:  makeGroup(byStatus('received')),
+      preparing: makeGroup(byStatus('preparing')),
+      ready:     makeGroup(byStatus('ready')),
+    };
   });
 
-export const updateOrderStatus = (orderId: string, newStatus: 'PREPARING' | 'READY') =>
-  apiClient.patch(`/kitchen/orders/${orderId}/status`, { status: newStatus }).then(r => r.data);
+export const acceptKitchenOrder = (orderId: string, staffId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/accept`, { staffId, notes: '' }).then(r => r.data);
+
+export const readyKitchenOrder = (orderId: string, staffId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/ready`, { staffId, notes: '' }).then(r => r.data);
+
+export const pickupKitchenOrder = (orderId: string, staffId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/pickup`, { staffId, notes: '' }).then(r => r.data);
+
+export const serveKitchenOrder = (orderId: string, staffId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/serve`, { staffId, notes: '' }).then(r => r.data);
 
 // ─── MANAGER ──────────────────────────────────────────────────────────────────
 

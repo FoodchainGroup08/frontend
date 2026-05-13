@@ -1,16 +1,29 @@
 import { useEffect, useState } from "react";
-import { Clock, CheckCircle2, Package, Truck, Home, ChevronRight, ArrowLeft } from "lucide-react";
+import { Clock, CheckCircle2, Package, Truck, Home, UtensilsCrossed, ChevronRight, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-import { getActiveOrder, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
+<<<<<<< Updated upstream
+import { getOrderById, cancelOrder, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
 import { useOrderTracker } from "@/hooks/useOrderTracker";
-import { isNetworkError, getDemoActiveOrder } from "@/utils/demoData";
+import { useAuth } from "@/context/AuthContext";
+=======
+import { getOrderById, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
+import { useOrderTracker } from "@/hooks/useOrderTracker";
+>>>>>>> Stashed changes
 
-type LocalStatus = 'confirmed' | 'preparing' | 'ready' | 'out-for-delivery' | 'delivered';
+// Mirrors the backend status lifecycle exactly.
+type LocalStatus =
+  | 'received'    // RECEIVED  — order placed, awaiting branch confirmation
+  | 'confirmed'   // CONFIRMED — branch confirmed, not yet cooking
+  | 'preparing'   // PREPARING — kitchen started
+  | 'ready'       // READY     — food done, awaiting handoff
+  | 'picked-up'   // PICKED_UP — takeaway / delivery collected
+  | 'served'      // SERVED    — dine-in handed to table
+  | 'completed';  // COMPLETED — legacy terminal
 
 interface TrackedOrder {
   id: string;
@@ -25,27 +38,100 @@ interface TrackedOrder {
 }
 
 interface OrderTrackerProps {
+  orderId: string;
   onGoBack?: () => void;
 }
 
-const statusSteps = [
-  { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle2 },
-  { key: 'preparing', label: 'Preparing', icon: Package },
-  { key: 'ready', label: 'Ready', icon: Clock },
-  { key: 'out-for-delivery', label: 'Out for Delivery', icon: Truck },
-  { key: 'delivered', label: 'Delivered', icon: Home }
-];
+// ─── Status helpers ───────────────────────────────────────────────────────────
 
-function mapApiStatus(apiStatus: OrderStatus): LocalStatus {
-  const map: Record<OrderStatus, LocalStatus> = {
-    RECEIVED: 'confirmed',
-    PREPARING: 'preparing',
-    READY: 'ready',
-    PICKED_UP: 'out-for-delivery',
-    SERVED: 'delivered',
-  };
-  return map[apiStatus] ?? 'confirmed';
+const STATUS_MAP: Record<OrderStatus, LocalStatus> = {
+  RECEIVED:  'received',
+  CONFIRMED: 'confirmed',
+  PREPARING: 'preparing',
+  READY:     'ready',
+  PICKED_UP: 'picked-up',
+  SERVED:    'served',
+  COMPLETED: 'completed',
+  CANCELLED: 'received', // terminal — OrderTracker navigates away on cancel
+};
+
+// Canonical index used for progress bar and step highlighting.
+// PICKED_UP, SERVED, and COMPLETED all represent the final step (index 4).
+const STATUS_INDEX: Record<LocalStatus, number> = {
+  'received':  0,
+  'confirmed': 1,
+  'preparing': 2,
+  'ready':     3,
+  'picked-up': 4,
+  'served':    4,
+  'completed': 4,
+};
+
+function mapApiStatus(s: OrderStatus): LocalStatus {
+  return STATUS_MAP[s] ?? 'received';
 }
+
+// Step definitions differ by order type for the last two steps.
+function getSteps(orderType?: string) {
+  const isDineIn   = orderType === 'dine-in';
+
+  return [
+    { key: 'received'  as LocalStatus, label: 'Order Placed',      icon: CheckCircle2    },
+    { key: 'confirmed' as LocalStatus, label: 'Order Confirmed',    icon: CheckCircle2    },
+    { key: 'preparing' as LocalStatus, label: 'Being Prepared',     icon: Package         },
+    {
+      key:   'ready' as LocalStatus,
+      label: isDineIn ? 'Ready to Serve' : 'Ready for Pickup',
+      icon:  UtensilsCrossed,
+    },
+    {
+      key:   (isDineIn ? 'served' : 'picked-up') as LocalStatus,
+      label: isDineIn ? 'Served at Table' : 'Out for Delivery',
+      icon:  isDineIn ? Home : Truck,
+    },
+  ];
+}
+
+function stepSubtext(status: LocalStatus, orderType?: string): string {
+  switch (status) {
+    case 'received':  return 'Waiting for the branch to confirm your order…';
+    case 'confirmed': return 'The kitchen is about to start on your order…';
+    case 'preparing': return 'The kitchen is preparing your order…';
+    case 'ready':
+      if (orderType === 'dine-in')   return 'Your food is ready — a server is on the way!';
+      if (orderType === 'takeaway')  return 'Head to the counter — your order is ready!';
+      return 'A rider is collecting your order…';
+    case 'picked-up': return 'Your order is on its way to you!';
+    case 'served':    return 'Enjoy your meal!';
+    case 'completed': return 'Order complete!';
+    default:          return 'In progress…';
+  }
+}
+
+function badgeStyle(status: LocalStatus): React.CSSProperties {
+  if (['served', 'picked-up', 'completed'].includes(status))
+    return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
+  if (status === 'ready')
+    return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
+  if (status === 'preparing')
+    return { backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' };
+  return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
+}
+
+function badgeLabel(status: LocalStatus): string {
+  const labels: Record<LocalStatus, string> = {
+    'received':  'Order Placed',
+    'confirmed': 'Confirmed',
+    'preparing': 'Preparing',
+    'ready':     'Ready',
+    'picked-up': 'Out for Delivery',
+    'served':    'Served',
+    'completed': 'Completed',
+  };
+  return labels[status];
+}
+
+// ─── Mappers ──────────────────────────────────────────────────────────────────
 
 function mapApiOrder(order: Order): TrackedOrder {
   return {
@@ -54,49 +140,75 @@ function mapApiOrder(order: Order): TrackedOrder {
     items: order.items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity })),
     total: order.total,
     branchName: order.branchName,
-    estimatedTime: order.estimatedTime ?? '45 mins',
+    estimatedTime: order.estimatedTime ?? '—',
     placedAt: order.placedAt,
     deliveryAddress: order.deliveryAddress,
     orderType: order.orderType,
   };
 }
 
-export function OrderTracker({ onGoBack }: OrderTrackerProps) {
+<<<<<<< Updated upstream
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
+  const { user } = useAuth();
+=======
+export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
+>>>>>>> Stashed changes
   const [activeOrder, setActiveOrder] = useState<TrackedOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const fetchOrder = async () => {
     setIsLoading(true);
-    setError("");
+    setError('');
     try {
-      const order = await getActiveOrder();
-      setActiveOrder(order ? mapApiOrder(order) : null);
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        const demoOrder = getDemoActiveOrder();
-        setActiveOrder(demoOrder ? mapApiOrder(demoOrder) : null);
-      } else {
-        setError("Failed to load order");
-        toast.error("Failed to load active order");
-      }
+      const order = await getOrderById(orderId);
+      setActiveOrder(mapApiOrder(order));
+    } catch {
+<<<<<<< Updated upstream
+      setError('Failed to load order');
+      toast.error('Failed to load order');
+=======
+      setError("Failed to load order");
+      toast.error("Failed to load order");
+>>>>>>> Stashed changes
     } finally {
       setIsLoading(false);
     }
   };
 
+<<<<<<< Updated upstream
+  const handleCancel = async () => {
+    if (!activeOrder) return;
+    setIsCancelling(true);
+    try {
+      await cancelOrder(activeOrder.id, user?.id, 'Cancelled by customer');
+      toast.success('Order cancelled');
+      onGoBack?.();
+    } catch {
+      toast.error('Cannot cancel — the kitchen may have already started preparing your order');
+    } finally {
+      setIsCancelling(false);
+=======
   useEffect(() => {
-    fetchOrder();
-  }, []);
+    if (orderId) fetchOrder();
+  }, [orderId]);
 
   useEffect(() => {
     if (activeOrder) {
       const currentIndex = statusSteps.findIndex(step => step.key === activeOrder.status);
       setProgress(((currentIndex + 1) / statusSteps.length) * 100);
+>>>>>>> Stashed changes
     }
-  }, [activeOrder]);
+  };
 
+  useEffect(() => {
+    if (orderId) fetchOrder();
+  }, [orderId]);
+
+  // Real-time status updates via WebSocket
   useOrderTracker(activeOrder?.id ?? '', (data) => {
     const msg = data as WsOrderUpdate;
     if (msg.newStatus && activeOrder) {
@@ -104,12 +216,14 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
     }
   });
 
+  // ─── Loading ────────────────────────────────────────────────────────────────
+
   if (isLoading) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Skeleton className="h-10 w-48 mb-8" />
-          <Skeleton className="h-64 w-full rounded-lg mb-6" />
+          <Skeleton className="h-72 w-full rounded-lg mb-6" />
           <Skeleton className="h-48 w-full rounded-lg" />
         </div>
       </div>
@@ -129,60 +243,24 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
     );
   }
 
-  if (!activeOrder) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="flex items-center gap-3 mb-8">
-            {onGoBack && (
-              <Button
-                onClick={onGoBack}
-                variant="ghost"
-                size="sm"
-                className="gap-2"
-                style={{ color: 'var(--foodchain-espresso)' }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Button>
-            )}
-            <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-              Track Order
-            </h1>
-          </div>
+  if (!activeOrder) return null;
 
-          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
-            <CardContent className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                <Package className="w-10 h-10" style={{ color: 'var(--foodchain-espresso)' }} />
-              </div>
-              <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                No Active Orders
-              </h3>
-              <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
-                You don't have any orders in progress
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // ─── Derived display values ──────────────────────────────────────────────────
 
-  const currentStepIndex = statusSteps.findIndex(step => step.key === activeOrder.status);
+  const steps = getSteps(activeOrder.orderType);
+  const currentIndex = STATUS_INDEX[activeOrder.status] ?? 0;
+  const progress = ((currentIndex + 1) / steps.length) * 100;
+  const canCancel = activeOrder.status === 'received' || activeOrder.status === 'confirmed';
+  const placedTime = new Date(activeOrder.placedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           {onGoBack && (
-            <Button
-              onClick={onGoBack}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-              style={{ color: 'var(--foodchain-espresso)' }}
-            >
+            <Button onClick={onGoBack} variant="ghost" size="sm" className="gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
               <ArrowLeft className="w-4 h-4" />
               Back
             </Button>
@@ -192,33 +270,28 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
           </h1>
         </div>
 
+        {/* Status tracker card */}
         <Card className="border-[var(--foodchain-espresso)]/10 mb-6" style={{ backgroundColor: 'var(--foodchain-white)' }}>
           <CardHeader>
-            <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-start justify-between flex-wrap gap-2">
               <div>
-                <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>Order #{activeOrder.id}</CardTitle>
-                <p className="text-sm mt-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
-                  Placed at {activeOrder.placedAt}
+                <CardTitle className="text-base font-mono" style={{ color: 'var(--foodchain-espresso)' }}>
+                  #{activeOrder.id.slice(-8).toUpperCase()}
+                </CardTitle>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--foodchain-espresso)', opacity: 0.55 }}>
+                  Placed at {placedTime} · {activeOrder.branchName}
                 </p>
               </div>
-              <Badge
-                className="border-0"
-                style={{
-                  backgroundColor:
-                    activeOrder.status === 'delivered' ? 'var(--foodchain-sage-green)' :
-                    activeOrder.status === 'out-for-delivery' ? 'var(--foodchain-golden-amber)' :
-                    'var(--foodchain-espresso)',
-                  color: 'var(--foodchain-white)'
-                }}
-              >
-                {activeOrder.status === 'out-for-delivery' ? 'Out for Delivery' :
-                 activeOrder.status.charAt(0).toUpperCase() + activeOrder.status.slice(1)}
+              <Badge className="border-0" style={badgeStyle(activeOrder.status)}>
+                {badgeLabel(activeOrder.status)}
               </Badge>
             </div>
           </CardHeader>
+
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm mb-2">
+            {/* Progress bar */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
                 <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Progress</span>
                 <span style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
                   {Math.round(progress)}%
@@ -227,11 +300,13 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
               <Progress value={progress} className="h-2" />
             </div>
 
+            {/* Step-by-step tracker */}
             <div className="relative">
-              {statusSteps.map((step, index) => {
+              {steps.map((step, index) => {
                 const Icon = step.icon;
-                const isCompleted = index <= currentStepIndex;
-                const isCurrent = index === currentStepIndex;
+                const isCompleted = index < currentIndex;
+                const isCurrent   = index === currentIndex;
+                const isPending   = index > currentIndex;
 
                 return (
                   <div key={step.key} className="relative">
@@ -239,8 +314,10 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
                       <div
                         className="absolute left-5 -top-6 w-0.5 h-6"
                         style={{
-                          backgroundColor: isCompleted ? 'var(--foodchain-sage-green)' : 'var(--foodchain-espresso)',
-                          opacity: isCompleted ? 1 : 0.2
+                          backgroundColor: isCompleted
+                            ? 'var(--foodchain-sage-green)'
+                            : 'var(--foodchain-espresso)',
+                          opacity: isCompleted ? 1 : 0.15,
                         }}
                       />
                     )}
@@ -248,29 +325,35 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
                         style={{
-                          backgroundColor: isCompleted ? 'var(--foodchain-sage-green)' : isCurrent ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
-                          opacity: isCompleted || isCurrent ? 1 : 0.2
+                          backgroundColor: isCompleted
+                            ? 'var(--foodchain-sage-green)'
+                            : isCurrent
+                            ? 'var(--foodchain-golden-amber)'
+                            : 'var(--foodchain-espresso)',
+                          opacity: isPending ? 0.18 : 1,
                         }}
                       >
                         <Icon className="w-5 h-5" style={{ color: 'var(--foodchain-white)' }} />
                       </div>
+
                       <div className="flex-1">
                         <p
                           className="text-base"
                           style={{
                             color: 'var(--foodchain-espresso)',
                             fontWeight: isCurrent ? 600 : 400,
-                            opacity: isCompleted || isCurrent ? 1 : 0.5
+                            opacity: isPending ? 0.4 : 1,
                           }}
                         >
                           {step.label}
                         </p>
                         {isCurrent && (
-                          <p className="text-sm mt-1" style={{ color: 'var(--foodchain-golden-amber)' }}>
-                            In progress...
+                          <p className="text-sm mt-0.5" style={{ color: 'var(--foodchain-golden-amber)' }}>
+                            {stepSubtext(activeOrder.status, activeOrder.orderType)}
                           </p>
                         )}
                       </div>
+
                       {isCompleted && (
                         <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--foodchain-sage-green)' }} />
                       )}
@@ -280,39 +363,38 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
               })}
             </div>
 
-            <div className="p-4 rounded-md" style={{ backgroundColor: 'rgba(240, 165, 0, 0.12)' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
-                <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                  Estimated Delivery
-                </span>
+            {/* Estimated time */}
+            {activeOrder.estimatedTime && activeOrder.estimatedTime !== '—' && (
+              <div className="p-4 rounded-md" style={{ backgroundColor: 'rgba(240,165,0,0.1)' }}>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <Clock className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
+                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                    Estimated Time
+                  </span>
+                </div>
+                <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                  {activeOrder.estimatedTime}
+                </p>
               </div>
-              <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                {activeOrder.estimatedTime}
-              </p>
-            </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Order details card */}
         <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
           <CardHeader>
             <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>Order Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+
             <div>
-              <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
-                Branch
-              </p>
-              <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                {activeOrder.branchName}
-              </p>
+              <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Branch</p>
+              <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>{activeOrder.branchName || '—'}</p>
             </div>
 
             {activeOrder.orderType && (
               <div>
-                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
-                  Order Type
-                </p>
+                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Order Type</p>
                 <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600, textTransform: 'capitalize' }}>
                   {activeOrder.orderType.replace('-', ' ')}
                 </p>
@@ -321,12 +403,8 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
 
             {activeOrder.deliveryAddress && (
               <div>
-                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
-                  Delivery Address
-                </p>
-                <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                  {activeOrder.deliveryAddress}
-                </p>
+                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Delivery Address</p>
+                <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>{activeOrder.deliveryAddress}</p>
               </div>
             )}
 
@@ -335,11 +413,11 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
                 Items ({activeOrder.items.length})
               </p>
               <div className="space-y-1">
-                {activeOrder.items.map((item) => (
+                {activeOrder.items.map(item => (
                   <div key={item.id} className="flex items-center gap-2">
                     <ChevronRight className="w-4 h-4" style={{ color: 'var(--foodchain-golden-amber)' }} />
                     <span style={{ color: 'var(--foodchain-espresso)' }}>
-                      {item.name || 'Menu item'} × {item.quantity}
+                      {item.name || 'Unknown item'} × {item.quantity}
                     </span>
                   </div>
                 ))}
@@ -354,8 +432,21 @@ export function OrderTracker({ onGoBack }: OrderTrackerProps) {
                 </span>
               </div>
             </div>
+
+            {canCancel && (
+              <Button
+                onClick={handleCancel}
+                disabled={isCancelling}
+                variant="outline"
+                className="w-full"
+                style={{ borderColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-burnt-orange)' }}
+              >
+                {isCancelling ? 'Cancelling…' : 'Cancel Order'}
+              </Button>
+            )}
           </CardContent>
         </Card>
+
       </div>
     </div>
   );

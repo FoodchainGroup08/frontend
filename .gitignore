@@ -16,6 +16,9 @@ dist/
 .vscode/
 .idea/
 
+
+.index.html
+
 # OS
 .DS_Store
 Thumbs.db
