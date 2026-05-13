@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Minus, Search } from "lucide-react";
+import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
@@ -153,8 +154,8 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                   }}
                 >
                   <div className="aspect-video w-full overflow-hidden bg-gray-100">
-                    <img
-                      src={item.imageUrl || item.image || ''}
+                    <ImageWithFallback
+                      src={item.imageUrl || item.image}
                       alt={item.name}
                       className="w-full h-full object-cover"
                       loading="lazy"

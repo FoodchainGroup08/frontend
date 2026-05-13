@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude doctor *)",
+      "Bash(echo \"EXIT:$?\")",
+      "PowerShell(claude doctor *)",
+      "Bash(npm i *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(node_modules\\\\.bin\\\\tsc --noEmit)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "PowerShell(cd \"C:\\\\Users\\\\User\\\\Documents\\\\dreamdevs\\\\food-chain\"; Get-ChildItem node_modules -Name | Where-Object { $_ -match \"tw-animate|canvas-confetti\" })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\food-chain\\\\frontend\\\\src\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Head -50)",
+      "Bash(xargs grep -l \"validate\\\\|validator\\\\|schema\\\\|yup\\\\|zod\")",
+      "Bash(npm run *)",
+      "Bash(Get-Content *)"
+    ]
+  }
+}

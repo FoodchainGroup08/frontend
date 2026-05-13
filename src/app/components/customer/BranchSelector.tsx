@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { MapPin, Clock, Star, LogOut } from "lucide-react";
+
+const isOpenNow = () => {
+  const h = new Date().getHours();
+  return h >= 8 && h < 23;
+};
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -119,14 +124,15 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
           <div className="grid gap-4 sm:gap-6">
             {branches.map((branch, index) => {
               const isSuggested = index === 0;
+              const open = isOpenNow();
               return (
               <Card
                 key={branch.id}
                 className="cursor-pointer transition-all hover:shadow-lg border-[var(--foodchain-espresso)]/10"
-                onClick={() => branch.isOpen && onSelectBranch(branch)}
+                onClick={() => open && onSelectBranch(branch)}
                 style={{
                   backgroundColor: 'var(--foodchain-white)',
-                  opacity: branch.isOpen ? 1 : 0.6,
+                  opacity: open ? 1 : 0.6,
                   borderColor: isSuggested ? 'var(--foodchain-golden-amber)' : undefined,
                   boxShadow: isSuggested ? '0 0 0 1px rgba(240, 165, 0, 0.2), 0 8px 18px rgba(240, 165, 0, 0.14)' : undefined
                 }}
@@ -149,7 +155,7 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
                             Fastest delivery
                           </Badge>
                         )}
-                        {branch.isOpen ? (
+                        {open ? (
                           <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
                             Open
                           </Badge>

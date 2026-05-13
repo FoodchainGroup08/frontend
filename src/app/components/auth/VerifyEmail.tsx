@@ -15,6 +15,7 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [isResending, setIsResending] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
     if (!token) return;
@@ -30,6 +31,13 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
         setStatus('error');
       });
   }, [token]);
+
+  useEffect(() => {
+    if (status !== 'success') return;
+    if (countdown <= 0) { onNavigateToLogin(); return; }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [status, countdown, onNavigateToLogin]);
 
   const handleResend = async () => {
     if (!email) return;
@@ -90,12 +98,12 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
                 </div>
                 <CardTitle className="text-2xl" style={{ color: 'var(--foodchain-espresso)' }}>Email verified!</CardTitle>
                 <CardDescription style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
-                  Your account is now active. Sign in to start ordering.
+                  Your account is now active. Taking you to sign in{countdown > 0 ? ` in ${countdown}…` : '…'}
                 </CardDescription>
               </CardHeader>
               <CardFooter>
                 <Button onClick={onNavigateToLogin} className="w-full hover:opacity-90" style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
-                  Sign in
+                  Sign in now
                 </Button>
               </CardFooter>
             </>

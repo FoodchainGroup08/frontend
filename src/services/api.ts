@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { computeRoadDistancesKm } from './locationService';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const TOKEN_KEY = 'foodchain_token';
@@ -337,144 +336,6 @@ export const postGoogleAuth = (credential: string): Promise<AuthResponse> =>
   }));
 
 
-// ─── Demo Data ────────────────────────────────────────────────────────────────
-
-// These are the two real branches seeded in the DB.
-// Shown as fallback when the branch service is unavailable (gateway routing bug returns 500).
-const DEMO_BRANCHES: Branch[] = [
-  {
-    id: '4d800a8a-970b-4b80-a1e6-315106f170a4',
-    name: 'Uptown Express',
-    address: '15 Akin Adesola Street, Victoria Island, Lagos',
-    hours: '8:00 AM - 10:00 PM',
-    rating: 4.8,
-    isOpen: true,
-    isActive: true,
-    distance: '2.3 km'
-  },
-  {
-    id: '63ae8d0f-4c7c-48ea-9ec2-805d0e7f9d8d',
-    name: 'Downtown Kitchen',
-    address: '32 Admiralty Way, Lekki Phase 1, Lagos',
-    hours: '9:00 AM - 11:00 PM',
-    rating: 4.6,
-    isOpen: true,
-    isActive: true,
-    distance: '5.1 km'
-  }
-];
-
-const DEMO_MENU: MenuItem[] = [
-  { id: '1', name: 'Jollof Rice with Chicken', description: 'Spicy Nigerian jollof rice served with grilled chicken', price: 3500, category: 'Mains', available: true, image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400' },
-  { id: '2', name: 'Fried Rice Combo', description: 'Delicious fried rice with beef and plantain', price: 3200, category: 'Mains', available: true, image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400' },
-  { id: '3', name: 'Egusi Soup & Pounded Yam', description: 'Traditional melon soup with smooth pounded yam', price: 2800, category: 'Soups', available: true, image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=400' },
-  { id: '4', name: 'Suya Platter', description: 'Spicy grilled beef suya with onions and tomatoes', price: 4000, category: 'Grills', available: true, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400' },
-  { id: '5', name: 'Pepper Soup', description: 'Spicy Nigerian pepper soup with assorted meat', price: 2500, category: 'Soups', available: true, image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400' },
-  { id: '6', name: 'Grilled Chicken', description: 'Perfectly seasoned grilled chicken', price: 3800, category: 'Grills', available: true, image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=400' },
-  { id: '7', name: 'Fried Plantain', description: 'Sweet fried plantain slices', price: 1200, category: 'Sides', available: true, image: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?w=400' },
-  { id: '8', name: 'Chapman', description: 'Refreshing Nigerian cocktail drink', price: 1500, category: 'Drinks', available: true, image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400' },
-  { id: '9', name: 'Fresh Coconut Water', description: 'Chilled coconut water', price: 1000, category: 'Drinks', available: true, image: 'https://images.unsplash.com/photo-1564538724971-5aed61b928ba?w=400' }
-];
-
-// Helper to check if we're in demo mode
-const isDemoMode = () => localStorage.getItem('foodchain_demo_mode') === 'true';
-
-// Returns true for any error that means the backend/service is unreachable or
-// temporarily unavailable — used to decide whether to return demo data.
-// Includes all 5xx so the branch service gateway routing bug (500) also falls back.
-const isServiceUnavailable = (error: any): boolean => {
-  const status: number | undefined = error.response?.status;
-  return (
-    error.code === 'ERR_NETWORK' ||
-    !!error.message?.includes('Network Error') ||
-    (status != null && status >= 500)
-  );
-};
-
-// Wrapper to handle network/gateway errors with demo fallback
-const withDemoFallback = async <T,>(apiCall: () => Promise<T>, demoData: T): Promise<T> => {
-  try {
-    return await apiCall();
-  } catch (error: any) {
-    if (isDemoMode() || isServiceUnavailable(error)) {
-      return demoData;
-    }
-    throw error;
-  }
-};
-
-// Like withDemoFallback but accepts an async producer for demo data (e.g. when computing distances)
-const withAsyncDemoFallback = async <T,>(apiCall: () => Promise<T>, getDemoData: () => Promise<T>): Promise<T> => {
-  try {
-    return await apiCall();
-  } catch (error: any) {
-    if (isDemoMode() || isServiceUnavailable(error)) {
-      return await getDemoData();
-    }
-    throw error;
-  }
-};
-
-// ─── Demo branch distance helpers ────────────────────────────────────────────
-// Approximate Lagos coordinates for each demo branch (used for Haversine sorting
-// when the backend is unavailable and Google Maps Distance Matrix has no API key).
-
-const DEMO_BRANCH_COORDS: Record<string, { lat: number; lng: number }> = {
-  '4d800a8a-970b-4b80-a1e6-315106f170a4': { lat: 6.4281, lng: 3.4219 },  // Uptown Express — Victoria Island
-  '63ae8d0f-4c7c-48ea-9ec2-805d0e7f9d8d': { lat: 6.4321, lng: 3.5197 },  // Downtown Kitchen — Lekki Phase 1
-};
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-async function demoBranchesNearby(userLat: number, userLng: number): Promise<Branch[]> {
-  // Try Google Maps Distance Matrix first for real road distances
-  try {
-    const destinations = DEMO_BRANCHES.map(b => ({
-      id: b.id,
-      address: b.address,
-      ...DEMO_BRANCH_COORDS[b.id],
-    }));
-    const distMap = await computeRoadDistancesKm(userLat, userLng, destinations);
-    if (distMap.size > 0) {
-      return [...DEMO_BRANCHES]
-        .map(b => {
-          const d = distMap.get(b.id);
-          return { ...b, distance: d ? `${d.km.toFixed(1)} km` : b.distance };
-        })
-        .sort((a, b) => {
-          const da = distMap.get(a.id)?.km ?? 999;
-          const db = distMap.get(b.id)?.km ?? 999;
-          return da - db;
-        });
-    }
-  } catch {
-    // fall through to Haversine
-  }
-
-  // Fallback: straight-line Haversine sort
-  return [...DEMO_BRANCHES]
-    .map(b => {
-      const coords = DEMO_BRANCH_COORDS[b.id];
-      const km = coords ? haversineKm(userLat, userLng, coords.lat, coords.lng) : 999;
-      return { ...b, distance: `${km.toFixed(1)} km` };
-    })
-    .sort((a, b) => {
-      const coordsA = DEMO_BRANCH_COORDS[a.id];
-      const coordsB = DEMO_BRANCH_COORDS[b.id];
-      const da = coordsA ? haversineKm(userLat, userLng, coordsA.lat, coordsA.lng) : 999;
-      const db = coordsB ? haversineKm(userLat, userLng, coordsB.lat, coordsB.lng) : 999;
-      return da - db;
-    });
-}
-
 // ─── Order response mappers ───────────────────────────────────────────────────
 
 function normaliseOrderType(raw: string): 'dine-in' | 'takeaway' | 'delivery' {
@@ -540,23 +401,15 @@ function mapOrder(o: any): Order {
 // List endpoints return a Spring Page object — content array is extracted.
 
 export const getBranches = () =>
-  withDemoFallback(
-    () =>
-      apiClient.get<any>('/branches').then((r) => {
-        const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
-        return items.map(mapBranch);
-      }),
-    DEMO_BRANCHES
-  );
+  apiClient.get<any>('/branches').then((r) => {
+    const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
+    return items.map(mapBranch);
+  });
 
 export const getBranchesNearby = (lat: number, lng: number) =>
-  withAsyncDemoFallback(
-    () =>
-      apiClient
-        .get<any[]>('/branches/nearby', { params: { lat, lng } })
-        .then((r) => (r.data ?? []).map(mapBranch)),
-    () => demoBranchesNearby(lat, lng)
-  );
+  apiClient
+    .get<any[]>('/branches/nearby', { params: { lat, lng } })
+    .then((r) => (r.data ?? []).map(mapBranch));
 
 export const getBranchById = (id: string) =>
   apiClient.get<any>(`/branches/${id}`).then((r) => mapBranch(r.data));
@@ -575,16 +428,11 @@ export const patchBranchStatus = (id: string, isActive: boolean) =>
     .patch<any>(`/branches/${id}/${isActive ? 'activate' : 'deactivate'}`)
     .then((r) => mapBranch(r.data));
 
-// Pre-auth branch fetch used on the registration form. Falls back to DEMO_BRANCHES
-// on ANY error (401 because branches require auth through gateway, 500 due to
-// gateway routing bug). In demo mode these are placeholder branches only.
 export const getBranchesPublic = (): Promise<Branch[]> =>
-  apiClient.get<any>('/branches')
-    .then((r) => {
-      const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
-      return items.map(mapBranch);
-    })
-    .catch(() => DEMO_BRANCHES);
+  apiClient.get<any>('/branches').then((r) => {
+    const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
+    return items.map(mapBranch);
+  });
 
 // ─── MENU ─────────────────────────────────────────────────────────────────────
 // All paths include /v1/ — the menu service uses that as an internal prefix.
@@ -594,16 +442,10 @@ export const getBranchesPublic = (): Promise<Branch[]> =>
 // Admin write endpoints use MenuItemResponse (basePrice/categoryName/active) —
 // mapped via mapMenuItem(). Write ops require HEAD_OFFICE_ADMIN role.
 
-// Customer: all active items for a branch (public catalogue, shared across branches).
-// Falls back to demo menu on 5xx so customers can still browse when service is down.
 export const getMenuByBranch = (branchId: string) =>
-  withDemoFallback(
-    () =>
-      apiClient
-        .get<any[]>(`/menu/branch/${branchId}`)
-        .then((r) => (r.data ?? []).map(mapMenuItem)),
-    DEMO_MENU
-  );
+  apiClient
+    .get<any[]>(`/menu/branch/${branchId}`)
+    .then((r) => (r.data ?? []).map(mapMenuItem));
 
 // Admin: paginated full item list with optional categoryId / active filters.
 export const getAllMenuItems = (params?: { categoryId?: string; active?: boolean; page?: number; size?: number }) =>
@@ -665,6 +507,19 @@ export const createCategory = (name: string, displayOrder?: number) =>
 
 export const updateCategory = (id: string, data: { name?: string; displayOrder?: number }) =>
   apiClient.put<any>(`/menu/categories/${id}`, data).then((r) => r.data);
+
+export const getMenuSuggestions = (params?: { preferences?: string[]; limit?: number }) =>
+  apiClient.post<any>('/menu/suggestions', params ?? {}).then((r) => (r.data ?? []).map(mapMenuItem));
+
+export const uploadMenuItemImage = async (id: string, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const r = await apiClient.post<any>(`/menu/items/${id}/image`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  return mapMenuItem(r.data);
+};
+
+export const deleteMenuItemImage = (id: string) =>
+  apiClient.delete<any>(`/menu/items/${id}/image`).then((r) => mapMenuItem(r.data));
 
 // ─── ORDERS (Customer) ────────────────────────────────────────────────────────
 
