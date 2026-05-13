@@ -49,6 +49,9 @@ export interface User {
   email: string;
   role: UserRole;
   branchId?: string | null;
+  addressLine?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface Branch {
@@ -138,6 +141,13 @@ export interface ManagerDashboard {
   averageOrderValue: number;
   ordersChange?: number;
   revenueChange?: number;
+  averagePrepTime?: number;
+  peakHour?: string;
+  peakHourOrders?: number;
+  completionRate?: number;
+  dineInCount?: number;
+  takeawayCount?: number;
+  deliveryCount?: number;
 }
 
 export interface ManagerHistoryDay {
@@ -273,6 +283,9 @@ function mapUser(u: any): User {
     email: u.email,
     role: mapUserRole(u.role),
     branchId: u.branchId ?? null,
+    addressLine: u.addressLine ?? null,
+    latitude: u.latitude ?? null,
+    longitude: u.longitude ?? null,
   };
 }
 
@@ -300,7 +313,10 @@ export const postLogout = (refreshToken?: string) =>
   apiClient.post('/auth/logout', refreshToken ? { refreshToken } : {}).then(r => r.data);
 
 export const getMe = () =>
-  apiClient.get<any>('/auth/me').then(r => mapUser(r.data));
+  apiClient.get<any>('/users/me').then(r => mapUser(r.data));
+
+export const updateProfile = (data: { name?: string; addressLine?: string; latitude?: number; longitude?: number }) =>
+  apiClient.patch<any>('/users/me', data).then(r => mapUser(r.data));
 
 export const postForgotPassword = (email: string) =>
   apiClient.post<AuthMessageResponse>('/auth/forgot-password', { email }).then(r => r.data);
@@ -719,7 +735,14 @@ export const updateOrderStatus = (orderId: string, newStatus: 'PREPARING' | 'REA
 
 export const getManagerDashboard = (date?: string) =>
   apiClient.get<any>('/manager/dashboard', { params: date ? { date } : undefined })
-    .then(r => r.data as ManagerDashboard);
+    .then(r => {
+      const d = r.data;
+      return {
+        ...d,
+        totalRevenue: Math.round((d.totalRevenue ?? 0) / 100),
+        averageOrderValue: Math.round((d.averageOrderValue ?? 0) / 100),
+      } as ManagerDashboard;
+    });
 
 export const getManagerLiveOrders = () =>
   apiClient.get<any>('/manager/orders/live').then(r => {
@@ -731,13 +754,15 @@ export const getManagerLiveOrders = () =>
 export const getDailySales = (date?: string) =>
   apiClient.get<any>('/manager/sales/daily', { params: date ? { date } : undefined }).then(r => {
     const data = r.data;
-    return (Array.isArray(data) ? data : data?.content ?? []) as HourlySales[];
+    const rows: HourlySales[] = Array.isArray(data) ? data : data?.content ?? [];
+    return rows.map(h => ({ ...h, revenue: Math.round((h.revenue ?? 0) / 100) }));
   });
 
 export const getPopularItems = (date?: string) =>
   apiClient.get<any>('/manager/items/popular', { params: date ? { date } : undefined }).then(r => {
     const data = r.data;
-    return (Array.isArray(data) ? data : data?.content ?? []) as PopularItem[];
+    const rows: PopularItem[] = Array.isArray(data) ? data : data?.content ?? [];
+    return rows.map(item => ({ ...item, revenue: Math.round((item.revenue ?? 0) / 100) }));
   });
 
 export const getManagerHistory = (from?: string, to?: string) =>
@@ -745,7 +770,12 @@ export const getManagerHistory = (from?: string, to?: string) =>
     params: { ...(from && { from }), ...(to && { to }) },
   }).then(r => {
     const data = r.data;
-    return (Array.isArray(data) ? data : data?.content ?? []) as ManagerHistoryDay[];
+    const rows: ManagerHistoryDay[] = Array.isArray(data) ? data : data?.content ?? [];
+    return rows.map(d => ({
+      ...d,
+      totalRevenue: Math.round((d.totalRevenue ?? 0) / 100),
+      avgOrderValue: Math.round((d.avgOrderValue ?? 0) / 100),
+    }));
   });
 
 // TODO (backend): Admin analytics and user management service not yet built.

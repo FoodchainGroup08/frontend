@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Clock, ChevronRight } from "lucide-react";
+import { Clock, ChevronRight, ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -21,6 +21,25 @@ interface LiveOrder {
   customerName?: string;
   total?: number;
 }
+
+type StatusFilter = 'all' | LiveOrder['status'];
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: 'All Orders' },
+  { value: 'received', label: 'Received' },
+  { value: 'preparing', label: 'Preparing' },
+  { value: 'ready', label: 'Ready' },
+  { value: 'out-for-delivery', label: 'Out for Delivery' },
+];
+
+const STATUS_COLORS: Record<LiveOrder['status'], { bg: string; text: string }> = {
+  received: { bg: 'var(--foodchain-espresso)', text: 'var(--foodchain-warm-white)' },
+  preparing: { bg: 'var(--foodchain-golden-amber)', text: 'var(--foodchain-charcoal)' },
+  ready: { bg: 'var(--foodchain-sage-green)', text: 'var(--foodchain-white)' },
+  'out-for-delivery': { bg: 'var(--foodchain-burnt-orange)', text: 'var(--foodchain-white)' },
+};
+
+const PAGE_SIZE = 20;
 
 function mapOrderStatus(status: string): LiveOrder['status'] {
   const map: Record<string, LiveOrder['status']> = {
@@ -50,6 +69,8 @@ export function LiveOrders() {
   const [orders, setOrders] = useState<LiveOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [page, setPage] = useState(1);
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -88,15 +109,26 @@ export function LiveOrders() {
     return Math.floor((Date.now() - new Date(receivedAt).getTime()) / 60000);
   };
 
-  const ordersByStatus = {
-    received: orders.filter(o => o.status === 'received'),
-    preparing: orders.filter(o => o.status === 'preparing'),
-    ready: orders.filter(o => o.status === 'ready'),
-    'out-for-delivery': orders.filter(o => o.status === 'out-for-delivery'),
+  const statusCounts: Record<StatusFilter, number> = {
+    all: orders.length,
+    received: orders.filter(o => o.status === 'received').length,
+    preparing: orders.filter(o => o.status === 'preparing').length,
+    ready: orders.filter(o => o.status === 'ready').length,
+    'out-for-delivery': orders.filter(o => o.status === 'out-for-delivery').length,
+  };
+
+  const filtered = statusFilter === 'all' ? orders : orders.filter(o => o.status === statusFilter);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleFilterChange = (value: StatusFilter) => {
+    setStatusFilter(value);
+    setPage(1);
   };
 
   const renderOrderCard = (order: LiveOrder) => {
     const elapsedMinutes = getElapsedTime(order.receivedAt);
+    const colors = STATUS_COLORS[order.status];
 
     return (
       <Card
@@ -119,7 +151,11 @@ export function LiveOrders() {
                 <Badge
                   className="border-0 text-xs"
                   style={{
-                    backgroundColor: order.orderType === 'dine-in' ? 'var(--foodchain-sage-green)' : order.orderType === 'delivery' ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
+                    backgroundColor: order.orderType === 'dine-in'
+                      ? 'var(--foodchain-sage-green)'
+                      : order.orderType === 'delivery'
+                        ? 'var(--foodchain-golden-amber)'
+                        : 'var(--foodchain-espresso)',
                     color: 'var(--foodchain-white)'
                   }}
                 >
@@ -130,9 +166,12 @@ export function LiveOrders() {
                     Table {order.tableNumber}
                   </Badge>
                 )}
+                <Badge className="border-0 text-xs" style={{ backgroundColor: colors.bg, color: colors.text }}>
+                  {order.status === 'out-for-delivery' ? 'Out for Delivery' : order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </Badge>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               <div className="flex items-center gap-1 text-sm">
                 <Clock className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }} />
                 <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
@@ -174,14 +213,10 @@ export function LiveOrders() {
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
         <div className="p-6 sm:p-8">
           <Skeleton className="h-10 w-48 mb-2" />
-          <Skeleton className="h-5 w-72 mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map(col => (
-              <div key={col} className="space-y-4">
-                <Skeleton className="h-6 w-24" />
-                {[1, 2].map(i => <Skeleton key={i} className="h-36 w-full rounded-lg" />)}
-              </div>
-            ))}
+          <Skeleton className="h-5 w-72 mb-6" />
+          <Skeleton className="h-10 w-56 mb-8" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-36 w-full rounded-lg" />)}
           </div>
         </div>
       </div>
@@ -229,72 +264,86 @@ export function LiveOrders() {
   return (
     <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
       <div className="p-6 sm:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-            Live Orders
-          </h1>
-          <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
-            Real-time view of all active orders • {orders.length} {orders.length === 1 ? 'order' : 'orders'} in progress
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                Received
-              </h2>
-              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}>
-                {ordersByStatus.received.length}
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              {ordersByStatus.received.map(renderOrderCard)}
-            </div>
+            <h1 className="text-3xl mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+              Live Orders
+            </h1>
+            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+              {orders.length} {orders.length === 1 ? 'order' : 'orders'} in progress
+            </p>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                Preparing
-              </h2>
-              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
-                {ordersByStatus.preparing.length}
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              {ordersByStatus.preparing.map(renderOrderCard)}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                Ready
-              </h2>
-              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
-                {ordersByStatus.ready.length}
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              {ordersByStatus.ready.map(renderOrderCard)}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
-                Out for Delivery
-              </h2>
-              <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
-                {ordersByStatus['out-for-delivery'].length}
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              {ordersByStatus['out-for-delivery'].map(renderOrderCard)}
-            </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => handleFilterChange(e.target.value as StatusFilter)}
+              className="rounded-md px-3 py-2 text-sm border outline-none cursor-pointer"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 20%, transparent)',
+                backgroundColor: 'var(--foodchain-white)',
+                color: 'var(--foodchain-espresso)',
+              }}
+            >
+              {STATUS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label} ({statusCounts[opt.value]})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
+
+        {filtered.length === 0 ? (
+          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+            <CardContent className="text-center py-12">
+              <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                No {statusFilter === 'all' ? '' : STATUS_OPTIONS.find(o => o.value === statusFilter)?.label.toLowerCase() + ' '}orders right now
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {paginated.map(renderOrderCard)}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                  Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} orders
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => p - 1)}
+                    disabled={page === 1}
+                    className="border-[var(--foodchain-espresso)]/20 gap-1"
+                    style={{ color: 'var(--foodchain-espresso)' }}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Prev
+                  </Button>
+                  <span className="text-sm px-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page === totalPages}
+                    className="border-[var(--foodchain-espresso)]/20 gap-1"
+                    style={{ color: 'var(--foodchain-espresso)' }}
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { LayoutDashboard, ClipboardList, TrendingUp, Award, User } from "lucide-react";
+import { LayoutDashboard, ClipboardList, TrendingUp, Award, History, User } from "lucide-react";
 
 interface ManagerSidebarProps {
   currentScreen: string;
@@ -19,7 +19,8 @@ export function ManagerSidebar({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'live-orders', label: 'Live Orders', icon: ClipboardList },
     { id: 'daily-sales', label: 'Daily Sales', icon: TrendingUp },
-    { id: 'popular-items', label: 'Popular Items', icon: Award }
+    { id: 'popular-items', label: 'Popular Items', icon: Award },
+    { id: 'history', label: 'History', icon: History },
   ];
 
   return (

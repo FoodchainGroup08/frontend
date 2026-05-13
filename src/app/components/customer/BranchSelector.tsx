@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
 import { getBranches, getBranchesNearby, type Branch } from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface BranchSelectorProps {
   onSelectBranch: (branch: Branch) => void;
@@ -14,29 +15,39 @@ interface BranchSelectorProps {
 }
 
 export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSelectorProps) {
+  const { user } = useAuth();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [usingSource, setUsingSource] = useState<'saved' | 'gps' | 'all' | null>(null);
 
   const fetchBranches = async () => {
     setIsLoading(true);
     setError("");
     try {
+      // If the user has a saved address, use it directly — no GPS needed
+      if (user?.latitude != null && user?.longitude != null) {
+        const nearby = await getBranchesNearby(user.latitude, user.longitude);
+        setBranches(nearby);
+        setUsingSource('saved');
+        setIsLoading(false);
+        return;
+      }
+
       // Load all branches immediately — don't wait for geolocation
       const all = await getBranches();
       setBranches(all);
+      setUsingSource('all');
       setIsLoading(false);
 
-      // Then, non-blocking, try to sort by proximity
+      // Then, non-blocking, try to sort by proximity via GPS
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             try {
-              const nearby = await getBranchesNearby(
-                pos.coords.latitude,
-                pos.coords.longitude
-              );
+              const nearby = await getBranchesNearby(pos.coords.latitude, pos.coords.longitude);
               setBranches(nearby);
+              setUsingSource('gps');
             } catch {
               /* silent — keep the already-loaded all-branches list */
             }
@@ -92,6 +103,23 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
           <h1 className="text-3xl sm:text-4xl mb-3" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
             Select Your Branch
           </h1>
+          {usingSource === 'saved' && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm mb-3" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
+              <MapPin className="w-3.5 h-3.5" />
+              Sorted by your saved address
+            </div>
+          )}
+          {usingSource === 'gps' && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm mb-3" style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
+              <MapPin className="w-3.5 h-3.5" />
+              Sorted by your current location
+            </div>
+          )}
+          {usingSource === 'all' && !user?.latitude && (
+            <p className="text-sm mb-3" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              Save your address in your profile for quicker, location-sorted results
+            </p>
+          )}
           <p className="text-base sm:text-lg" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
             Choose a FoodChain location near you to continue
           </p>

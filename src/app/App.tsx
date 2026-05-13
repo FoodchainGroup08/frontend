@@ -18,6 +18,7 @@ import { OrderConfirmation } from "./components/customer/OrderConfirmation";
 import { OrderTracker } from "./components/customer/OrderTracker";
 import { OrderHistory } from "./components/customer/OrderHistory";
 import { OrderDetailModal } from "./components/customer/OrderDetailModal";
+import { CustomerProfile } from "./components/customer/CustomerProfile";
 import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
 import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
@@ -26,6 +27,7 @@ import { ManagerDashboard } from "./components/manager/ManagerDashboard";
 import { LiveOrders } from "./components/manager/LiveOrders";
 import { DailySales } from "./components/manager/DailySales";
 import { PopularItems } from "./components/manager/PopularItems";
+import { ManagerHistory } from "./components/manager/ManagerHistory";
 import { AdminSidebar } from "./components/admin/AdminSidebar";
 import { Analytics } from "./components/admin/Analytics";
 import { BranchManagement } from "./components/admin/BranchManagement";
@@ -212,6 +214,7 @@ function CustomerLayout() {
     '/order-confirmation': 'order-confirmation',
     '/order-tracker': 'order-tracker',
     '/order-history': 'order-history',
+    '/profile': 'profile',
   };
 
   const screenToPath: Record<string, string> = {
@@ -222,6 +225,7 @@ function CustomerLayout() {
     'order-confirmation': '/order-confirmation',
     'order-tracker': '/order-tracker',
     'order-history': '/order-history',
+    'profile': '/profile',
   };
 
   const currentScreen = pathToScreen[location.pathname] ?? 'branch-selector';
@@ -342,6 +346,8 @@ function CustomerLayout() {
         return <OrderTracker onGoBack={() => navigate('/menu')} />;
       case 'order-history':
         return <OrderHistory onViewDetails={handleViewOrderDetails} onBrowseMenu={() => navigate('/menu')} />;
+      case 'profile':
+        return <CustomerProfile onGoBack={() => navigate(-1)} />;
       default:
         return <Navigate to="/branches" replace />;
     }
@@ -419,6 +425,7 @@ const managerScreenPaths: Record<string, string> = {
   'live-orders': '/manager/live-orders',
   'daily-sales': '/manager/daily-sales',
   'popular-items': '/manager/popular-items',
+  'history': '/manager/history',
 };
 
 function ManagerLayout() {
@@ -431,6 +438,7 @@ function ManagerLayout() {
     '/manager/live-orders': 'live-orders',
     '/manager/daily-sales': 'daily-sales',
     '/manager/popular-items': 'popular-items',
+    '/manager/history': 'history',
   };
   const currentScreen = pathToScreen[location.pathname] ?? 'dashboard';
 
@@ -449,6 +457,7 @@ function ManagerLayout() {
           <Route path="live-orders" element={<LiveOrders />} />
           <Route path="daily-sales" element={<DailySales />} />
           <Route path="popular-items" element={<PopularItems />} />
+          <Route path="history" element={<ManagerHistory />} />
           <Route path="*" element={<Navigate to="/manager" replace />} />
         </Routes>
       </div>

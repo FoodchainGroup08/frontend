@@ -15,7 +15,7 @@ import { CheckCircle2, Eye, EyeOff, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { LocationPicker } from './LocationPicker';
-import { saveDeliveryLocation } from '@/services/locationService';
+import { saveDeliveryLocation, geocodeAddressText } from '@/services/locationService';
 import { postGoogleAuth } from '@/services/api';
 
 interface RegisterProps {
@@ -89,15 +89,23 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
     }
   };
 
-  const handleStep2 = (e: React.FormEvent) => {
+  const handleStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!phoneNumber.trim()) { setError('Phone number is required'); return; }
     if (!deliveryLocation.trim()) { setError('Please enter your delivery location'); return; }
 
+    setIsLoading(true);
+    const coords = await geocodeAddressText(deliveryLocation.trim());
+    localStorage.setItem('foodchain_pending_location', JSON.stringify({
+      addressLine: deliveryLocation.trim(),
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+    }));
     saveDeliveryLocation(deliveryLocation);
     localStorage.setItem('foodchain_phone_number', phoneNumber.trim());
+    setIsLoading(false);
     onVerificationRequired(email.trim());
   };
 
