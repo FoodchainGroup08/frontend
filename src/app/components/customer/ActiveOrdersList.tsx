@@ -5,11 +5,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-<<<<<<< Updated upstream
-import { getActiveOrders, getOrderById, type Order, type OrderStatus } from "@/services/api";
-=======
 import { getActiveOrders, type Order, type OrderStatus } from "@/services/api";
->>>>>>> Stashed changes
 import { useAuth } from "@/context/AuthContext";
 
 interface ActiveOrdersListProps {
@@ -19,7 +15,7 @@ interface ActiveOrdersListProps {
 
 function statusLabel(s: OrderStatus): string {
   switch (s) {
-<<<<<<< Updated upstream
+
     case 'RECEIVED':  return 'Order Placed';
     case 'CONFIRMED': return 'Confirmed';
     case 'PREPARING': return 'Preparing';
@@ -28,20 +24,13 @@ function statusLabel(s: OrderStatus): string {
     case 'SERVED':    return 'Delivered';
     case 'COMPLETED': return 'Completed';
     case 'CANCELLED': return 'Cancelled';
-=======
-    case 'RECEIVED':  return 'Confirmed';
-    case 'PREPARING': return 'Preparing';
-    case 'READY':     return 'Ready for Pickup';
-    case 'PICKED_UP': return 'Out for Delivery';
-    case 'SERVED':    return 'Delivered';
->>>>>>> Stashed changes
     default:          return s;
   }
 }
 
 function statusStyle(s: OrderStatus): React.CSSProperties {
   switch (s) {
-<<<<<<< Updated upstream
+
     case 'RECEIVED':
     case 'CONFIRMED':  return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
     case 'PREPARING':  return { backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' };
@@ -51,14 +40,7 @@ function statusStyle(s: OrderStatus): React.CSSProperties {
     case 'PICKED_UP':  return { backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' };
     case 'CANCELLED':  return { backgroundColor: '#9CA3AF', color: 'var(--foodchain-white)' };
     default:           return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
-=======
-    case 'RECEIVED':  return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
-    case 'PREPARING': return { backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' };
-    case 'READY':     return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
-    case 'PICKED_UP': return { backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' };
-    case 'SERVED':    return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
-    default:          return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
->>>>>>> Stashed changes
+
   }
 }
 
@@ -71,23 +53,8 @@ export function ActiveOrdersList({ onSelectOrder, onGoBack }: ActiveOrdersListPr
   const fetchOrders = () => {
     setIsLoading(true);
     setError('');
-<<<<<<< Updated upstream
-    // /orders/active returns a summary (no items, no branchName).
-    // Fetch full detail for each so cards can display items and branch.
     getActiveOrders(user?.id)
-      .then(summaries => Promise.all(summaries.map(s => getOrderById(s.id))))
       .then(setOrders)
-=======
-    getActiveOrders()
-      .then(all => {
-        // If the backend returns customerId, scope to the current user.
-        // Otherwise trust the API is already scoped via JWT.
-        const mine = user?.id
-          ? all.filter(o => !o.customerId || o.customerId === user.id)
-          : all;
-        setOrders(mine);
-      })
->>>>>>> Stashed changes
       .catch(() => {
         setError('Failed to load active orders');
         toast.error('Failed to load active orders');

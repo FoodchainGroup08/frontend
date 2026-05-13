@@ -6,14 +6,9 @@ import { Progress } from "../ui/progress";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-<<<<<<< Updated upstream
 import { getOrderById, cancelOrder, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
 import { useOrderTracker } from "@/hooks/useOrderTracker";
 import { useAuth } from "@/context/AuthContext";
-=======
-import { getOrderById, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
-import { useOrderTracker } from "@/hooks/useOrderTracker";
->>>>>>> Stashed changes
 
 // Mirrors the backend status lifecycle exactly.
 type LocalStatus =
@@ -147,14 +142,10 @@ function mapApiOrder(order: Order): TrackedOrder {
   };
 }
 
-<<<<<<< Updated upstream
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
   const { user } = useAuth();
-=======
-export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
->>>>>>> Stashed changes
   const [activeOrder, setActiveOrder] = useState<TrackedOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -167,19 +158,13 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
       const order = await getOrderById(orderId);
       setActiveOrder(mapApiOrder(order));
     } catch {
-<<<<<<< Updated upstream
       setError('Failed to load order');
       toast.error('Failed to load order');
-=======
-      setError("Failed to load order");
-      toast.error("Failed to load order");
->>>>>>> Stashed changes
     } finally {
       setIsLoading(false);
     }
   };
 
-<<<<<<< Updated upstream
   const handleCancel = async () => {
     if (!activeOrder) return;
     setIsCancelling(true);
@@ -191,16 +176,6 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
       toast.error('Cannot cancel — the kitchen may have already started preparing your order');
     } finally {
       setIsCancelling(false);
-=======
-  useEffect(() => {
-    if (orderId) fetchOrder();
-  }, [orderId]);
-
-  useEffect(() => {
-    if (activeOrder) {
-      const currentIndex = statusSteps.findIndex(step => step.key === activeOrder.status);
-      setProgress(((currentIndex + 1) / statusSteps.length) * 100);
->>>>>>> Stashed changes
     }
   };
 

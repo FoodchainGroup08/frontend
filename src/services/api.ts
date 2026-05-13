@@ -679,29 +679,17 @@ export const placeOrder = (payload: PlaceOrderPayload) =>
     headers: { 'Idempotency-Key': crypto.randomUUID() },
   }).then(r => mapOrder(r.data));
 
-<<<<<<< Updated upstream
-// /orders/active returns a summary page (no items, no branchName).
-// Pass customerId so the backend scopes to the current user via the query param
-// (the gateway also enforces this via JWT, but the param avoids needing a second
-// call to filter client-side when the backend returns the full tenant's orders).
+
 export const getActiveOrders = (customerId?: string): Promise<Order[]> =>
   apiClient.get<any>('/orders/active', {
     params: { ...(customerId && { customerId }), size: 20 },
   }).then(r => {
-=======
-export const getActiveOrders = (): Promise<Order[]> =>
-  apiClient.get<any>('/orders/active').then(r => {
->>>>>>> Stashed changes
     const data = r.data;
     let orders: Order[];
     if (data?.content && Array.isArray(data.content)) orders = data.content.map(mapOrder);
     else if (Array.isArray(data)) orders = data.map(mapOrder);
     else orders = data ? [mapOrder(data)] : [];
-<<<<<<< Updated upstream
     return orders;
-=======
-    return orders.filter(o => !o.id.startsWith('demo_'));
->>>>>>> Stashed changes
   });
 
 // Same summary page shape as /orders/active.
