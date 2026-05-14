@@ -26,8 +26,12 @@ export function useCustomerNotifications(userId: string | undefined) {
   }, [userId]);
 
   useEffect(() => {
+    if (!userId) return;
     fetchUnreadCount();
-  }, [fetchUnreadCount]);
+    // Poll every 5 s — fallback for when the STOMP WS isn't pushing events
+    const poll = setInterval(fetchUnreadCount, 5000);
+    return () => clearInterval(poll);
+  }, [fetchUnreadCount, userId]);
 
   useEffect(() => {
     if (!userId) return;

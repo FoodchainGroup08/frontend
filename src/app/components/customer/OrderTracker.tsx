@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Clock, CheckCircle2, Package, Truck, Home, UtensilsCrossed, ChevronRight, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -150,18 +150,25 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const activeOrderRef = useRef<TrackedOrder | null>(null);
 
-  const fetchOrder = async () => {
-    setIsLoading(true);
+  const TERMINAL: LocalStatus[] = ['served', 'picked-up', 'completed'];
+
+  const fetchOrder = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     setError('');
     try {
       const order = await getOrderById(orderId);
-      setActiveOrder(mapApiOrder(order));
+      const mapped = mapApiOrder(order);
+      setActiveOrder(mapped);
+      activeOrderRef.current = mapped;
     } catch {
-      setError('Failed to load order');
-      toast.error('Failed to load order');
+      if (!silent) {
+        setError('Failed to load order');
+        toast.error('Failed to load order');
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -180,14 +187,26 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
   };
 
   useEffect(() => {
-    if (orderId) fetchOrder();
+    if (!orderId) return;
+    fetchOrder();
+    // Poll every 5 s — stops automatically once order reaches a terminal status
+    const poll = setInterval(() => {
+      if (activeOrderRef.current && TERMINAL.includes(activeOrderRef.current.status)) {
+        clearInterval(poll);
+        return;
+      }
+      fetchOrder(true);
+    }, 5000);
+    return () => clearInterval(poll);
   }, [orderId]);
 
-  // Real-time status updates via WebSocket
+  // Real-time status updates via WebSocket (instant when backend pushes)
   useOrderTracker(activeOrder?.id ?? '', (data) => {
     const msg = data as WsOrderUpdate;
     if (msg.newStatus && activeOrder) {
-      setActiveOrder(prev => prev ? { ...prev, status: mapApiStatus(msg.newStatus) } : prev);
+      const mapped = mapApiStatus(msg.newStatus);
+      setActiveOrder(prev => prev ? { ...prev, status: mapped } : prev);
+      activeOrderRef.current = activeOrder ? { ...activeOrder, status: mapped } : null;
     }
   });
 

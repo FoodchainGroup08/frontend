@@ -39,16 +39,23 @@ export function NotificationPanel({
 
   useEffect(() => {
     if (!isOpen) return;
-    setIsLoading(true);
-    getNotifications(0, 20)
-      .then(data => {
-        setItems(data.content);
-        if (unreadCount > 0) {
-          markAllNotificationsRead().then(onResetUnread).catch(() => {});
-        }
-      })
-      .catch(() => toast.error('Failed to load notifications'))
-      .finally(() => setIsLoading(false));
+
+    const load = (silent = false) => {
+      if (!silent) setIsLoading(true);
+      getNotifications(0, 20)
+        .then(data => {
+          setItems(data.content);
+          if (unreadCount > 0) {
+            markAllNotificationsRead().then(onResetUnread).catch(() => {});
+          }
+        })
+        .catch(() => { if (!silent) toast.error('Failed to load notifications'); })
+        .finally(() => { if (!silent) setIsLoading(false); });
+    };
+
+    load();
+    const poll = setInterval(() => load(true), 5000);
+    return () => clearInterval(poll);
   }, [isOpen]);
 
   const handleDelete = (id: number) => {
