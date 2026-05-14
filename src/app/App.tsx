@@ -277,14 +277,14 @@ function CustomerLayout() {
   };
 
   const handleAddToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
-    const existing = cart.find(c => c.id === item.id);
-    if (existing) {
-      setCart(cart.map(c => c.id === item.id ? { ...c, quantity: c.quantity + quantity } : c));
-      toast.success(`Updated ${item.name}`, { description: `Cart quantity: ${existing.quantity + quantity}` });
-    } else {
-      setCart([...cart, { ...item, quantity }]);
-      toast.success(`Added ${item.name}`, { description: `${quantity} item${quantity > 1 ? 's' : ''} added to cart` });
-    }
+    setCart(prev => {
+      const existing = prev.find(c => c.id === item.id);
+      if (existing) {
+        return prev.map(c => c.id === item.id ? { ...c, quantity: c.quantity + quantity } : c);
+      }
+      return [...prev, { ...item, quantity }];
+    });
+    toast.success(`Added ${item.name}`, { description: `${quantity} item${quantity > 1 ? 's' : ''} added to cart` });
   };
 
   const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
