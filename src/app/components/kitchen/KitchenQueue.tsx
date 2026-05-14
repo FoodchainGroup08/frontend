@@ -49,6 +49,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   const [serverTotals, setServerTotals] = useState({ received: 0, preparing: 0, ready: 0 });
   const [currentPage, setCurrentPage] = useState(0);
   const currentPageRef = useRef(0);
+  const prevReceivedTotalRef = useRef<number | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
@@ -83,6 +84,12 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     ));
     setCurrentPage(data.page);
     currentPageRef.current = data.page;
+
+    // Ping if new orders arrived since the last fetch (poll-based detection)
+    if (prevReceivedTotalRef.current !== null && totals.received > prevReceivedTotalRef.current) {
+      playKitchenAlert();
+    }
+    prevReceivedTotalRef.current = totals.received;
   };
 
   const fetchQueue = async (page = 0, silent = false) => {
