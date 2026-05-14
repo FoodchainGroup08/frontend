@@ -998,8 +998,8 @@ export const getAnalytics = (startDate?: string, endDate?: string) =>
 export const getBranchAnalytics = (startDate?: string, endDate?: string) =>
   apiClient.get<BranchAnalytics[]>('/admin/analytics/branches', { params: { startDate, endDate } }).then(r => r.data);
 
-export const getAdminOverview = (startDate?: string, endDate?: string): Promise<AdminOverview> =>
-  apiClient.get<any>('/admin/analytics/overview', { params: { startDate, endDate } }).then(r => ({
+export const getAdminOverview = (startDate?: string, endDate?: string, branchId?: string): Promise<AdminOverview> =>
+  apiClient.get<any>('/admin/analytics/overview', { params: { startDate, endDate, branchId } }).then(r => ({
     ...r.data,
     totalRevenue: Number(r.data.totalRevenue ?? 0),
     avgOrderValue: Number(r.data.avgOrderValue ?? 0),
@@ -1014,8 +1014,8 @@ export const getBranchComparison = (startDate?: string, endDate?: string): Promi
     }))
   );
 
-export const getAdminTrends = (startDate?: string, endDate?: string, interval?: string): Promise<AdminTrends> =>
-  apiClient.get<any>('/admin/analytics/trends', { params: { startDate, endDate, interval } }).then(r => ({
+export const getAdminTrends = (startDate?: string, endDate?: string, interval?: string, branchId?: string): Promise<AdminTrends> =>
+  apiClient.get<any>('/admin/analytics/trends', { params: { startDate, endDate, interval, branchId } }).then(r => ({
     ...r.data,
     dataPoints: (r.data.dataPoints ?? []).map((p: any) => ({
       ...p,
@@ -1023,11 +1023,11 @@ export const getAdminTrends = (startDate?: string, endDate?: string, interval?: 
     })),
   }));
 
-export const getAdminOperational = (startDate?: string, endDate?: string): Promise<AdminOperational> =>
-  apiClient.get<AdminOperational>('/admin/analytics/operational', { params: { startDate, endDate } }).then(r => r.data);
+export const getAdminOperational = (startDate?: string, endDate?: string, branchId?: string): Promise<AdminOperational> =>
+  apiClient.get<AdminOperational>('/admin/analytics/operational', { params: { startDate, endDate, branchId } }).then(r => r.data);
 
-export const getAdminPopularItems = (startDate?: string, endDate?: string, limit = 10): Promise<AdminPopularItem[]> =>
-  apiClient.get<AdminPopularItem[]>('/admin/analytics/popular-items', { params: { startDate, endDate, limit } }).then(r => r.data ?? []);
+export const getAdminPopularItems = (startDate?: string, endDate?: string, limit = 10, branchId?: string): Promise<AdminPopularItem[]> =>
+  apiClient.get<AdminPopularItem[]>('/admin/analytics/popular-items', { params: { startDate, endDate, limit, branchId } }).then(r => r.data ?? []);
 
 export const getAllUsers = (role?: string) =>
   apiClient.get<SystemUser[]>('/admin/users', { params: role ? { role } : undefined }).then(r => r.data);

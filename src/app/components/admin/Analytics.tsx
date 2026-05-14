@@ -19,11 +19,13 @@ import {
   getAdminTrends,
   getAdminOperational,
   getAdminPopularItems,
+  getBranchesPublic,
   type AdminOverview,
   type BranchComparison,
   type AdminTrends,
   type AdminOperational,
   type AdminPopularItem,
+  type Branch,
 } from "@/services/api";
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -62,6 +64,11 @@ function fmtRevenue(v: number): string {
 
 function fmtPct(v: number): string {
   return `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+}
+
+function normaliseBranchName(value: string | null | undefined, branchNameById: Map<string, string>): string {
+  if (!value) return '—';
+  return branchNameById.get(value) ?? value;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -159,6 +166,8 @@ function LoadingSkeleton() {
 
 export function Analytics() {
   const [range, setRange] = useState<Range>('This Month');
+  const [selectedBranchId, setSelectedBranchId] = useState('');
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [comparison, setComparison] = useState<BranchComparison[]>([]);
   const [trends, setTrends] = useState<AdminTrends | null>(null);
@@ -167,19 +176,27 @@ export function Analytics() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchAll = useCallback(async (r: Range) => {
+  const branchNameById = new Map(branches.map(branch => [branch.id, branch.name]));
+  const selectedBranchName = selectedBranchId
+    ? branchNameById.get(selectedBranchId) ?? 'Selected branch'
+    : 'All branches';
+
+  const fetchAll = useCallback(async (r: Range, branchId = selectedBranchId) => {
     setIsLoading(true);
     setError('');
     try {
       const { startDate, endDate } = getDateParams(r);
       const interval = rangeToInterval(r);
-      const [ov, comp, tr, op, pop] = await Promise.all([
-        getAdminOverview(startDate, endDate),
+      const scopedBranchId = branchId || undefined;
+      const [branchList, ov, comp, tr, op, pop] = await Promise.all([
+        getBranchesPublic().catch(() => []),
+        getAdminOverview(startDate, endDate, scopedBranchId),
         getBranchComparison(startDate, endDate),
-        getAdminTrends(startDate, endDate, interval),
-        getAdminOperational(startDate, endDate),
-        getAdminPopularItems(startDate, endDate, 8),
+        getAdminTrends(startDate, endDate, interval, scopedBranchId),
+        getAdminOperational(startDate, endDate, scopedBranchId),
+        getAdminPopularItems(startDate, endDate, 8, scopedBranchId),
       ]);
+      setBranches(branchList);
       setOverview(ov);
       setComparison(comp);
       setTrends(tr);
@@ -191,9 +208,9 @@ export function Analytics() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedBranchId]);
 
-  useEffect(() => { fetchAll(range); }, [range, fetchAll]);
+  useEffect(() => { fetchAll(range, selectedBranchId); }, [range, selectedBranchId, fetchAll]);
 
   if (isLoading) return <LoadingSkeleton />;
 
@@ -202,7 +219,7 @@ export function Analytics() {
       <div className="h-screen overflow-auto flex items-center justify-center" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="text-center">
           <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
-          <Button onClick={() => fetchAll(range)} variant="outline" className="gap-2">
+          <Button onClick={() => fetchAll(range, selectedBranchId)} variant="outline" className="gap-2">
             <RefreshCw className="w-4 h-4" /> Retry
           </Button>
         </div>
@@ -210,7 +227,10 @@ export function Analytics() {
     );
   }
 
-  const sortedByRevenue = [...comparison].sort((a, b) => b.totalRevenue - a.totalRevenue);
+  const visibleComparison = selectedBranchId
+    ? comparison.filter(branch => branch.branchId === selectedBranchId)
+    : comparison;
+  const sortedByRevenue = [...visibleComparison].sort((a, b) => b.totalRevenue - a.totalRevenue);
 
   return (
     <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
@@ -223,14 +243,25 @@ export function Analytics() {
               Executive Dashboard
             </h1>
             <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
-              Org-wide performance · {overview?.totalBranches ?? 0} branches
+              {selectedBranchId ? selectedBranchName : 'Org-wide performance'} · {overview?.totalBranches ?? 0} branches
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={selectedBranchId}
+              onChange={e => setSelectedBranchId(e.target.value)}
+              className="h-9 rounded-md border bg-white px-3 text-sm"
+              style={{ borderColor: 'var(--espresso)', color: 'var(--espresso)' }}
+            >
+              <option value="">All branches</option>
+              {branches.map(branch => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
             {(['Today', 'This Week', 'This Month'] as Range[]).map(r => (
               <RangeButton key={r} label={r} selected={range === r} onClick={() => setRange(r)} />
             ))}
-            <Button size="sm" variant="outline" onClick={() => fetchAll(range)}
+            <Button size="sm" variant="outline" onClick={() => fetchAll(range, selectedBranchId)}
               className="border-[var(--espresso)]/20 p-2"
               style={{ color: 'var(--espresso)' }}>
               <RefreshCw className="w-4 h-4" />
@@ -301,7 +332,7 @@ export function Analytics() {
                 <div className="min-w-0">
                   <p className="text-xs mb-0.5" style={{ color: 'var(--espresso)', opacity: 0.6 }}>{label}</p>
                   <p className="font-semibold truncate" style={{ color: 'var(--espresso)' }}>
-                    {value ?? '—'}
+                    {normaliseBranchName(value, branchNameById)}
                   </p>
                 </div>
               </CardContent>
@@ -462,7 +493,7 @@ export function Analytics() {
                               #1
                             </Badge>}
                             <span className="font-medium" style={{ color: 'var(--espresso)' }}>
-                              {b.name ?? b.branchId}
+                              {branchNameById.get(b.branchId) ?? b.name ?? b.branchId}
                             </span>
                           </div>
                         </td>
