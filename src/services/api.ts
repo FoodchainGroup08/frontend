@@ -311,6 +311,7 @@ export interface FoodSuggestionRequest {
   limit?: number;
 }
 
+// Legacy single-item types (kept for backward compat)
 export interface FoodSuggestionItem {
   menuItemId: string;
   menuItemName: string;
@@ -327,6 +328,35 @@ export interface FoodSuggestionResponse {
   readyForSuggestions: boolean;
   questions: string[];
   suggestions: FoodSuggestionItem[];
+  estimatedTotalCost: number;
+}
+
+// Enhanced combo types
+export interface ComboItem {
+  menuItemId: string;
+  name: string;
+  price: number;
+}
+
+export interface ComboSuggestion {
+  comboName: string;
+  items: ComboItem[];
+  totalPrice: number;
+  healthScore: number;
+  wellnessTags: string[];
+  reason: string;
+  confidence: number;
+}
+
+export type RecommendationSource = 'GEMINI' | 'RULE_BASED' | 'NONE';
+
+export interface AiRecommendationResponse {
+  recommendationSource: RecommendationSource;
+  fallbackUsed: boolean;
+  message: string;
+  readyForSuggestions: boolean;
+  questions: string[];
+  suggestions: ComboSuggestion[];
   estimatedTotalCost: number;
 }
 
@@ -672,8 +702,8 @@ export const createCategory = (name: string, displayOrder?: number) =>
 export const updateCategory = (id: string, data: { name?: string; displayOrder?: number }) =>
   apiClient.put<any>(`/menu/categories/${id}`, data).then((r) => r.data);
 
-export const getFoodSuggestions = (request: FoodSuggestionRequest): Promise<FoodSuggestionResponse> =>
-  apiClient.post<FoodSuggestionResponse>('/menu/suggestions', request).then((r) => r.data);
+export const getFoodSuggestions = (request: FoodSuggestionRequest): Promise<AiRecommendationResponse> =>
+  apiClient.post<AiRecommendationResponse>('/menu/suggestions', request).then((r) => r.data);
 
 export const uploadMenuItemImage = async (id: string, file: File) => {
   const formData = new FormData();
