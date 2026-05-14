@@ -41,13 +41,13 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* FoodChain Brand Colors */
-  --foodchain-espresso: #3B2314;
-  --foodchain-golden-amber: #F0A500;
-  --foodchain-charcoal: #1E1E1E;
-  --foodchain-warm-white: #FAF7F2;
-  --foodchain-sage-green: #4CAF7D;
-  --foodchain-burnt-orange: #E8622A;
-  --foodchain-white: #ffffff;
+  --espresso: #3B2314;
+  --golden-amber: #F0A500;
+  --charcoal: #1E1E1E;
+  --warm-white: #FAF7F2;
+  --sage-green: #4CAF7D;
+  --burnt-orange: #E8622A;
+  --white: #ffffff;
 }
 
 .dark {
@@ -128,13 +128,13 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* FoodChain Brand Colors */
-  --color-foodchain-espresso: var(--foodchain-espresso);
-  --color-foodchain-golden-amber: var(--foodchain-golden-amber);
-  --color-foodchain-charcoal: var(--foodchain-charcoal);
-  --color-foodchain-warm-white: var(--foodchain-warm-white);
-  --color-foodchain-sage-green: var(--foodchain-sage-green);
-  --color-foodchain-burnt-orange: var(--foodchain-burnt-orange);
-  --color-foodchain-white: var(--foodchain-white);
+  --color-foodchain-espresso: var(--espresso);
+  --color-foodchain-golden-amber: var(--golden-amber);
+  --color-foodchain-charcoal: var(--charcoal);
+  --color-foodchain-warm-white: var(--warm-white);
+  --color-foodchain-sage-green: var(--sage-green);
+  --color-foodchain-burnt-orange: var(--burnt-orange);
+  --color-foodchain-white: var(--white);
 }
 
 @layer base {

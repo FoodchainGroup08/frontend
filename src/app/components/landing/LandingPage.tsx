@@ -44,7 +44,7 @@ const FEATURES = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
       <style>{`
         @keyframes fc-dot-bounce {
           0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
@@ -59,25 +59,25 @@ export function LandingPage() {
       <nav
         className="sticky top-0 z-50 border-b backdrop-blur-sm"
         style={{
-          backgroundColor: 'color-mix(in srgb, var(--foodchain-warm-white) 88%, transparent)',
+          backgroundColor: 'color-mix(in srgb, var(--warm-white) 88%, transparent)',
           borderColor: 'rgba(59,35,20,0.07)',
         }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           <span
             className="text-xl font-bold tracking-tight select-none"
-            style={{ color: 'var(--foodchain-espresso)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             FoodChain
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild className="font-medium" style={{ color: 'var(--foodchain-espresso)' }}>
+            <Button variant="ghost" asChild className="font-medium" style={{ color: 'var(--espresso)' }}>
               <Link to="/login">Sign In</Link>
             </Button>
             <Button
               asChild
               className="font-semibold text-white"
-              style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+              style={{ backgroundColor: 'var(--golden-amber)' }}
             >
               <Link to="/register">Get Started</Link>
             </Button>
@@ -89,19 +89,19 @@ export function LandingPage() {
       <section className="relative overflow-hidden py-20 sm:py-28">
         <div
           className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full pointer-events-none opacity-[0.04]"
-          style={{ backgroundColor: 'var(--foodchain-espresso)' }}
+          style={{ backgroundColor: 'var(--espresso)' }}
         />
         <div
           className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full pointer-events-none opacity-[0.06]"
-          style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+          style={{ backgroundColor: 'var(--golden-amber)' }}
         />
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <div
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium mb-6"
             style={{
-              backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 14%, transparent)',
-              color: 'var(--foodchain-espresso)',
+              backgroundColor: 'color-mix(in srgb, var(--golden-amber) 14%, transparent)',
+              color: 'var(--espresso)',
             }}
           >
             <Sparkles size={13} />
@@ -110,16 +110,16 @@ export function LandingPage() {
 
           <h1
             className="text-4xl sm:text-5xl lg:text-[3.75rem] font-bold leading-tight mb-5"
-            style={{ color: 'var(--foodchain-espresso)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             Not sure what to eat?
             <br />
-            <span style={{ color: 'var(--foodchain-golden-amber)' }}>Let our AI figure it out.</span>
+            <span style={{ color: 'var(--golden-amber)' }}>Let our AI figure it out.</span>
           </h1>
 
           <p
             className="text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl mx-auto"
-            style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 68%, transparent)' }}
+            style={{ color: 'color-mix(in srgb, var(--espresso) 68%, transparent)' }}
           >
             Tell us how you're feeling and we'll suggest the perfect meal from your nearest branch
             — no scrolling required.
@@ -130,7 +130,7 @@ export function LandingPage() {
               size="lg"
               asChild
               className="font-semibold text-white min-w-36"
-              style={{ backgroundColor: 'var(--foodchain-espresso)' }}
+              style={{ backgroundColor: 'var(--espresso)' }}
             >
               <Link to="/register">Try the AI</Link>
             </Button>
@@ -140,8 +140,8 @@ export function LandingPage() {
               asChild
               className="font-semibold min-w-36"
               style={{
-                borderColor: 'var(--foodchain-espresso)',
-                color: 'var(--foodchain-espresso)',
+                borderColor: 'var(--espresso)',
+                color: 'var(--espresso)',
               }}
             >
               <Link to="/login">Sign In</Link>
@@ -156,13 +156,13 @@ export function LandingPage() {
           <div className="text-center mb-12">
             <h2
               className="text-3xl sm:text-4xl font-bold mb-3"
-              style={{ color: 'var(--foodchain-espresso)' }}
+              style={{ color: 'var(--espresso)' }}
             >
               From craving to cart in three steps
             </h2>
             <p
               className="text-base sm:text-lg"
-              style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 60%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--espresso) 60%, transparent)' }}
             >
               Answer a few quick questions. We handle the rest.
             </p>
@@ -174,22 +174,22 @@ export function LandingPage() {
               className="flex-1 rounded-2xl border p-6"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 11%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 11%, transparent)',
               }}
             >
               <div className="flex items-center gap-2 mb-5">
                 <span
                   className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                  style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+                  style={{ backgroundColor: 'var(--golden-amber)' }}
                 >
                   1
                 </span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--foodchain-espresso)' }}>
+                <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
                   We ask
                 </span>
               </div>
 
-              <p className="text-sm font-semibold mb-3" style={{ color: 'var(--foodchain-espresso)' }}>
+              <p className="text-sm font-semibold mb-3" style={{ color: 'var(--espresso)' }}>
                 How hungry are you?
               </p>
               <div className="grid grid-cols-2 gap-2 mb-5">
@@ -201,13 +201,13 @@ export function LandingPage() {
                       style={
                         i === 1
                           ? {
-                              backgroundColor: 'var(--foodchain-golden-amber)',
+                              backgroundColor: 'var(--golden-amber)',
                               color: '#fff',
-                              borderColor: 'var(--foodchain-golden-amber)',
+                              borderColor: 'var(--golden-amber)',
                             }
                           : {
-                              borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 18%, transparent)',
-                              color: 'var(--foodchain-espresso)',
+                              borderColor: 'color-mix(in srgb, var(--espresso) 18%, transparent)',
+                              color: 'var(--espresso)',
                             }
                       }
                     >
@@ -217,7 +217,7 @@ export function LandingPage() {
                 )}
               </div>
 
-              <p className="text-sm font-semibold mb-2.5" style={{ color: 'var(--foodchain-espresso)' }}>
+              <p className="text-sm font-semibold mb-2.5" style={{ color: 'var(--espresso)' }}>
                 What are you in the mood for?
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -228,13 +228,13 @@ export function LandingPage() {
                     style={
                       i === 1
                         ? {
-                            backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 14%, transparent)',
-                            color: 'var(--foodchain-espresso)',
-                            borderColor: 'var(--foodchain-golden-amber)',
+                            backgroundColor: 'color-mix(in srgb, var(--golden-amber) 14%, transparent)',
+                            color: 'var(--espresso)',
+                            borderColor: 'var(--golden-amber)',
                           }
                         : {
-                            borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 16%, transparent)',
-                            color: 'var(--foodchain-espresso)',
+                            borderColor: 'color-mix(in srgb, var(--espresso) 16%, transparent)',
+                            color: 'var(--espresso)',
                           }
                     }
                   >
@@ -248,7 +248,7 @@ export function LandingPage() {
             <div className="hidden md:flex items-center justify-center px-2 shrink-0">
               <ChevronRight
                 size={22}
-                style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 25%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 25%, transparent)' }}
               />
             </div>
 
@@ -257,17 +257,17 @@ export function LandingPage() {
               className="flex-1 rounded-2xl border p-6 flex flex-col"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 11%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 11%, transparent)',
               }}
             >
               <div className="flex items-center gap-2 mb-5">
                 <span
                   className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                  style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+                  style={{ backgroundColor: 'var(--golden-amber)' }}
                 >
                   2
                 </span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--foodchain-espresso)' }}>
+                <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
                   AI thinks
                 </span>
               </div>
@@ -275,31 +275,31 @@ export function LandingPage() {
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
                   style={{
-                    backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 11%, transparent)',
+                    backgroundColor: 'color-mix(in srgb, var(--golden-amber) 11%, transparent)',
                   }}
                 >
-                  <Sparkles size={22} style={{ color: 'var(--foodchain-golden-amber)' }} />
+                  <Sparkles size={22} style={{ color: 'var(--golden-amber)' }} />
                 </div>
-                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--foodchain-espresso)' }}>
+                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--espresso)' }}>
                   Finding the perfect meals for you
                 </p>
                 <div className="flex items-center gap-1.5 mb-4">
                   <span
                     className="w-2 h-2 rounded-full fc-dot-1"
-                    style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+                    style={{ backgroundColor: 'var(--golden-amber)' }}
                   />
                   <span
                     className="w-2 h-2 rounded-full fc-dot-2"
-                    style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+                    style={{ backgroundColor: 'var(--golden-amber)' }}
                   />
                   <span
                     className="w-2 h-2 rounded-full fc-dot-3"
-                    style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+                    style={{ backgroundColor: 'var(--golden-amber)' }}
                   />
                 </div>
                 <p
                   className="text-xs"
-                  style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 48%, transparent)' }}
+                  style={{ color: 'color-mix(in srgb, var(--espresso) 48%, transparent)' }}
                 >
                   Checking your branch's menu against your mood
                 </p>
@@ -310,7 +310,7 @@ export function LandingPage() {
             <div className="hidden md:flex items-center justify-center px-2 shrink-0">
               <ChevronRight
                 size={22}
-                style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 25%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 25%, transparent)' }}
               />
             </div>
 
@@ -319,17 +319,17 @@ export function LandingPage() {
               className="flex-1 rounded-2xl border p-6"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 11%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 11%, transparent)',
               }}
             >
               <div className="flex items-center gap-2 mb-5">
                 <span
                   className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                  style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+                  style={{ backgroundColor: 'var(--golden-amber)' }}
                 >
                   3
                 </span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--foodchain-espresso)' }}>
+                <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
                   We suggest
                 </span>
               </div>
@@ -339,20 +339,20 @@ export function LandingPage() {
                     key={item.name}
                     className="flex items-start justify-between gap-3 p-3 rounded-xl border"
                     style={{
-                      borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 9%, transparent)',
+                      borderColor: 'color-mix(in srgb, var(--espresso) 9%, transparent)',
                     }}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
                         <span
                           className="text-sm font-semibold truncate"
-                          style={{ color: 'var(--foodchain-espresso)' }}
+                          style={{ color: 'var(--espresso)' }}
                         >
                           {item.name}
                         </span>
                         <span
                           className="text-sm font-bold shrink-0"
-                          style={{ color: 'var(--foodchain-golden-amber)' }}
+                          style={{ color: 'var(--golden-amber)' }}
                         >
                           {item.price}
                         </span>
@@ -361,12 +361,12 @@ export function LandingPage() {
                         <Sparkles
                           size={10}
                           className="shrink-0 mt-0.5"
-                          style={{ color: 'var(--foodchain-golden-amber)' }}
+                          style={{ color: 'var(--golden-amber)' }}
                         />
                         <span
                           className="text-xs leading-tight"
                           style={{
-                            color: 'color-mix(in srgb, var(--foodchain-espresso) 52%, transparent)',
+                            color: 'color-mix(in srgb, var(--espresso) 52%, transparent)',
                           }}
                         >
                           {item.reason}
@@ -375,7 +375,7 @@ export function LandingPage() {
                     </div>
                     <button
                       className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white"
-                      style={{ backgroundColor: 'var(--foodchain-espresso)' }}
+                      style={{ backgroundColor: 'var(--espresso)' }}
                       tabIndex={-1}
                     >
                       <ShoppingCart size={13} />
@@ -392,7 +392,7 @@ export function LandingPage() {
       <section
         className="py-16 sm:py-24"
         style={{
-          backgroundColor: 'color-mix(in srgb, var(--foodchain-espresso) 3.5%, var(--foodchain-warm-white))',
+          backgroundColor: 'color-mix(in srgb, var(--espresso) 3.5%, var(--warm-white))',
         }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -401,13 +401,13 @@ export function LandingPage() {
             <div>
               <h2
                 className="text-3xl sm:text-4xl font-bold mb-4 leading-snug"
-                style={{ color: 'var(--foodchain-espresso)' }}
+                style={{ color: 'var(--espresso)' }}
               >
                 We find your nearest branch — or order for a friend
               </h2>
               <p
                 className="text-base sm:text-lg leading-relaxed"
-                style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 68%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 68%, transparent)' }}
               >
                 FoodChain detects your location and defaults to the closest branch. Ordering for
                 someone in another area? Switch branches in one tap.
@@ -419,22 +419,22 @@ export function LandingPage() {
               className="rounded-2xl border p-5 max-w-sm mx-auto md:mx-0 md:ml-auto w-full"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 10%, transparent)',
-                boxShadow: '0 8px 40px color-mix(in srgb, var(--foodchain-golden-amber) 18%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 10%, transparent)',
+                boxShadow: '0 8px 40px color-mix(in srgb, var(--golden-amber) 18%, transparent)',
               }}
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="font-semibold text-base" style={{ color: 'var(--foodchain-espresso)' }}>
+                  <h3 className="font-semibold text-base" style={{ color: 'var(--espresso)' }}>
                     Victoria Island
                   </h3>
                   <div className="flex items-center gap-1 mt-0.5">
                     <Star
                       size={12}
-                      fill="var(--foodchain-golden-amber)"
-                      stroke="var(--foodchain-golden-amber)"
+                      fill="var(--golden-amber)"
+                      stroke="var(--golden-amber)"
                     />
-                    <span className="text-xs font-medium" style={{ color: 'var(--foodchain-espresso)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--espresso)' }}>
                       4.8
                     </span>
                   </div>
@@ -443,15 +443,15 @@ export function LandingPage() {
                   <span
                     className="text-xs px-2 py-0.5 rounded-full font-medium"
                     style={{
-                      backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 14%, transparent)',
-                      color: 'var(--foodchain-espresso)',
+                      backgroundColor: 'color-mix(in srgb, var(--golden-amber) 14%, transparent)',
+                      color: 'var(--espresso)',
                     }}
                   >
                     Fastest delivery
                   </span>
                   <span
                     className="text-xs font-medium"
-                    style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 48%, transparent)' }}
+                    style={{ color: 'color-mix(in srgb, var(--espresso) 48%, transparent)' }}
                   >
                     1.2 km away
                   </span>
@@ -460,23 +460,23 @@ export function LandingPage() {
 
               <div
                 className="flex items-center gap-1.5 text-xs mb-1.5"
-                style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 58%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 58%, transparent)' }}
               >
                 <MapPin size={11} />
                 14 Adeola Odeku St, Victoria Island
               </div>
 
-              <div className="flex items-center gap-1.5 text-xs mb-5" style={{ color: 'var(--foodchain-sage-green)' }}>
+              <div className="flex items-center gap-1.5 text-xs mb-5" style={{ color: 'var(--sage-green)' }}>
                 <span
                   className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: 'var(--foodchain-sage-green)' }}
+                  style={{ backgroundColor: 'var(--sage-green)' }}
                 />
                 Open now · Closes 10:00 PM
               </div>
 
               <button
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
-                style={{ backgroundColor: 'var(--foodchain-espresso)' }}
+                style={{ backgroundColor: 'var(--espresso)' }}
                 tabIndex={-1}
               >
                 Order from here
@@ -491,7 +491,7 @@ export function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <h2
             className="text-3xl sm:text-4xl font-bold text-center mb-12"
-            style={{ color: 'var(--foodchain-espresso)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             Everything else you need
           </h2>
@@ -502,27 +502,27 @@ export function LandingPage() {
                 className="rounded-2xl border p-6"
                 style={{
                   backgroundColor: '#fff',
-                  borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 10%, transparent)',
+                  borderColor: 'color-mix(in srgb, var(--espresso) 10%, transparent)',
                 }}
               >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
                   style={{
-                    backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 11%, transparent)',
-                    color: 'var(--foodchain-golden-amber)',
+                    backgroundColor: 'color-mix(in srgb, var(--golden-amber) 11%, transparent)',
+                    color: 'var(--golden-amber)',
                   }}
                 >
                   {feat.icon}
                 </div>
                 <h3
                   className="font-semibold text-base mb-1"
-                  style={{ color: 'var(--foodchain-espresso)' }}
+                  style={{ color: 'var(--espresso)' }}
                 >
                   {feat.title}
                 </h3>
                 <p
                   className="text-sm leading-relaxed"
-                  style={{ color: 'color-mix(in srgb, var(--foodchain-espresso) 58%, transparent)' }}
+                  style={{ color: 'color-mix(in srgb, var(--espresso) 58%, transparent)' }}
                 >
                   {feat.body}
                 </p>
@@ -533,17 +533,17 @@ export function LandingPage() {
       </section>
 
       {/* ── CTA Banner ──────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20" style={{ backgroundColor: 'var(--foodchain-espresso)' }}>
+      <section className="py-16 sm:py-20" style={{ backgroundColor: 'var(--espresso)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h2
             className="text-3xl sm:text-4xl font-bold mb-4"
-            style={{ color: 'var(--foodchain-warm-white)' }}
+            style={{ color: 'var(--warm-white)' }}
           >
             Ready to eat well?
           </h2>
           <p
             className="text-base sm:text-lg mb-8"
-            style={{ color: 'color-mix(in srgb, var(--foodchain-warm-white) 70%, transparent)' }}
+            style={{ color: 'color-mix(in srgb, var(--warm-white) 70%, transparent)' }}
           >
             Join FoodChain and let our AI take the indecision out of your next meal.
           </p>
@@ -551,7 +551,7 @@ export function LandingPage() {
             size="lg"
             asChild
             className="font-semibold text-white"
-            style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+            style={{ backgroundColor: 'var(--golden-amber)' }}
           >
             <Link to="/register">Get Started</Link>
           </Button>
@@ -562,14 +562,14 @@ export function LandingPage() {
       <footer
         className="py-8 border-t"
         style={{
-          backgroundColor: 'var(--foodchain-espresso)',
+          backgroundColor: 'var(--espresso)',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <span
             className="text-sm font-semibold"
-            style={{ color: 'var(--foodchain-warm-white)' }}
+            style={{ color: 'var(--warm-white)' }}
           >
             FoodChain &copy; 2026
           </span>
@@ -577,14 +577,14 @@ export function LandingPage() {
             <Link
               to="/login"
               className="text-sm transition-opacity hover:opacity-100"
-              style={{ color: 'color-mix(in srgb, var(--foodchain-warm-white) 60%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--warm-white) 60%, transparent)' }}
             >
               Sign In
             </Link>
             <Link
               to="/register"
               className="text-sm transition-opacity hover:opacity-100"
-              style={{ color: 'color-mix(in srgb, var(--foodchain-warm-white) 60%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--warm-white) 60%, transparent)' }}
             >
               Register
             </Link>

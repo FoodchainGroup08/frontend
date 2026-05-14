@@ -66,6 +66,7 @@ type ConfirmationOrder = {
   paymentMethod: string;
   branchName: string;
   estimatedTime: string;
+  orderType?: 'delivery' | 'dine-in';
 };
 
 type OrderDetailData = {
@@ -299,6 +300,7 @@ function CustomerLayout() {
       paymentMethod: formData.paymentMethod,
       branchName: selectedBranch?.name ?? '',
       estimatedTime: apiOrder.estimatedTime ?? '45 mins',
+      orderType: formData.orderType,
     });
     setTrackingOrderId(apiOrder.id);
     setCart([]);
@@ -335,6 +337,7 @@ function CustomerLayout() {
           <Menu
             branchId={selectedBranch.id}
             onAddToCart={handleAddToCart}
+            onGoToCart={() => navigate('/cart')}
             cart={cart}
           />
         );

@@ -32,10 +32,10 @@ function fmtTime(s: string | null | undefined): string {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  ORDER_RECEIVED: 'var(--foodchain-golden-amber)',
-  ORDER_STATUS_UPDATE: 'var(--foodchain-sage-green)',
-  ORDER_READY: 'var(--foodchain-sage-green)',
-  REPORT_GENERATED: 'var(--foodchain-espresso)',
+  ORDER_RECEIVED: 'var(--golden-amber)',
+  ORDER_STATUS_UPDATE: 'var(--sage-green)',
+  ORDER_READY: 'var(--sage-green)',
+  REPORT_GENERATED: 'var(--espresso)',
   SYSTEM: '#6B7280',
 };
 
@@ -65,7 +65,7 @@ function NotificationCard({
       style={{
         backgroundColor: notification.isRead ? 'transparent' : `color-mix(in srgb, ${color} 5%, transparent)`,
         border: `1px solid`,
-        borderColor: notification.isRead ? 'var(--foodchain-espresso)' : color,
+        borderColor: notification.isRead ? 'var(--espresso)' : color,
         opacity: notification.isRead ? 0.75 : 1,
       }}
     >
@@ -86,19 +86,19 @@ function NotificationCard({
             <Badge className="text-xs border-0 px-1.5 py-0 h-5" style={{ backgroundColor: color, color: 'white' }}>
               {label}
             </Badge>
-            <span className="font-medium text-sm truncate" style={{ color: 'var(--foodchain-espresso)' }}>
+            <span className="font-medium text-sm truncate" style={{ color: 'var(--espresso)' }}>
               {notification.title}
             </span>
           </div>
-          <span className="text-xs flex-shrink-0" style={{ color: 'var(--foodchain-espresso)', opacity: 0.4 }}>
+          <span className="text-xs flex-shrink-0" style={{ color: 'var(--espresso)', opacity: 0.4 }}>
             {fmtTime(notification.createdAt)}
           </span>
         </div>
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
           {notification.message}
         </p>
         {notification.relatedEntityType && (
-          <p className="text-xs mt-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.4 }}>
+          <p className="text-xs mt-1" style={{ color: 'var(--espresso)', opacity: 0.4 }}>
             {notification.relatedEntityType}: {notification.relatedEntityId}
           </p>
         )}
@@ -110,8 +110,8 @@ function NotificationCard({
           <button
             onClick={() => onMarkRead(notification.id)}
             title="Mark as read"
-            className="p-1.5 rounded transition-colors hover:bg-[var(--foodchain-espresso)]/10"
-            style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}
+            className="p-1.5 rounded transition-colors hover:bg-[var(--espresso)]/10"
+            style={{ color: 'var(--espresso)', opacity: 0.5 }}
           >
             <CheckCheck className="w-4 h-4" />
           </button>
@@ -119,8 +119,8 @@ function NotificationCard({
         <button
           onClick={() => onDelete(notification.id)}
           title="Delete"
-          className="p-1.5 rounded transition-colors hover:bg-[var(--foodchain-burnt-orange)]/10"
-          style={{ color: 'var(--foodchain-burnt-orange)', opacity: 0.6 }}
+          className="p-1.5 rounded transition-colors hover:bg-[var(--burnt-orange)]/10"
+          style={{ color: 'var(--burnt-orange)', opacity: 0.6 }}
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -191,7 +191,7 @@ export function AdminNotifications() {
   };
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="p-6 sm:p-8 space-y-6">
 
         {/* Header */}
@@ -199,28 +199,28 @@ export function AdminNotifications() {
           <div className="flex items-center gap-3">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-3xl font-semibold" style={{ color: 'var(--foodchain-espresso)' }}>Notifications</h1>
+                <h1 className="text-3xl font-semibold" style={{ color: 'var(--espresso)' }}>Notifications</h1>
                 {unreadCount > 0 && (
                   <Badge className="text-xs border-0"
-                    style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'white' }}>
+                    style={{ backgroundColor: 'var(--burnt-orange)', color: 'white' }}>
                     {unreadCount} unread
                   </Badge>
                 )}
               </div>
-              <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                 {totalElements} total notification{totalElements !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => fetchNotifications(page)}
-              className="border-[var(--foodchain-espresso)]/20 p-2" style={{ color: 'var(--foodchain-espresso)' }}>
+              className="border-[var(--espresso)]/20 p-2" style={{ color: 'var(--espresso)' }}>
               <RefreshCw className="w-4 h-4" />
             </Button>
             {unreadCount > 0 && (
               <Button size="sm" variant="outline" onClick={handleMarkAllRead} disabled={markingAll}
-                className="gap-2 border-[var(--foodchain-espresso)]/20"
-                style={{ color: 'var(--foodchain-espresso)' }}>
+                className="gap-2 border-[var(--espresso)]/20"
+                style={{ color: 'var(--espresso)' }}>
                 <CheckCheck className="w-4 h-4" />
                 Mark all read
               </Button>
@@ -229,9 +229,9 @@ export function AdminNotifications() {
         </div>
 
         {/* Notification list */}
-        <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+            <CardTitle className="flex items-center gap-2" style={{ color: 'var(--espresso)' }}>
               <Bell className="w-4 h-4" />
               Activity Feed
             </CardTitle>
@@ -243,8 +243,8 @@ export function AdminNotifications() {
               </div>
             ) : notifications.length === 0 ? (
               <div className="text-center py-16">
-                <BellOff className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--foodchain-espresso)', opacity: 0.3 }} />
-                <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>No notifications yet</p>
+                <BellOff className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--espresso)', opacity: 0.3 }} />
+                <p style={{ color: 'var(--espresso)', opacity: 0.5 }}>No notifications yet</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -262,17 +262,17 @@ export function AdminNotifications() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-4 mt-4 border-t"
-                style={{ borderColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>
+                style={{ borderColor: 'var(--espresso)', opacity: 0.1 }}>
+                <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
                   Page {page + 1} of {totalPages}
                 </p>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}
-                    className="border-[var(--foodchain-espresso)]/20 p-1.5" style={{ color: 'var(--foodchain-espresso)' }}>
+                    className="border-[var(--espresso)]/20 p-1.5" style={{ color: 'var(--espresso)' }}>
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
                   <Button size="sm" variant="outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
-                    className="border-[var(--foodchain-espresso)]/20 p-1.5" style={{ color: 'var(--foodchain-espresso)' }}>
+                    className="border-[var(--espresso)]/20 p-1.5" style={{ color: 'var(--espresso)' }}>
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>

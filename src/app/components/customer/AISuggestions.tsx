@@ -118,17 +118,17 @@ function SuggestionEmptyState({ onReset }: { onReset: () => void }) {
       <div
         className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
         style={{
-          backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 15%, transparent)',
+          backgroundColor: 'color-mix(in srgb, var(--golden-amber) 15%, transparent)',
         }}
       >
-        <Utensils className='w-7 h-7' style={{ color: 'var(--foodchain-golden-amber)' }} />
+        <Utensils className='w-7 h-7' style={{ color: 'var(--golden-amber)' }} />
       </div>
-      <h3 className='text-lg font-semibold mb-2' style={{ color: 'var(--foodchain-espresso)' }}>
+      <h3 className='text-lg font-semibold mb-2' style={{ color: 'var(--espresso)' }}>
         No suggestions found
       </h3>
       <p
         className='text-sm mb-6 max-w-xs mx-auto'
-        style={{ color: 'var(--foodchain-charcoal)', opacity: 0.6 }}
+        style={{ color: 'var(--charcoal)', opacity: 0.6 }}
       >
         Try adjusting your preferences, increasing your budget, or removing some dietary filters.
       </p>
@@ -169,20 +169,20 @@ function SuggestionCard({
   return (
     <Card
       className='flex flex-col overflow-hidden border transition-shadow hover:shadow-md'
-      style={{ borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 12%, transparent)' }}
+      style={{ borderColor: 'color-mix(in srgb, var(--espresso) 12%, transparent)' }}
     >
       <CardContent className='flex flex-col flex-1 p-4 gap-3'>
         {/* Name + price */}
         <div className='flex items-start justify-between gap-2'>
           <h3
             className='font-semibold text-base leading-tight'
-            style={{ color: 'var(--foodchain-espresso)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             {item.menuItemName}
           </h3>
           <span
             className='text-sm font-bold shrink-0'
-            style={{ color: 'var(--foodchain-golden-amber)' }}
+            style={{ color: 'var(--golden-amber)' }}
           >
             ₦{item.price.toLocaleString()}
           </span>
@@ -192,16 +192,16 @@ function SuggestionCard({
         <div
           className='flex items-start gap-2 rounded-md p-2.5'
           style={{
-            backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 12%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--golden-amber) 12%, transparent)',
           }}
         >
           <Sparkles
             className='w-3.5 h-3.5 mt-0.5 shrink-0'
-            style={{ color: 'var(--foodchain-golden-amber)' }}
+            style={{ color: 'var(--golden-amber)' }}
           />
           <p
             className='text-xs leading-relaxed'
-            style={{ color: 'var(--foodchain-espresso)', opacity: 0.85 }}
+            style={{ color: 'var(--espresso)', opacity: 0.85 }}
           >
             {item.reason}
           </p>
@@ -212,7 +212,7 @@ function SuggestionCard({
           <div>
             <p
               className='text-xs mb-1.5'
-              style={{ color: 'var(--foodchain-charcoal)', opacity: 0.5 }}
+              style={{ color: 'var(--charcoal)', opacity: 0.5 }}
             >
               Pairs well with:
             </p>
@@ -228,7 +228,7 @@ function SuggestionCard({
 
         {/* Estimated total when ordering for multiple people */}
         {item.estimatedTotalCost > item.price && (
-          <p className='text-xs' style={{ color: 'var(--foodchain-charcoal)', opacity: 0.5 }}>
+          <p className='text-xs' style={{ color: 'var(--charcoal)', opacity: 0.5 }}>
             Est. total: ₦{item.estimatedTotalCost.toLocaleString()}
           </p>
         )}
@@ -240,9 +240,9 @@ function SuggestionCard({
           onClick={handleAdd}
           style={{
             backgroundColor: justAdded
-              ? 'var(--foodchain-sage-green)'
-              : 'var(--foodchain-espresso)',
-            color: 'var(--foodchain-warm-white)',
+              ? 'var(--sage-green)'
+              : 'var(--espresso)',
+            color: 'var(--warm-white)',
           }}
         >
           <ShoppingCart className='w-4 h-4 mr-1.5' />
@@ -354,21 +354,21 @@ export function AISuggestions({
   const selectStyle: React.CSSProperties = {
     borderColor: 'var(--border)',
     backgroundColor: 'transparent',
-    color: 'var(--foodchain-charcoal)',
+    color: 'var(--charcoal)',
   };
 
   return (
-    <div className='min-h-screen pb-16' style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className='min-h-screen pb-16' style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className='max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8'>
         {/* ── Page header ─────────────────────────────────────────────────── */}
         <div className='mb-8'>
           <div className='flex items-center gap-2 mb-1'>
-            <Sparkles className='w-6 h-6' style={{ color: 'var(--foodchain-golden-amber)' }} />
-            <h1 className='text-2xl font-bold' style={{ color: 'var(--foodchain-espresso)' }}>
+            <Sparkles className='w-6 h-6' style={{ color: 'var(--golden-amber)' }} />
+            <h1 className='text-2xl font-bold' style={{ color: 'var(--espresso)' }}>
               AI Food Suggestions
             </h1>
           </div>
-          <p className='text-sm' style={{ color: 'var(--foodchain-charcoal)', opacity: 0.6 }}>
+          <p className='text-sm' style={{ color: 'var(--charcoal)', opacity: 0.6 }}>
             Tell us what you're craving and our AI will find the best dishes from {branchName}.
           </p>
         </div>
@@ -377,11 +377,11 @@ export function AISuggestions({
         <Card
           className='mb-8 border'
           style={{
-            borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 12%, transparent)',
+            borderColor: 'color-mix(in srgb, var(--espresso) 12%, transparent)',
           }}
         >
           <CardHeader className='pb-4'>
-            <CardTitle className='text-base' style={{ color: 'var(--foodchain-espresso)' }}>
+            <CardTitle className='text-base' style={{ color: 'var(--espresso)' }}>
               Your Preferences
             </CardTitle>
           </CardHeader>
@@ -392,7 +392,7 @@ export function AISuggestions({
                 <div className='space-y-1.5'>
                   <label
                     className='text-xs font-medium'
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    style={{ color: 'var(--espresso)' }}
                   >
                     Budget (₦) — optional
                   </label>
@@ -407,7 +407,7 @@ export function AISuggestions({
                 <div className='space-y-1.5'>
                   <label
                     className='text-xs font-medium'
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    style={{ color: 'var(--espresso)' }}
                   >
                     Number of People
                   </label>
@@ -422,7 +422,7 @@ export function AISuggestions({
                 <div className='space-y-1.5'>
                   <label
                     className='text-xs font-medium'
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    style={{ color: 'var(--espresso)' }}
                   >
                     Max Suggestions (1–10)
                   </label>
@@ -441,7 +441,7 @@ export function AISuggestions({
                 <div className='space-y-1.5'>
                   <label
                     className='text-xs font-medium'
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    style={{ color: 'var(--espresso)' }}
                   >
                     Meal Type
                   </label>
@@ -463,7 +463,7 @@ export function AISuggestions({
                 <div className='space-y-1.5'>
                   <label
                     className='text-xs font-medium'
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    style={{ color: 'var(--espresso)' }}
                   >
                     Appetite
                   </label>
@@ -482,7 +482,7 @@ export function AISuggestions({
                 <div className='space-y-1.5'>
                   <label
                     className='text-xs font-medium'
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    style={{ color: 'var(--espresso)' }}
                   >
                     Order Type
                   </label>
@@ -511,7 +511,7 @@ export function AISuggestions({
               <div className='space-y-2'>
                 <label
                   className='text-xs font-medium'
-                  style={{ color: 'var(--foodchain-espresso)' }}
+                  style={{ color: 'var(--espresso)' }}
                 >
                   Dietary Preferences
                 </label>
@@ -525,11 +525,11 @@ export function AISuggestions({
                         onClick={() => toggleDietary(pref)}
                         className='px-3 py-1 rounded-full text-xs font-medium border transition-all'
                         style={{
-                          backgroundColor: active ? 'var(--foodchain-espresso)' : 'transparent',
+                          backgroundColor: active ? 'var(--espresso)' : 'transparent',
                           color: active
-                            ? 'var(--foodchain-warm-white)'
-                            : 'var(--foodchain-espresso)',
-                          borderColor: 'var(--foodchain-espresso)',
+                            ? 'var(--warm-white)'
+                            : 'var(--espresso)',
+                          borderColor: 'var(--espresso)',
                         }}
                       >
                         {pref}
@@ -546,8 +546,8 @@ export function AISuggestions({
                   disabled={isLoading}
                   className='sm:w-auto'
                   style={{
-                    backgroundColor: 'var(--foodchain-golden-amber)',
-                    color: 'var(--foodchain-charcoal)',
+                    backgroundColor: 'var(--golden-amber)',
+                    color: 'var(--charcoal)',
                   }}
                 >
                   {isLoading ? (
@@ -614,18 +614,18 @@ export function AISuggestions({
           <div
             className='flex items-start gap-3 p-5 rounded-lg border mb-6'
             style={{
-              borderColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 40%, transparent)',
-              backgroundColor: 'color-mix(in srgb, var(--foodchain-golden-amber) 10%, transparent)',
+              borderColor: 'color-mix(in srgb, var(--golden-amber) 40%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--golden-amber) 10%, transparent)',
             }}
           >
             <HelpCircle
               className='w-5 h-5 shrink-0 mt-0.5'
-              style={{ color: 'var(--foodchain-golden-amber)' }}
+              style={{ color: 'var(--golden-amber)' }}
             />
             <div>
               <p
                 className='text-sm font-semibold mb-3'
-                style={{ color: 'var(--foodchain-espresso)' }}
+                style={{ color: 'var(--espresso)' }}
               >
                 {result!.message}
               </p>
@@ -634,11 +634,11 @@ export function AISuggestions({
                   <li
                     key={i}
                     className='text-sm flex items-start gap-2'
-                    style={{ color: 'var(--foodchain-charcoal)' }}
+                    style={{ color: 'var(--charcoal)' }}
                   >
                     <span
                       className='font-bold shrink-0 tabular-nums'
-                      style={{ color: 'var(--foodchain-golden-amber)' }}
+                      style={{ color: 'var(--golden-amber)' }}
                     >
                       {i + 1}.
                     </span>
@@ -648,7 +648,7 @@ export function AISuggestions({
               </ol>
               <p
                 className='text-xs mt-3'
-                style={{ color: 'var(--foodchain-charcoal)', opacity: 0.5 }}
+                style={{ color: 'var(--charcoal)', opacity: 0.5 }}
               >
                 Fill in the form above and click "Get AI Suggestions" again.
               </p>
@@ -662,13 +662,13 @@ export function AISuggestions({
             {/* Results bar */}
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5'>
               <div>
-                <p className='text-sm font-medium' style={{ color: 'var(--foodchain-espresso)' }}>
+                <p className='text-sm font-medium' style={{ color: 'var(--espresso)' }}>
                   {result!.message}
                 </p>
                 {result!.estimatedTotalCost > 0 && (
                   <p
                     className='text-xs mt-0.5'
-                    style={{ color: 'var(--foodchain-charcoal)', opacity: 0.55 }}
+                    style={{ color: 'var(--charcoal)', opacity: 0.55 }}
                   >
                     Estimated total:{' '}
                     <span className='font-semibold'>
@@ -682,8 +682,8 @@ export function AISuggestions({
                   size='sm'
                   onClick={handleAddAll}
                   style={{
-                    backgroundColor: 'var(--foodchain-espresso)',
-                    color: 'var(--foodchain-warm-white)',
+                    backgroundColor: 'var(--espresso)',
+                    color: 'var(--warm-white)',
                   }}
                 >
                   <ShoppingCart className='w-4 h-4 mr-1.5' />

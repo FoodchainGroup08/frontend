@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Phone, User, CreditCard, ArrowLeft } from "lucide-react";
+import { MapPin, Phone, User, CreditCard, ArrowLeft, Truck, UtensilsCrossed } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -37,11 +37,13 @@ export interface OrderDetails {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  orderType: 'delivery' | 'dine-in';
 }
 
 export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }: CheckoutProps) {
   const { user } = useAuth();
 
+  const [orderType, setOrderType] = useState<'delivery' | 'dine-in'>('delivery');
   const [customerName, setCustomerName] = useState(user?.name ?? "");
   const [phoneNumber, setPhoneNumber] = useState(localStorage.getItem('foodchain_phone_number') || "");
   const [deliveryAddress, setDeliveryAddress] = useState(getSavedDeliveryLocation());
@@ -50,7 +52,7 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
   const [isProcessing, setIsProcessing] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryFee = 500;
+  const deliveryFee = orderType === 'delivery' ? 500 : 0;
   const total = subtotal + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,8 +62,9 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
     const payload = {
       branchId,
       branchName,
-      orderType: "delivery" as const,
-      deliveryAddress,
+      orderType,
+      deliveryAddress: orderType === 'delivery' ? deliveryAddress : undefined,
+
       items: cart.map(item => ({
         menuItemId: item.id,
         menuItemName: item.name,
@@ -77,18 +80,18 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
     try {
       const order = await placeOrder(payload);
 
-      // Persist the address for future orders
-      saveDeliveryLocation(deliveryAddress);
+      if (orderType === 'delivery') saveDeliveryLocation(deliveryAddress);
 
       const formData: OrderDetails = {
         customerName,
         phoneNumber,
-        deliveryAddress,
+        deliveryAddress: orderType === 'delivery' ? deliveryAddress : '',
         paymentMethod,
         specialInstructions,
         subtotal,
         deliveryFee,
         total,
+        orderType,
       };
       onPlaceOrder(formData, order);
       toast.success("Order placed successfully!", { description: `Order #${order.id}` });
@@ -100,18 +103,18 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--foodchain-warm-white)" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "var(--warm-white)" }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={onGoBack}
-            className="p-2 rounded-md hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
+            className="p-2 rounded-md hover:bg-[var(--espresso)]/5 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" style={{ color: "var(--foodchain-espresso)" }} />
+            <ArrowLeft className="w-5 h-5" style={{ color: "var(--espresso)" }} />
           </button>
           <h1
             className="text-2xl sm:text-3xl"
-            style={{ color: "var(--foodchain-espresso)", fontWeight: 600 }}
+            style={{ color: "var(--espresso)", fontWeight: 600 }}
           >
             Checkout
           </h1>
@@ -120,15 +123,56 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
+              {/* Order Type */}
+              <Card
+                className="border-[var(--espresso)]/10"
+                style={{ backgroundColor: "var(--white)" }}
+              >
+                <CardHeader>
+                  <CardTitle style={{ color: "var(--espresso)" }}>
+                    Order Type
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    {([
+                      { value: 'delivery' as const, label: 'Delivery', sub: 'Order delivered to you', Icon: Truck },
+                      { value: 'dine-in' as const, label: 'Dine In', sub: 'Eat at the restaurant', Icon: UtensilsCrossed },
+                    ]).map(({ value, label, sub, Icon }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setOrderType(value)}
+                        className="p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all text-center"
+                        style={{
+                          borderColor: orderType === value ? 'var(--golden-amber)' : 'rgba(59,35,20,0.1)',
+                          backgroundColor: orderType === value ? 'rgba(240,165,0,0.08)' : 'transparent',
+                        }}
+                      >
+                        <Icon
+                          className="w-6 h-6"
+                          style={{
+                            color: orderType === value ? 'var(--golden-amber)' : 'var(--espresso)',
+                            opacity: orderType === value ? 1 : 0.45,
+                          }}
+                        />
+                        <span className="text-sm" style={{ color: 'var(--espresso)', fontWeight: 600 }}>{label}</span>
+                        <span className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.6 }}>{sub}</span>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Contact Information */}
               <Card
-                className="border-[var(--foodchain-espresso)]/10"
-                style={{ backgroundColor: "var(--foodchain-white)" }}
+                className="border-[var(--espresso)]/10"
+                style={{ backgroundColor: "var(--white)" }}
               >
                 <CardHeader>
                   <CardTitle
                     className="flex items-center gap-2"
-                    style={{ color: "var(--foodchain-espresso)" }}
+                    style={{ color: "var(--espresso)" }}
                   >
                     <User className="w-5 h-5" />
                     Contact Information
@@ -136,7 +180,7 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name" style={{ color: "var(--foodchain-espresso)" }}>
+                    <Label htmlFor="name" style={{ color: "var(--espresso)" }}>
                       Full Name
                     </Label>
                     <Input
@@ -146,18 +190,18 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                       onChange={e => setCustomerName(e.target.value)}
                       placeholder="John Doe"
                       required
-                      className="border-[var(--foodchain-espresso)]/20"
-                      style={{ backgroundColor: "var(--foodchain-white)" }}
+                      className="border-[var(--espresso)]/20"
+                      style={{ backgroundColor: "var(--white)" }}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone" style={{ color: "var(--foodchain-espresso)" }}>
+                    <Label htmlFor="phone" style={{ color: "var(--espresso)" }}>
                       Phone Number
                     </Label>
                     <div className="relative">
                       <Phone
                         className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                        style={{ color: "var(--foodchain-espresso)", opacity: 0.4 }}
+                        style={{ color: "var(--espresso)", opacity: 0.4 }}
                       />
                       <Input
                         id="phone"
@@ -166,66 +210,82 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                         onChange={e => setPhoneNumber(e.target.value)}
                         placeholder="080 1234 5678"
                         required
-                        className="pl-10 border-[var(--foodchain-espresso)]/20"
-                        style={{ backgroundColor: "var(--foodchain-white)" }}
+                        className="pl-10 border-[var(--espresso)]/20"
+                        style={{ backgroundColor: "var(--white)" }}
                       />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Delivery Address */}
-              <Card
-                className="border-[var(--foodchain-espresso)]/10"
-                style={{ backgroundColor: "var(--foodchain-white)" }}
-              >
-                <CardHeader>
-                  <CardTitle
-                    className="flex items-center gap-2"
-                    style={{ color: "var(--foodchain-espresso)" }}
-                  >
-                    <MapPin className="w-5 h-5" />
-                    Delivery Address
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <LocationPicker
-                    value={deliveryAddress}
-                    onChange={setDeliveryAddress}
-                    placeholder="Search for your delivery address…"
-                  />
-                  {deliveryAddress && (
-                    <div
-                      className="p-3 rounded-md"
-                      style={{ backgroundColor: "rgba(240,165,0,0.08)" }}
+              {/* Delivery Address / Dine-In Details */}
+              {orderType === 'delivery' ? (
+                <Card
+                  className="border-[var(--espresso)]/10"
+                  style={{ backgroundColor: "var(--white)" }}
+                >
+                  <CardHeader>
+                    <CardTitle
+                      className="flex items-center gap-2"
+                      style={{ color: "var(--espresso)" }}
                     >
-                      <p className="text-sm" style={{ color: "var(--foodchain-espresso)" }}>
-                        Delivering from{" "}
-                        <span style={{ fontWeight: 600 }}>{branchName}</span>
-                      </p>
-                    </div>
-                  )}
-                  {/* Hidden required input so form validation works */}
-                  <input
-                    type="text"
-                    value={deliveryAddress}
-                    onChange={() => {}}
-                    required
-                    className="sr-only"
-                    aria-hidden="true"
-                  />
-                </CardContent>
-              </Card>
+                      <MapPin className="w-5 h-5" />
+                      Delivery Address
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <LocationPicker
+                      value={deliveryAddress}
+                      onChange={setDeliveryAddress}
+                      placeholder="Search for your delivery address…"
+                    />
+                    {deliveryAddress && (
+                      <div
+                        className="p-3 rounded-md"
+                        style={{ backgroundColor: "rgba(240,165,0,0.08)" }}
+                      >
+                        <p className="text-sm" style={{ color: "var(--espresso)" }}>
+                          Delivering from{" "}
+                          <span style={{ fontWeight: 600 }}>{branchName}</span>
+                        </p>
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      value={deliveryAddress}
+                      onChange={() => {}}
+                      required
+                      className="sr-only"
+                      aria-hidden="true"
+                    />
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card
+                  className="border-[var(--espresso)]/10 pb-4"
+                  style={{ backgroundColor: "var(--white)" }}
+                >
+                  <CardHeader>
+                    <CardTitle
+                      className="flex items-center gap-2"
+                      style={{ color: "var(--espresso)" }}
+                    >
+                      <UtensilsCrossed className="w-5 h-5" />
+                      You're Dining at <span style={{ fontWeight: 600 }}>{branchName}</span>
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              )}
 
               {/* Payment Method */}
               <Card
-                className="border-[var(--foodchain-espresso)]/10"
-                style={{ backgroundColor: "var(--foodchain-white)" }}
+                className="border-[var(--espresso)]/10"
+                style={{ backgroundColor: "var(--white)" }}
               >
                 <CardHeader>
                   <CardTitle
                     className="flex items-center gap-2"
-                    style={{ color: "var(--foodchain-espresso)" }}
+                    style={{ color: "var(--espresso)" }}
                   >
                     <CreditCard className="w-5 h-5" />
                     Payment Method
@@ -235,18 +295,18 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                     {[
                       { value: "card", label: "Card Payment" },
-                      { value: "cash", label: "Cash on Delivery" },
+                      { value: "cash", label: orderType === 'dine-in' ? "Cash Payment" : "Cash on Delivery" },
                       { value: "transfer", label: "Bank Transfer" },
                     ].map(opt => (
                       <div
                         key={opt.value}
-                        className="flex items-center space-x-2 p-3 rounded-md border border-[var(--foodchain-espresso)]/10 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
+                        className="flex items-center space-x-2 p-3 rounded-md border border-[var(--espresso)]/10 hover:bg-[var(--espresso)]/5 transition-colors"
                       >
                         <RadioGroupItem value={opt.value} id={opt.value} />
                         <Label
                           htmlFor={opt.value}
                           className="flex-1 cursor-pointer"
-                          style={{ color: "var(--foodchain-espresso)" }}
+                          style={{ color: "var(--espresso)" }}
                         >
                           {opt.label}
                         </Label>
@@ -258,11 +318,11 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
 
               {/* Special Instructions */}
               <Card
-                className="border-[var(--foodchain-espresso)]/10"
-                style={{ backgroundColor: "var(--foodchain-white)" }}
+                className="border-[var(--espresso)]/10"
+                style={{ backgroundColor: "var(--white)" }}
               >
                 <CardHeader>
-                  <CardTitle style={{ color: "var(--foodchain-espresso)" }}>
+                  <CardTitle style={{ color: "var(--espresso)" }}>
                     Special Instructions
                   </CardTitle>
                 </CardHeader>
@@ -272,8 +332,8 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                     onChange={e => setSpecialInstructions(e.target.value)}
                     placeholder="Any special requests? (e.g., extra spicy, no onions)"
                     rows={3}
-                    className="border-[var(--foodchain-espresso)]/20 resize-none"
-                    style={{ backgroundColor: "var(--foodchain-white)" }}
+                    className="border-[var(--espresso)]/20 resize-none"
+                    style={{ backgroundColor: "var(--white)" }}
                   />
                 </CardContent>
               </Card>
@@ -282,11 +342,11 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card
-                className="border-[var(--foodchain-espresso)]/10 sticky top-20"
-                style={{ backgroundColor: "var(--foodchain-white)" }}
+                className="border-[var(--espresso)]/10 sticky top-20"
+                style={{ backgroundColor: "var(--white)" }}
               >
                 <CardHeader>
-                  <CardTitle style={{ color: "var(--foodchain-espresso)" }}>
+                  <CardTitle style={{ color: "var(--espresso)" }}>
                     Order Summary
                   </CardTitle>
                 </CardHeader>
@@ -294,10 +354,10 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                   <div className="space-y-3">
                     {cart.map(item => (
                       <div key={item.id} className="flex justify-between text-sm">
-                        <span style={{ color: "var(--foodchain-espresso)", opacity: 0.7 }}>
+                        <span style={{ color: "var(--espresso)", opacity: 0.7 }}>
                           {item.name} × {item.quantity}
                         </span>
-                        <span style={{ color: "var(--foodchain-espresso)", fontWeight: 600 }}>
+                        <span style={{ color: "var(--espresso)", fontWeight: 600 }}>
                           ₦{(item.price * item.quantity).toLocaleString()}
                         </span>
                       </div>
@@ -308,49 +368,51 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span style={{ color: "var(--foodchain-espresso)", opacity: 0.7 }}>
+                      <span style={{ color: "var(--espresso)", opacity: 0.7 }}>
                         Subtotal
                       </span>
-                      <span style={{ color: "var(--foodchain-espresso)", fontWeight: 600 }}>
+                      <span style={{ color: "var(--espresso)", fontWeight: 600 }}>
                         ₦{subtotal.toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: "var(--foodchain-espresso)", opacity: 0.7 }}>
-                        Delivery Fee
-                      </span>
-                      <span style={{ color: "var(--foodchain-espresso)", fontWeight: 600 }}>
-                        ₦{deliveryFee.toLocaleString()}
-                      </span>
-                    </div>
+                    {orderType === 'delivery' && (
+                      <div className="flex justify-between text-sm">
+                        <span style={{ color: "var(--espresso)", opacity: 0.7 }}>
+                          Delivery Fee
+                        </span>
+                        <span style={{ color: "var(--espresso)", fontWeight: 600 }}>
+                          ₦{deliveryFee.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between text-lg">
-                    <span style={{ color: "var(--foodchain-espresso)", fontWeight: 600 }}>
+                    <span style={{ color: "var(--espresso)", fontWeight: 600 }}>
                       Total
                     </span>
-                    <span style={{ color: "var(--foodchain-golden-amber)", fontWeight: 600 }}>
+                    <span style={{ color: "var(--golden-amber)", fontWeight: 600 }}>
                       ₦{total.toLocaleString()}
                     </span>
                   </div>
 
                   <Button
                     type="submit"
-                    disabled={isProcessing || !deliveryAddress.trim()}
+                    disabled={isProcessing || (orderType === 'delivery' && !deliveryAddress.trim())}
                     className="w-full transition-all hover:opacity-90 hover:shadow-lg"
                     style={{
-                      backgroundColor: "var(--foodchain-golden-amber)",
-                      color: "var(--foodchain-charcoal)",
+                      backgroundColor: "var(--golden-amber)",
+                      color: "var(--charcoal)",
                     }}
                   >
                     {isProcessing ? "Processing…" : "Place Order"}
                   </Button>
-                  {!deliveryAddress.trim() && (
+                  {orderType === 'delivery' && !deliveryAddress.trim() && (
                     <p
                       className="text-xs text-center"
-                      style={{ color: "var(--foodchain-espresso)", opacity: 0.5 }}
+                      style={{ color: "var(--espresso)", opacity: 0.5 }}
                     >
                       Please enter a delivery address to continue
                     </p>

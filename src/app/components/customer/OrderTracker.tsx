@@ -105,12 +105,12 @@ function stepSubtext(status: LocalStatus, orderType?: string): string {
 
 function badgeStyle(status: LocalStatus): React.CSSProperties {
   if (['served', 'picked-up', 'completed'].includes(status))
-    return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
+    return { backgroundColor: 'var(--sage-green)', color: 'var(--white)' };
   if (status === 'ready')
-    return { backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' };
+    return { backgroundColor: 'var(--sage-green)', color: 'var(--white)' };
   if (status === 'preparing')
-    return { backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' };
-  return { backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' };
+    return { backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' };
+  return { backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' };
 }
 
 function badgeLabel(status: LocalStatus): string {
@@ -195,7 +195,7 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Skeleton className="h-10 w-48 mb-8" />
           <Skeleton className="h-72 w-full rounded-lg mb-6" />
@@ -207,10 +207,10 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
 
   if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
-          <Button onClick={fetchOrder} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
+          <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
+          <Button onClick={fetchOrder} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
             Retry
           </Button>
         </div>
@@ -229,31 +229,31 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
   const placedTime = new Date(activeOrder.placedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           {onGoBack && (
-            <Button onClick={onGoBack} variant="ghost" size="sm" className="gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+            <Button onClick={onGoBack} variant="ghost" size="sm" className="gap-2" style={{ color: 'var(--espresso)' }}>
               <ArrowLeft className="w-4 h-4" />
               Back
             </Button>
           )}
-          <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+          <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
             Track Order
           </h1>
         </div>
 
         {/* Status tracker card */}
-        <Card className="border-[var(--foodchain-espresso)]/10 mb-6" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-[var(--espresso)]/10 mb-6" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
             <div className="flex items-start justify-between flex-wrap gap-2">
               <div>
-                <CardTitle className="text-base font-mono" style={{ color: 'var(--foodchain-espresso)' }}>
+                <CardTitle className="text-base font-mono" style={{ color: 'var(--espresso)' }}>
                   #{activeOrder.id.slice(-8).toUpperCase()}
                 </CardTitle>
-                <p className="text-sm mt-0.5" style={{ color: 'var(--foodchain-espresso)', opacity: 0.55 }}>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--espresso)', opacity: 0.55 }}>
                   Placed at {placedTime} · {activeOrder.branchName}
                 </p>
               </div>
@@ -267,8 +267,8 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
             {/* Progress bar */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
-                <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Progress</span>
-                <span style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
+                <span style={{ color: 'var(--espresso)', opacity: 0.6 }}>Progress</span>
+                <span style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                   {Math.round(progress)}%
                 </span>
               </div>
@@ -290,8 +290,8 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
                         className="absolute left-5 -top-6 w-0.5 h-6"
                         style={{
                           backgroundColor: isCompleted
-                            ? 'var(--foodchain-sage-green)'
-                            : 'var(--foodchain-espresso)',
+                            ? 'var(--sage-green)'
+                            : 'var(--espresso)',
                           opacity: isCompleted ? 1 : 0.15,
                         }}
                       />
@@ -301,21 +301,21 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
                         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
                         style={{
                           backgroundColor: isCompleted
-                            ? 'var(--foodchain-sage-green)'
+                            ? 'var(--sage-green)'
                             : isCurrent
-                            ? 'var(--foodchain-golden-amber)'
-                            : 'var(--foodchain-espresso)',
+                            ? 'var(--golden-amber)'
+                            : 'var(--espresso)',
                           opacity: isPending ? 0.18 : 1,
                         }}
                       >
-                        <Icon className="w-5 h-5" style={{ color: 'var(--foodchain-white)' }} />
+                        <Icon className="w-5 h-5" style={{ color: 'var(--white)' }} />
                       </div>
 
                       <div className="flex-1">
                         <p
                           className="text-base"
                           style={{
-                            color: 'var(--foodchain-espresso)',
+                            color: 'var(--espresso)',
                             fontWeight: isCurrent ? 600 : 400,
                             opacity: isPending ? 0.4 : 1,
                           }}
@@ -323,14 +323,14 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
                           {step.label}
                         </p>
                         {isCurrent && (
-                          <p className="text-sm mt-0.5" style={{ color: 'var(--foodchain-golden-amber)' }}>
+                          <p className="text-sm mt-0.5" style={{ color: 'var(--golden-amber)' }}>
                             {stepSubtext(activeOrder.status, activeOrder.orderType)}
                           </p>
                         )}
                       </div>
 
                       {isCompleted && (
-                        <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--foodchain-sage-green)' }} />
+                        <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--sage-green)' }} />
                       )}
                     </div>
                   </div>
@@ -342,12 +342,12 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
             {activeOrder.estimatedTime && activeOrder.estimatedTime !== '—' && (
               <div className="p-4 rounded-md" style={{ backgroundColor: 'rgba(240,165,0,0.1)' }}>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <Clock className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
-                  <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                  <Clock className="w-4 h-4" style={{ color: 'var(--espresso)' }} />
+                  <span className="text-sm" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                     Estimated Time
                   </span>
                 </div>
-                <p className="text-lg" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                <p className="text-lg" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                   {activeOrder.estimatedTime}
                 </p>
               </div>
@@ -356,21 +356,21 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
         </Card>
 
         {/* Order details card */}
-        <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
-            <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>Order Details</CardTitle>
+            <CardTitle style={{ color: 'var(--espresso)' }}>Order Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
 
             <div>
-              <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Branch</p>
-              <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>{activeOrder.branchName || '—'}</p>
+              <p className="text-sm mb-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>Branch</p>
+              <p style={{ color: 'var(--espresso)', fontWeight: 600 }}>{activeOrder.branchName || '—'}</p>
             </div>
 
             {activeOrder.orderType && (
               <div>
-                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Order Type</p>
-                <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600, textTransform: 'capitalize' }}>
+                <p className="text-sm mb-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>Order Type</p>
+                <p style={{ color: 'var(--espresso)', fontWeight: 600, textTransform: 'capitalize' }}>
                   {activeOrder.orderType.replace('-', ' ')}
                 </p>
               </div>
@@ -378,20 +378,20 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
 
             {activeOrder.deliveryAddress && (
               <div>
-                <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>Delivery Address</p>
-                <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>{activeOrder.deliveryAddress}</p>
+                <p className="text-sm mb-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>Delivery Address</p>
+                <p style={{ color: 'var(--espresso)', fontWeight: 600 }}>{activeOrder.deliveryAddress}</p>
               </div>
             )}
 
             <div>
-              <p className="text-sm mb-2" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              <p className="text-sm mb-2" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                 Items ({activeOrder.items.length})
               </p>
               <div className="space-y-1">
                 {activeOrder.items.map(item => (
                   <div key={item.id} className="flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4" style={{ color: 'var(--foodchain-golden-amber)' }} />
-                    <span style={{ color: 'var(--foodchain-espresso)' }}>
+                    <ChevronRight className="w-4 h-4" style={{ color: 'var(--golden-amber)' }} />
+                    <span style={{ color: 'var(--espresso)' }}>
                       {item.name || 'Unknown item'} × {item.quantity}
                     </span>
                   </div>
@@ -399,10 +399,10 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[var(--foodchain-espresso)]/10">
+            <div className="pt-2 border-t border-[var(--espresso)]/10">
               <div className="flex justify-between">
-                <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Total</span>
-                <span style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
+                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>Total</span>
+                <span style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                   ₦{activeOrder.total.toLocaleString()}
                 </span>
               </div>
@@ -414,7 +414,7 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
                 disabled={isCancelling}
                 variant="outline"
                 className="w-full"
-                style={{ borderColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-burnt-orange)' }}
+                style={{ borderColor: 'var(--burnt-orange)', color: 'var(--burnt-orange)' }}
               >
                 {isCancelling ? 'Cancelling…' : 'Cancel Order'}
               </Button>

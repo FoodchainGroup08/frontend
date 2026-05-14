@@ -18,13 +18,13 @@ interface NotificationPanelProps {
 }
 
 const STATUS_DOT: Record<string, string> = {
-  PREPARING: 'var(--foodchain-golden-amber)',
-  READY:     'var(--foodchain-sage-green)',
+  PREPARING: 'var(--golden-amber)',
+  READY:     'var(--sage-green)',
   CANCELLED: '#9CA3AF',
 };
 
 function dotColor(status: string) {
-  return STATUS_DOT[status] ?? 'var(--foodchain-espresso)';
+  return STATUS_DOT[status] ?? 'var(--espresso)';
 }
 
 export function NotificationPanel({
@@ -67,7 +67,7 @@ export function NotificationPanel({
     <div
       className="absolute right-0 top-full mt-2 w-96 rounded-lg shadow-xl z-50 flex flex-col"
       style={{
-        backgroundColor: 'var(--foodchain-white)',
+        backgroundColor: 'var(--white)',
         border: '1px solid rgba(59,35,20,0.15)',
         maxHeight: '480px',
       }}
@@ -76,13 +76,13 @@ export function NotificationPanel({
         className="flex items-center justify-between px-4 py-3 flex-shrink-0"
         style={{ borderBottom: '1px solid rgba(59,35,20,0.1)' }}
       >
-        <span className="text-sm font-semibold" style={{ color: 'var(--foodchain-espresso)' }}>
+        <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
           Notifications
         </span>
         <button
           onClick={onClose}
           className="p-1 rounded opacity-60 hover:opacity-100 transition-opacity"
-          style={{ color: 'var(--foodchain-espresso)' }}
+          style={{ color: 'var(--espresso)' }}
         >
           <X className="w-4 h-4" />
         </button>
@@ -95,8 +95,8 @@ export function NotificationPanel({
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 gap-2">
-            <Bell className="w-8 h-8" style={{ color: 'var(--foodchain-espresso)', opacity: 0.2 }} />
-            <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.45 }}>
+            <Bell className="w-8 h-8" style={{ color: 'var(--espresso)', opacity: 0.2 }} />
+            <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.45 }}>
               No notifications yet
             </p>
           </div>
@@ -118,17 +118,17 @@ export function NotificationPanel({
                 <p
                   className="text-sm leading-snug mb-0.5"
                   style={{
-                    color: 'var(--foodchain-espresso)',
+                    color: 'var(--espresso)',
                     fontWeight: n.isRead ? 400 : 600,
                   }}
                 >
                   {n.title}
                 </p>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                   {n.message}
                 </p>
                 {n.sentAt && (
-                  <p className="text-xs mt-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.35 }}>
+                  <p className="text-xs mt-1" style={{ color: 'var(--espresso)', opacity: 0.35 }}>
                     {new Date(n.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     {' · '}
                     {new Date(n.sentAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
@@ -138,7 +138,7 @@ export function NotificationPanel({
               <button
                 onClick={() => handleDelete(n.id)}
                 className="p-1 rounded flex-shrink-0 opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity"
-                style={{ color: 'var(--foodchain-espresso)' }}
+                style={{ color: 'var(--espresso)' }}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

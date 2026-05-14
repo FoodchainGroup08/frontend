@@ -221,7 +221,7 @@ function TypingDots() {
         <motion.div
           key={i}
           className='w-2.5 h-2.5 rounded-full'
-          style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+          style={{ backgroundColor: 'var(--golden-amber)' }}
           animate={{ opacity: [0.3, 1, 0.3], y: [0, -5, 0] }}
           transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18 }}
         />
@@ -249,11 +249,11 @@ function OptionChip({
       onClick={onClick}
       className='flex items-center gap-2 px-3.5 py-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left'
       style={{
-        backgroundColor: selected ? 'var(--foodchain-espresso)' : 'transparent',
-        color: selected ? 'var(--foodchain-warm-white)' : 'var(--foodchain-espresso)',
+        backgroundColor: selected ? 'var(--espresso)' : 'transparent',
+        color: selected ? 'var(--warm-white)' : 'var(--espresso)',
         borderColor: selected
-          ? 'var(--foodchain-espresso)'
-          : 'color-mix(in srgb, var(--foodchain-espresso) 18%, transparent)',
+          ? 'var(--espresso)'
+          : 'color-mix(in srgb, var(--espresso) 18%, transparent)',
       }}
     >
       {emoji && <span className='text-base leading-none'>{emoji}</span>}
@@ -264,7 +264,7 @@ function OptionChip({
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           className='text-xs ml-auto'
-          style={{ color: 'var(--foodchain-golden-amber)' }}
+          style={{ color: 'var(--golden-amber)' }}
         >
           ✓
         </motion.span>
@@ -304,21 +304,21 @@ function SuggestionCard({
     <div
       className='flex items-start gap-3 p-3 rounded-xl border'
       style={{
-        borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 10%, transparent)',
-        backgroundColor: 'color-mix(in srgb, var(--foodchain-espresso) 2%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--espresso) 10%, transparent)',
+        backgroundColor: 'color-mix(in srgb, var(--espresso) 2%, transparent)',
       }}
     >
       <div className='flex-1 min-w-0'>
         <div className='flex items-start justify-between gap-2'>
           <h4
             className='font-semibold text-sm leading-snug'
-            style={{ color: 'var(--foodchain-espresso)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             {item.menuItemName}
           </h4>
           <span
             className='text-sm font-bold shrink-0'
-            style={{ color: 'var(--foodchain-golden-amber)' }}
+            style={{ color: 'var(--golden-amber)' }}
           >
             ₦{item.price.toLocaleString()}
           </span>
@@ -328,11 +328,11 @@ function SuggestionCard({
           <div className='flex items-start gap-1.5 mt-1.5'>
             <Sparkles
               className='w-3 h-3 mt-0.5 shrink-0'
-              style={{ color: 'var(--foodchain-golden-amber)' }}
+              style={{ color: 'var(--golden-amber)' }}
             />
             <p
               className='text-xs leading-relaxed'
-              style={{ color: 'var(--foodchain-charcoal)', opacity: 0.7 }}
+              style={{ color: 'var(--charcoal)', opacity: 0.7 }}
             >
               {item.reason}
             </p>
@@ -354,8 +354,8 @@ function SuggestionCard({
         onClick={handleAdd}
         className='shrink-0 h-8 w-8 rounded-lg flex items-center justify-center transition-colors'
         style={{
-          backgroundColor: justAdded ? 'var(--foodchain-sage-green)' : 'var(--foodchain-espresso)',
-          color: 'var(--foodchain-warm-white)',
+          backgroundColor: justAdded ? 'var(--sage-green)' : 'var(--espresso)',
+          color: 'var(--warm-white)',
         }}
         title={justAdded ? 'Added!' : 'Add to cart'}
       >
@@ -506,24 +506,24 @@ export function AIFoodAssistantModal({
               className='w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-3xl select-none'
               style={{
                 backgroundColor:
-                  'color-mix(in srgb, var(--foodchain-golden-amber) 15%, transparent)',
+                  'color-mix(in srgb, var(--golden-amber) 15%, transparent)',
               }}
             >
               🤖
             </div>
-            <h2 className='text-lg font-bold mb-2' style={{ color: 'var(--foodchain-espresso)' }}>
+            <h2 className='text-lg font-bold mb-2' style={{ color: 'var(--espresso)' }}>
               Hi! I'm your AI food assistant
             </h2>
             <p
               className='text-sm mb-5 max-w-xs'
-              style={{ color: 'var(--foodchain-charcoal)', opacity: 0.6 }}
+              style={{ color: 'var(--charcoal)', opacity: 0.6 }}
             >
-              I'll ask you {totalSteps} quick questions and suggest the perfect meal from{' '}
+              I'll ask you {totalSteps} quick questions and suggest the perfect meal for you from{' '}
               <span className='font-medium'>{branchName}</span>.
             </p>
             <label
               className='flex items-center gap-2 text-xs cursor-pointer select-none'
-              style={{ color: 'var(--foodchain-charcoal)', opacity: 0.45 }}
+              style={{ color: 'var(--charcoal)', opacity: 0.45 }}
             >
               <input
                 type='checkbox'
@@ -620,8 +620,8 @@ export function AIFoodAssistantModal({
             rows={5}
             className='w-full rounded-xl border px-3.5 py-3 text-sm resize-none outline-none transition-colors'
             style={{
-              borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 20%, transparent)',
-              color: 'var(--foodchain-charcoal)',
+              borderColor: 'color-mix(in srgb, var(--espresso) 20%, transparent)',
+              color: 'var(--charcoal)',
               backgroundColor: 'transparent',
             }}
             onKeyDown={(e) => {
@@ -643,7 +643,7 @@ export function AIFoodAssistantModal({
             <div className='text-center'>
               <p
                 className='text-sm font-medium mb-4'
-                style={{ color: 'var(--foodchain-espresso)' }}
+                style={{ color: 'var(--espresso)' }}
               >
                 Finding the perfect meals for you…
               </p>
@@ -651,7 +651,7 @@ export function AIFoodAssistantModal({
                 <TypingDots />
               </div>
             </div>
-            <p className='text-xs' style={{ color: 'var(--foodchain-charcoal)', opacity: 0.4 }}>
+            <p className='text-xs' style={{ color: 'var(--charcoal)', opacity: 0.4 }}>
               Checking {branchName}'s menu
             </p>
           </div>
@@ -664,7 +664,7 @@ export function AIFoodAssistantModal({
             {result.message && (
               <p
                 className='text-xs font-medium px-0.5 pb-1'
-                style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}
+                style={{ color: 'var(--espresso)', opacity: 0.7 }}
               >
                 {result.message}
               </p>
@@ -672,7 +672,7 @@ export function AIFoodAssistantModal({
             {result.estimatedTotalCost > 0 && (
               <p
                 className='text-xs px-0.5 -mt-1 pb-0.5'
-                style={{ color: 'var(--foodchain-charcoal)', opacity: 0.45 }}
+                style={{ color: 'var(--charcoal)', opacity: 0.45 }}
               >
                 Est. total: ₦{result.estimatedTotalCost.toLocaleString()}
               </p>
@@ -699,7 +699,7 @@ export function AIFoodAssistantModal({
             >
               <AlertCircle className='w-6 h-6 text-red-500' />
             </div>
-            <p className='text-sm max-w-xs' style={{ color: 'var(--foodchain-charcoal)' }}>
+            <p className='text-sm max-w-xs' style={{ color: 'var(--charcoal)' }}>
               {errorMsg}
             </p>
           </div>
@@ -719,7 +719,7 @@ export function AIFoodAssistantModal({
             variant='ghost'
             onClick={handleClose}
             className='flex-1 text-sm'
-            style={{ color: 'var(--foodchain-charcoal)', opacity: 0.55 }}
+            style={{ color: 'var(--charcoal)', opacity: 0.55 }}
           >
             Skip for now
           </Button>
@@ -727,8 +727,8 @@ export function AIFoodAssistantModal({
             onClick={handleStart}
             className='flex-1 text-sm'
             style={{
-              backgroundColor: 'var(--foodchain-golden-amber)',
-              color: 'var(--foodchain-charcoal)',
+              backgroundColor: 'var(--golden-amber)',
+              color: 'var(--charcoal)',
             }}
           >
             Let's start →
@@ -754,8 +754,8 @@ export function AIFoodAssistantModal({
             onClick={handleAddAll}
             className='text-xs gap-1'
             style={{
-              backgroundColor: 'var(--foodchain-espresso)',
-              color: 'var(--foodchain-warm-white)',
+              backgroundColor: 'var(--espresso)',
+              color: 'var(--warm-white)',
             }}
           >
             <ShoppingCart className='w-3.5 h-3.5' />
@@ -778,8 +778,8 @@ export function AIFoodAssistantModal({
             onClick={submitAnswers}
             className='flex-1 text-sm gap-1.5'
             style={{
-              backgroundColor: 'var(--foodchain-golden-amber)',
-              color: 'var(--foodchain-charcoal)',
+              backgroundColor: 'var(--golden-amber)',
+              color: 'var(--charcoal)',
             }}
           >
             <RefreshCw className='w-3.5 h-3.5' />
@@ -806,7 +806,7 @@ export function AIFoodAssistantModal({
             onClick={handleNext}
             size='sm'
             className='text-xs shrink-0'
-            style={{ color: 'var(--foodchain-charcoal)', opacity: 0.5 }}
+            style={{ color: 'var(--charcoal)', opacity: 0.5 }}
           >
             Skip
           </Button>
@@ -819,8 +819,8 @@ export function AIFoodAssistantModal({
           style={
             canProceed()
               ? {
-                  backgroundColor: 'var(--foodchain-golden-amber)',
-                  color: 'var(--foodchain-charcoal)',
+                  backgroundColor: 'var(--golden-amber)',
+                  color: 'var(--charcoal)',
                 }
               : undefined
           }
@@ -855,16 +855,16 @@ export function AIFoodAssistantModal({
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div
           className='flex items-center justify-between px-5 py-3.5 shrink-0'
-          style={{ backgroundColor: 'var(--foodchain-espresso)' }}
+          style={{ backgroundColor: 'var(--espresso)' }}
         >
           <div className='flex items-center gap-2'>
             <Sparkles
               className='w-4 h-4 shrink-0'
-              style={{ color: 'var(--foodchain-golden-amber)' }}
+              style={{ color: 'var(--golden-amber)' }}
             />
             <span
               className='text-sm font-semibold'
-              style={{ color: 'var(--foodchain-warm-white)' }}
+              style={{ color: 'var(--warm-white)' }}
             >
               {step === 'results'
                 ? `${result?.suggestions?.length ?? 0} suggestions found ✨`
@@ -875,7 +875,7 @@ export function AIFoodAssistantModal({
             {isQuestionStep && (
               <span
                 className='text-xs tabular-nums'
-                style={{ color: 'var(--foodchain-warm-white)', opacity: 0.45 }}
+                style={{ color: 'var(--warm-white)', opacity: 0.45 }}
               >
                 {qIdx + 1} / {totalSteps}
               </span>
@@ -884,7 +884,7 @@ export function AIFoodAssistantModal({
               <button
                 onClick={handleClose}
                 className='p-0.5 rounded-md opacity-50 hover:opacity-100 transition-opacity'
-                style={{ color: 'var(--foodchain-warm-white)' }}
+                style={{ color: 'var(--warm-white)' }}
               >
                 <X className='w-4 h-4' />
               </button>
@@ -897,12 +897,12 @@ export function AIFoodAssistantModal({
           <div
             className='h-1 w-full shrink-0'
             style={{
-              backgroundColor: 'color-mix(in srgb, var(--foodchain-espresso) 8%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--espresso) 8%, transparent)',
             }}
           >
             <motion.div
               className='h-full'
-              style={{ backgroundColor: 'var(--foodchain-golden-amber)' }}
+              style={{ backgroundColor: 'var(--golden-amber)' }}
               animate={{ width: `${progressPct}%` }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
             />
@@ -912,13 +912,13 @@ export function AIFoodAssistantModal({
         {/* ── Question label ──────────────────────────────────────────────── */}
         {isQuestionStep && stepMeta && (
           <div className='px-5 pt-5 pb-2 shrink-0'>
-            <h3 className='font-semibold text-base' style={{ color: 'var(--foodchain-espresso)' }}>
+            <h3 className='font-semibold text-base' style={{ color: 'var(--espresso)' }}>
               {stepMeta.question}
             </h3>
             {stepMeta.subtitle && (
               <p
                 className='text-xs mt-0.5'
-                style={{ color: 'var(--foodchain-charcoal)', opacity: 0.5 }}
+                style={{ color: 'var(--charcoal)', opacity: 0.5 }}
               >
                 {stepMeta.subtitle}
               </p>
@@ -951,7 +951,7 @@ export function AIFoodAssistantModal({
           <div
             className='px-5 py-4 border-t shrink-0'
             style={{
-              borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 8%, transparent)',
+              borderColor: 'color-mix(in srgb, var(--espresso) 8%, transparent)',
             }}
           >
             {footer}

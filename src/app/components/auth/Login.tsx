@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -108,26 +109,26 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 mb-2">
+          <Link to="/" className="inline-flex items-center gap-2 mb-2">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="40" height="40" rx="8" fill="var(--foodchain-espresso)"/>
-              <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--foodchain-golden-amber)"/>
-              <circle cx="20" cy="20" r="4" fill="var(--foodchain-warm-white)"/>
+              <rect width="40" height="40" rx="8" fill="var(--espresso)"/>
+              <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--golden-amber)"/>
+              <circle cx="20" cy="20" r="4" fill="var(--warm-white)"/>
             </svg>
-            <h1 className="text-3xl" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>FoodChain</h1>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+            <h1 className="text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>FoodChain</h1>
+          </Link>
+          <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
             Multi-branch Restaurant Management
           </p>
         </div>
 
-        <Card className="border-0 shadow-xl" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-0 shadow-xl" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl" style={{ color: 'var(--foodchain-espresso)' }}>Welcome back</CardTitle>
-            <CardDescription style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+            <CardTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>Welcome back</CardTitle>
+            <CardDescription style={{ color: 'var(--espresso)', opacity: 0.7 }}>
               Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
@@ -135,7 +136,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
             <CardContent className="space-y-4">
               {unverifiedEmail && (
                 <div className="p-3 rounded-md text-sm space-y-2" style={{ backgroundColor: 'rgba(240, 165, 0, 0.12)', border: '1px solid rgba(240, 165, 0, 0.4)' }}>
-                  <p style={{ color: 'var(--foodchain-espresso)' }}>
+                  <p style={{ color: 'var(--espresso)' }}>
                     Please verify your email before signing in. Check your inbox for <span style={{ fontWeight: 600 }}>{unverifiedEmail}</span>.
                   </p>
                   <button
@@ -143,14 +144,14 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
                     onClick={handleResendVerification}
                     disabled={isResending}
                     className="underline text-xs"
-                    style={{ color: 'var(--foodchain-golden-amber)' }}
+                    style={{ color: 'var(--golden-amber)' }}
                   >
                     {isResending ? 'Sending…' : 'Resend verification email'}
                   </button>
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email" style={{ color: 'var(--foodchain-espresso)' }}>Email</Label>
+                <Label htmlFor="email" style={{ color: 'var(--espresso)' }}>Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -158,18 +159,18 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="border-[var(--foodchain-espresso)]/20"
-                  style={{ backgroundColor: 'var(--foodchain-white)' }}
+                  className="border-[var(--espresso)]/20"
+                  style={{ backgroundColor: 'var(--white)' }}
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" style={{ color: 'var(--foodchain-espresso)' }}>Password</Label>
+                  <Label htmlFor="password" style={{ color: 'var(--espresso)' }}>Password</Label>
                   <button
                     type="button"
                     onClick={onNavigateToForgotPassword}
                     className="text-sm hover:underline"
-                    style={{ color: 'var(--foodchain-golden-amber)' }}
+                    style={{ color: 'var(--golden-amber)' }}
                   >
                     Forgot Password?
                   </button>
@@ -182,14 +183,14 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="border-[var(--foodchain-espresso)]/20 pr-10"
-                    style={{ backgroundColor: 'var(--foodchain-white)' }}
+                    className="border-[var(--espresso)]/20 pr-10"
+                    style={{ backgroundColor: 'var(--white)' }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2"
-                    style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}
+                    style={{ color: 'var(--espresso)', opacity: 0.5 }}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -202,8 +203,8 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
                 className="w-full mt-5 transition-all hover:opacity-90 hover:shadow-lg"
                 disabled={isLoading}
                 style={{
-                  backgroundColor: 'var(--foodchain-golden-amber)',
-                  color: 'var(--foodchain-charcoal)'
+                  backgroundColor: 'var(--golden-amber)',
+                  color: 'var(--charcoal)'
                 }}
               >
                 {isLoading ? "Signing in..." : "Sign in"}
@@ -211,7 +212,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
 
               <div className="relative w-full">
                 <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2 text-xs" style={{ backgroundColor: 'var(--foodchain-white)', color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2 text-xs" style={{ backgroundColor: 'var(--white)', color: 'var(--espresso)', opacity: 0.6 }}>
                   OR
                 </span>
               </div>
@@ -219,12 +220,12 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
               <div ref={googleBtnRef} className="w-full flex justify-center" />
 
               <div className="text-center text-sm">
-                <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Don't have an account? </span>
+                <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Don't have an account? </span>
                 <button
                   type="button"
                   onClick={onNavigateToRegister}
                   className="underline"
-                  style={{ color: 'var(--foodchain-golden-amber)' }}
+                  style={{ color: 'var(--golden-amber)' }}
                 >
                   Create account
                 </button>
@@ -239,20 +240,20 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
             onClick={() => setShowDemoCredentials(!showDemoCredentials)}
             className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors"
             style={{
-              backgroundColor: 'var(--foodchain-warm-white)',
-              borderColor: 'var(--foodchain-espresso)',
+              backgroundColor: 'var(--warm-white)',
+              borderColor: 'var(--espresso)',
               borderWidth: '1px',
               borderStyle: 'solid',
               opacity: 0.9
             }}
           >
-            <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', fontWeight: 500 }}>
+            <span className="text-sm" style={{ color: 'var(--espresso)', fontWeight: 500 }}>
               Demo Credentials
             </span>
             {showDemoCredentials ? (
-              <ChevronUp className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
+              <ChevronUp className="w-4 h-4" style={{ color: 'var(--espresso)' }} />
             ) : (
-              <ChevronDown className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
+              <ChevronDown className="w-4 h-4" style={{ color: 'var(--espresso)' }} />
             )}
           </button>
 
@@ -260,14 +261,14 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
             <div
               className="mt-2 p-4 rounded-lg border"
               style={{
-                backgroundColor: 'var(--foodchain-white)',
-                borderColor: 'var(--foodchain-espresso)',
+                backgroundColor: 'var(--white)',
+                borderColor: 'var(--espresso)',
                 borderWidth: '1px',
                 borderStyle: 'solid',
                 opacity: 0.95
               }}
             >
-              <p className="text-xs mb-3" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+              <p className="text-xs mb-3" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                 Use these test accounts to explore different user roles
               </p>
               <div className="space-y-2">
@@ -275,13 +276,13 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
                   <div
                     key={account.role}
                     className="flex items-center justify-between p-2 rounded"
-                    style={{ backgroundColor: 'var(--foodchain-warm-white)' }}
+                    style={{ backgroundColor: 'var(--warm-white)' }}
                   >
                     <div className="flex-1">
-                      <p className="text-xs" style={{ color: 'var(--foodchain-espresso)', fontWeight: 500 }}>
+                      <p className="text-xs" style={{ color: 'var(--espresso)', fontWeight: 500 }}>
                         {account.role}
                       </p>
-                      <p className="text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                      <p className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                         {account.email}
                       </p>
                     </div>
@@ -291,8 +292,8 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
                       onClick={() => useDemoCredentials(account.email, account.password)}
                       className="text-xs h-7 px-3"
                       style={{
-                        backgroundColor: 'var(--foodchain-golden-amber)',
-                        color: 'var(--foodchain-charcoal)'
+                        backgroundColor: 'var(--golden-amber)',
+                        color: 'var(--charcoal)'
                       }}
                     >
                       Use

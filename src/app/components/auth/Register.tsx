@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from "react-router";
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -25,9 +26,9 @@ interface RegisterProps {
 
 const FoodChainLogo = () => (
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="40" height="40" rx="8" fill="var(--foodchain-espresso)" />
-    <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--foodchain-golden-amber)" />
-    <circle cx="20" cy="20" r="4" fill="var(--foodchain-warm-white)" />
+    <rect width="40" height="40" rx="8" fill="var(--espresso)" />
+    <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--golden-amber)" />
+    <circle cx="20" cy="20" r="4" fill="var(--warm-white)" />
   </svg>
 );
 
@@ -145,31 +146,31 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12"
-      style={{ backgroundColor: 'var(--foodchain-warm-white)' }}
+      style={{ backgroundColor: 'var(--warm-white)' }}
     >
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 mb-2">
+          <Link to="/" className="inline-flex items-center gap-2 mb-2">
             <FoodChainLogo />
-            <h1 className="text-3xl" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+            <h1 className="text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
               FoodChain
             </h1>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+          </Link>
+          <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
             Multi-branch Restaurant Management
           </p>
         </div>
 
-        <Card className="border-0 shadow-xl" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-0 shadow-xl" style={{ backgroundColor: 'var(--white)' }}>
 
           {/* ── Step 1: Account details ───────────────────────────────────────── */}
           {step === 1 && (
             <>
               <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl" style={{ color: 'var(--foodchain-espresso)' }}>
+                <CardTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>
                   Create an account
                 </CardTitle>
-                <CardDescription style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                <CardDescription style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                   Step 1 of 2 · Account details
                 </CardDescription>
               </CardHeader>
@@ -179,14 +180,14 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                   {error && (
                     <div
                       className="p-3 rounded-md text-sm"
-                      style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' }}
+                      style={{ backgroundColor: 'var(--burnt-orange)', color: 'var(--white)' }}
                     >
                       {error}
                     </div>
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="name" style={{ color: 'var(--foodchain-espresso)' }}>Full Name</Label>
+                    <Label htmlFor="name" style={{ color: 'var(--espresso)' }}>Full Name</Label>
                     <Input
                       id="name"
                       type="text"
@@ -194,13 +195,13 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                       value={name}
                       onChange={e => setName(e.target.value)}
                       required
-                      className="border-[var(--foodchain-espresso)]/20"
-                      style={{ backgroundColor: 'var(--foodchain-white)' }}
+                      className="border-[var(--espresso)]/20"
+                      style={{ backgroundColor: 'var(--white)' }}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" style={{ color: 'var(--foodchain-espresso)' }}>Email</Label>
+                    <Label htmlFor="email" style={{ color: 'var(--espresso)' }}>Email</Label>
                     <Input
                       id="email"
                       type="email"
@@ -208,13 +209,13 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                       value={email}
                       onChange={e => setEmail(e.target.value.trim())}
                       required
-                      className="border-[var(--foodchain-espresso)]/20"
-                      style={{ backgroundColor: 'var(--foodchain-white)' }}
+                      className="border-[var(--espresso)]/20"
+                      style={{ backgroundColor: 'var(--white)' }}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" style={{ color: 'var(--foodchain-espresso)' }}>Password</Label>
+                    <Label htmlFor="password" style={{ color: 'var(--espresso)' }}>Password</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -223,25 +224,25 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         required
-                        className="border-[var(--foodchain-espresso)]/20 pr-10"
-                        style={{ backgroundColor: 'var(--foodchain-white)' }}
+                        className="border-[var(--espresso)]/20 pr-10"
+                        style={{ backgroundColor: 'var(--white)' }}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPasswords(v => !v)}
                         className="absolute right-3 top-1/2 -translate-y-1/2"
-                        style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}
+                        style={{ color: 'var(--espresso)', opacity: 0.5 }}
                       >
                         {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.55 }}>
+                    <p className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.55 }}>
                       Min. 8 chars · uppercase · lowercase · digit · special (@#$!%*?&amp;-_+=)
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" style={{ color: 'var(--foodchain-espresso)' }}>
+                    <Label htmlFor="confirmPassword" style={{ color: 'var(--espresso)' }}>
                       Confirm Password
                     </Label>
                     <Input
@@ -251,11 +252,11 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
                       required
-                      className="border-[var(--foodchain-espresso)]/20"
-                      style={{ backgroundColor: 'var(--foodchain-white)' }}
+                      className="border-[var(--espresso)]/20"
+                      style={{ backgroundColor: 'var(--white)' }}
                     />
                     {passwordsMatch && (
-                      <p className="text-xs flex items-center gap-1" style={{ color: 'var(--foodchain-sage-green)' }}>
+                      <p className="text-xs flex items-center gap-1" style={{ color: 'var(--sage-green)' }}>
                         <CheckCircle2 className="w-3 h-3" />
                         Passwords match
                       </p>
@@ -268,7 +269,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                     type="submit"
                     className="w-full mt-4 transition-all hover:opacity-90 hover:shadow-lg"
                     disabled={isLoading}
-                    style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
+                    style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
                   >
                     {isLoading ? 'Creating account…' : 'Continue'}
                   </Button>
@@ -277,7 +278,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                     <Separator />
                     <span
                       className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2 text-xs"
-                      style={{ backgroundColor: 'var(--foodchain-white)', color: 'var(--foodchain-espresso)', opacity: 0.6 }}
+                      style={{ backgroundColor: 'var(--white)', color: 'var(--espresso)', opacity: 0.6 }}
                     >
                       OR
                     </span>
@@ -286,12 +287,12 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                   <div ref={googleBtnRef} className="w-full flex justify-center" />
 
                   <div className="text-center text-sm">
-                    <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>Already have an account? </span>
+                    <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Already have an account? </span>
                     <button
                       type="button"
                       onClick={onNavigateToLogin}
                       className="underline"
-                      style={{ color: 'var(--foodchain-golden-amber)' }}
+                      style={{ color: 'var(--golden-amber)' }}
                     >
                       Sign in
                     </button>
@@ -305,10 +306,10 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
           {step === 2 && (
             <>
               <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl" style={{ color: 'var(--foodchain-espresso)' }}>
+                <CardTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>
                   Set up delivery
                 </CardTitle>
-                <CardDescription style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                <CardDescription style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                   Step 2 of 2 · Delivery details
                 </CardDescription>
               </CardHeader>
@@ -318,7 +319,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                   {error && (
                     <div
                       className="p-3 rounded-md text-sm"
-                      style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' }}
+                      style={{ backgroundColor: 'var(--burnt-orange)', color: 'var(--white)' }}
                     >
                       {error}
                     </div>
@@ -328,14 +329,14 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                     className="p-3 rounded-lg flex items-start gap-3"
                     style={{ backgroundColor: 'rgba(240, 165, 0, 0.08)' }}
                   >
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
-                    <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.85 }}>
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
+                    <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.85 }}>
                       Your delivery address will be pre-filled on every order. You can always change it at checkout.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone" style={{ color: 'var(--foodchain-espresso)' }}>Phone Number</Label>
+                    <Label htmlFor="phone" style={{ color: 'var(--espresso)' }}>Phone Number</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -343,13 +344,13 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                       value={phoneNumber}
                       onChange={e => setPhoneNumber(e.target.value)}
                       required
-                      className="border-[var(--foodchain-espresso)]/20"
-                      style={{ backgroundColor: 'var(--foodchain-white)' }}
+                      className="border-[var(--espresso)]/20"
+                      style={{ backgroundColor: 'var(--white)' }}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label style={{ color: 'var(--foodchain-espresso)' }}>Delivery Location</Label>
+                    <Label style={{ color: 'var(--espresso)' }}>Delivery Location</Label>
                     <LocationPicker
                       value={deliveryLocation}
                       onChange={setDeliveryLocation}
@@ -362,7 +363,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
                   <Button
                     type="submit"
                     className="w-full transition-all hover:opacity-90 hover:shadow-lg"
-                    style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
+                    style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
                   >
                     Finish
                   </Button>

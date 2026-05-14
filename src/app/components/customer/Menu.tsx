@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Minus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Minus, Search, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -15,6 +15,7 @@ interface CartItem extends MenuItem {
 
 interface MenuProps {
   onAddToCart: (item: MenuItem, quantity: number) => void;
+  onGoToCart: () => void;
   cart: CartItem[];
   branchId: string;
 }
@@ -28,7 +29,7 @@ function getPageNumbers(current: number, total: number): (number | '…')[] {
   return [1, '…', current - 1, current, current + 1, '…', total];
 }
 
-export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
+export function Menu({ onAddToCart, onGoToCart, cart, branchId }: MenuProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -98,22 +99,22 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl mb-4" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+          <h1 className="text-2xl sm:text-3xl mb-4" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
             Menu
           </h1>
 
           <div className="relative mb-5">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--foodchain-espresso)', opacity: 0.4 }} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--espresso)', opacity: 0.4 }} />
             <Input
               type="text"
               placeholder="Search for dishes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-[var(--foodchain-espresso)]/20"
-              style={{ backgroundColor: 'var(--foodchain-white)' }}
+              className="pl-10 border-[var(--espresso)]/20"
+              style={{ backgroundColor: 'var(--white)' }}
             />
           </div>
 
@@ -130,8 +131,8 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                   onClick={() => setSelectedCategory(category)}
                   className="flex-shrink-0 whitespace-nowrap rounded-full text-sm font-medium transition-all px-4 py-2"
                   style={{
-                    backgroundColor: active ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-white)',
-                    color: active ? 'var(--foodchain-charcoal)' : 'var(--foodchain-espresso)',
+                    backgroundColor: active ? 'var(--golden-amber)' : 'var(--white)',
+                    color: active ? 'var(--charcoal)' : 'var(--espresso)',
                     border: active ? '1.5px solid transparent' : '1.5px solid rgba(59,35,20,0.15)',
                     fontWeight: active ? 600 : 400,
                     boxShadow: active ? '0 2px 8px rgba(240,165,0,0.25)' : 'none',
@@ -152,12 +153,12 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
+            <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
             <Button
               onClick={fetchMenu}
               variant="outline"
-              className="border-[var(--foodchain-espresso)]/20"
-              style={{ color: 'var(--foodchain-espresso)' }}
+              className="border-[var(--espresso)]/20"
+              style={{ color: 'var(--espresso)' }}
             >
               Retry
             </Button>
@@ -165,19 +166,19 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-16">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: 'rgba(59,35,20,0.08)' }}>
-              <Search className="w-8 h-8" style={{ color: 'var(--foodchain-espresso)' }} />
+              <Search className="w-8 h-8" style={{ color: 'var(--espresso)' }} />
             </div>
-            <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+            <h3 className="text-xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
               No items found
             </h3>
-            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+            <p style={{ color: 'var(--espresso)', opacity: 0.6 }}>
               Try adjusting your search or filters
             </p>
           </div>
         ) : (
           <>
             {/* Results info */}
-            <p className="text-sm mb-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+            <p className="text-sm mb-4" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
               Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length} items
             </p>
 
@@ -189,9 +190,9 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                 return (
                   <Card
                     key={item.id}
-                    className="border-[var(--foodchain-espresso)]/10 flex flex-col overflow-hidden"
+                    className="border-[var(--espresso)]/10 flex flex-col overflow-hidden"
                     style={{
-                      backgroundColor: 'var(--foodchain-white)',
+                      backgroundColor: 'var(--white)',
                       opacity: item.available ? 1 : 0.6
                     }}
                   >
@@ -205,26 +206,26 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                     </div>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <CardTitle className="text-lg" style={{ color: 'var(--foodchain-espresso)' }}>
+                        <CardTitle className="text-lg" style={{ color: 'var(--espresso)' }}>
                           {item.name}
                         </CardTitle>
                         {!item.available && (
-                          <Badge className="border-0 flex-shrink-0" style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' }}>
+                          <Badge className="border-0 flex-shrink-0" style={{ backgroundColor: 'var(--burnt-orange)', color: 'var(--white)' }}>
                             Unavailable
                           </Badge>
                         )}
                       </div>
-                      <CardDescription className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                      <CardDescription className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                         {item.description}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col justify-end">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-xl" style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
+                        <span className="text-xl" style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                           ₦{item.price.toLocaleString()}
                         </span>
                         {cartQty > 0 && (
-                          <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-sage-green)', color: 'var(--foodchain-white)' }}>
+                          <Badge className="border-0" style={{ backgroundColor: 'var(--sage-green)', color: 'var(--white)' }}>
                             {cartQty} in cart
                           </Badge>
                         )}
@@ -235,19 +236,19 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                           <div className="flex items-center border rounded-md" style={{ borderColor: 'rgba(59,35,20,0.2)' }}>
                             <button
                               onClick={() => handleQuantityChange(item.id, -1)}
-                              className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
+                              className="p-2 hover:bg-[var(--espresso)]/5 transition-colors"
                               disabled={selectedQty === 0}
                             >
-                              <Minus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
+                              <Minus className="w-4 h-4" style={{ color: 'var(--espresso)' }} />
                             </button>
-                            <span className="px-4 text-center min-w-[3rem]" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                            <span className="px-4 text-center min-w-[3rem]" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                               {selectedQty}
                             </span>
                             <button
                               onClick={() => handleQuantityChange(item.id, 1)}
-                              className="p-2 hover:bg-[var(--foodchain-espresso)]/5 transition-colors"
+                              className="p-2 hover:bg-[var(--espresso)]/5 transition-colors"
                             >
-                              <Plus className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)' }} />
+                              <Plus className="w-4 h-4" style={{ color: 'var(--espresso)' }} />
                             </button>
                           </div>
                           <Button
@@ -255,8 +256,8 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                             disabled={selectedQty === 0}
                             className="flex-1 transition-all hover:opacity-90"
                             style={{
-                              backgroundColor: selectedQty > 0 ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)',
-                              color: selectedQty > 0 ? 'var(--foodchain-charcoal)' : 'var(--foodchain-warm-white)',
+                              backgroundColor: selectedQty > 0 ? 'var(--golden-amber)' : 'var(--espresso)',
+                              color: selectedQty > 0 ? 'var(--charcoal)' : 'var(--warm-white)',
                               opacity: selectedQty === 0 ? 0.5 : 1
                             }}
                           >
@@ -278,9 +279,9 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                   disabled={currentPage === 1}
                   className="flex items-center justify-center w-9 h-9 rounded-full transition-all"
                   style={{
-                    backgroundColor: currentPage === 1 ? 'transparent' : 'var(--foodchain-white)',
+                    backgroundColor: currentPage === 1 ? 'transparent' : 'var(--white)',
                     border: '1.5px solid rgba(59,35,20,0.15)',
-                    color: 'var(--foodchain-espresso)',
+                    color: 'var(--espresso)',
                     opacity: currentPage === 1 ? 0.35 : 1,
                     cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                   }}
@@ -293,7 +294,7 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                     <span
                       key={`ellipsis-${idx}`}
                       className="w-9 h-9 flex items-center justify-center text-sm"
-                      style={{ color: 'var(--foodchain-espresso)', opacity: 0.4 }}
+                      style={{ color: 'var(--espresso)', opacity: 0.4 }}
                     >
                       …
                     </span>
@@ -303,8 +304,8 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                       onClick={() => setCurrentPage(page as number)}
                       className="w-9 h-9 rounded-full text-sm font-medium transition-all"
                       style={{
-                        backgroundColor: currentPage === page ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-white)',
-                        color: currentPage === page ? 'var(--foodchain-charcoal)' : 'var(--foodchain-espresso)',
+                        backgroundColor: currentPage === page ? 'var(--golden-amber)' : 'var(--white)',
+                        color: currentPage === page ? 'var(--charcoal)' : 'var(--espresso)',
                         border: currentPage === page ? '1.5px solid transparent' : '1.5px solid rgba(59,35,20,0.15)',
                         fontWeight: currentPage === page ? 600 : 400,
                         boxShadow: currentPage === page ? '0 2px 8px rgba(240,165,0,0.25)' : 'none',
@@ -320,9 +321,9 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
                   disabled={currentPage === totalPages}
                   className="flex items-center justify-center w-9 h-9 rounded-full transition-all"
                   style={{
-                    backgroundColor: currentPage === totalPages ? 'transparent' : 'var(--foodchain-white)',
+                    backgroundColor: currentPage === totalPages ? 'transparent' : 'var(--white)',
                     border: '1.5px solid rgba(59,35,20,0.15)',
-                    color: 'var(--foodchain-espresso)',
+                    color: 'var(--espresso)',
                     opacity: currentPage === totalPages ? 0.35 : 1,
                     cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                   }}
@@ -334,6 +335,30 @@ export function Menu({ onAddToCart, cart, branchId }: MenuProps) {
           </>
         )}
       </div>
+
+      {/* Floating cart button */}
+      {cart.length > 0 && (() => {
+        const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+        return (
+          <button
+            onClick={onGoToCart}
+            className="fixed bottom-6 right-12 flex items-center gap-2 px-5 py-3 rounded-full shadow-lg transition-all hover:scale-105 z-50"
+            style={{
+              backgroundColor: 'var(--golden-amber)',
+              color: 'var(--charcoal)',
+            }}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span style={{ fontWeight: 600 }}>Go to Cart</span>
+            <span
+              className="ml-1 min-w-6 h-6 rounded-full flex items-center justify-center text-xs px-1.5"
+              style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)', fontWeight: 700 }}
+            >
+              {cartCount}
+            </span>
+          </button>
+        );
+      })()}
     </div>
   );
 }

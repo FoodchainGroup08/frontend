@@ -40,6 +40,8 @@ export function BranchManagement() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -121,7 +123,7 @@ export function BranchManagement() {
 
   if (isLoading) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -138,10 +140,10 @@ export function BranchManagement() {
 
   if (error) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
-          <Button onClick={fetchBranches} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
+          <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
+          <Button onClick={fetchBranches} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
             Retry
           </Button>
         </div>
@@ -150,14 +152,14 @@ export function BranchManagement() {
   }
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
               Branch Management
             </h1>
-            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+            <p style={{ color: 'var(--espresso)', opacity: 0.7 }}>
               Manage all FoodChain restaurant branches
             </p>
           </div>
@@ -165,65 +167,65 @@ export function BranchManagement() {
           <Button
             onClick={handleAdd}
             className="gap-2 transition-all hover:opacity-90"
-            style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
+            style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
           >
             <Plus className="w-4 h-4" />
             Add Branch
           </Button>
         </div>
 
-        <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
-            <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>All Branches ({branches.length})</CardTitle>
+            <CardTitle style={{ color: 'var(--espresso)' }}>All Branches ({branches.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Branch Name</TableHead>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Location</TableHead>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Manager</TableHead>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Status</TableHead>
-                    <TableHead className="text-right" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Actions</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600 }}>Branch Name</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600 }}>Location</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600 }}>Manager</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600, width: '1px', whiteSpace: 'nowrap' }}>Status</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600, width: '1px', whiteSpace: 'nowrap', textAlign: 'right' }}>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {branches.map((branch) => (
+                  {branches.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((branch) => (
                     <TableRow key={branch.id}>
-                      <TableCell style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                      <TableCell style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                         {branch.name}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
-                          <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                          <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
+                          <span className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                             {branch.location}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell style={{ color: 'var(--foodchain-espresso)' }}>
+                      <TableCell style={{ color: 'var(--espresso)' }}>
                         {branch.manager}
                       </TableCell>
-                      <TableCell>
+                      <TableCell style={{ width: '1px', whiteSpace: 'nowrap' }}>
                         <Badge
                           className="border-0"
                           style={{
-                            backgroundColor: branch.isActive ? 'var(--foodchain-sage-green)' : 'var(--foodchain-burnt-orange)',
-                            color: 'var(--foodchain-white)'
+                            backgroundColor: branch.isActive ? 'var(--sage-green)' : 'var(--burnt-orange)',
+                            color: 'var(--white)'
                           }}
                         >
                           {branch.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell style={{ width: '1px', whiteSpace: 'nowrap', textAlign: 'right' }}>
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             onClick={() => handleEdit(branch)}
                             variant="outline"
                             size="sm"
-                            className="gap-1 border-[var(--foodchain-espresso)]/20"
-                            style={{ color: 'var(--foodchain-espresso)' }}
+                            className="gap-1 border-[var(--espresso)]/20"
+                            style={{ color: 'var(--espresso)' }}
                           >
                             <Edit className="w-4 h-4" />
                             Edit
@@ -234,8 +236,8 @@ export function BranchManagement() {
                             size="sm"
                             className="gap-1"
                             style={{
-                              borderColor: branch.isActive ? 'var(--foodchain-burnt-orange)' : 'var(--foodchain-sage-green)',
-                              color: branch.isActive ? 'var(--foodchain-burnt-orange)' : 'var(--foodchain-sage-green)'
+                              borderColor: branch.isActive ? 'var(--burnt-orange)' : 'var(--sage-green)',
+                              color: branch.isActive ? 'var(--burnt-orange)' : 'var(--sage-green)'
                             }}
                           >
                             {branch.isActive ? <XCircle className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -248,58 +250,90 @@ export function BranchManagement() {
                 </TableBody>
               </Table>
             </div>
+            {Math.ceil(branches.length / ITEMS_PER_PAGE) > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--espresso)]/10">
+                <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, branches.length)} of {branches.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="border-[var(--espresso)]/20"
+                    style={{ color: 'var(--espresso)' }}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm" style={{ color: 'var(--espresso)' }}>
+                    {currentPage} / {Math.ceil(branches.length / ITEMS_PER_PAGE)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(branches.length / ITEMS_PER_PAGE), p + 1))}
+                    disabled={currentPage === Math.ceil(branches.length / ITEMS_PER_PAGE)}
+                    className="border-[var(--espresso)]/20"
+                    style={{ color: 'var(--espresso)' }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+          <DialogContent style={{ backgroundColor: 'var(--warm-white)' }}>
             <DialogHeader>
-              <DialogTitle style={{ color: 'var(--foodchain-espresso)' }}>
+              <DialogTitle style={{ color: 'var(--espresso)' }}>
                 {editingBranch ? 'Edit Branch' : 'Add New Branch'}
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name" style={{ color: 'var(--foodchain-espresso)' }}>Branch Name</Label>
+                <Label htmlFor="name" style={{ color: 'var(--espresso)' }}>Branch Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Victoria Island"
-                  className="border-[var(--foodchain-espresso)]/20"
-                  style={{ backgroundColor: 'var(--foodchain-white)' }}
+                  className="border-[var(--espresso)]/20"
+                  style={{ backgroundColor: 'var(--white)' }}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location" style={{ color: 'var(--foodchain-espresso)' }}>Location</Label>
+                <Label htmlFor="location" style={{ color: 'var(--espresso)' }}>Location</Label>
                 <Input
                   id="location"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   placeholder="15 Ahmadu Bello Way, Victoria Island, Lagos"
-                  className="border-[var(--foodchain-espresso)]/20"
-                  style={{ backgroundColor: 'var(--foodchain-white)' }}
+                  className="border-[var(--espresso)]/20"
+                  style={{ backgroundColor: 'var(--white)' }}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="manager" style={{ color: 'var(--foodchain-espresso)' }}>Manager Name</Label>
+                <Label htmlFor="manager" style={{ color: 'var(--espresso)' }}>Manager Name</Label>
                 <Input
                   id="manager"
                   value={formData.manager}
                   onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
                   placeholder="John Doe"
-                  className="border-[var(--foodchain-espresso)]/20"
-                  style={{ backgroundColor: 'var(--foodchain-white)' }}
+                  className="border-[var(--espresso)]/20"
+                  style={{ backgroundColor: 'var(--white)' }}
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-md" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+              <div className="flex items-center justify-between p-4 rounded-md" style={{ backgroundColor: 'var(--white)' }}>
                 <div>
-                  <Label htmlFor="active" style={{ color: 'var(--foodchain-espresso)' }}>Active Status</Label>
-                  <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                  <Label htmlFor="active" style={{ color: 'var(--espresso)' }}>Active Status</Label>
+                  <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                     Branch is {formData.isActive ? 'active' : 'inactive'}
                   </p>
                 </div>
@@ -315,8 +349,8 @@ export function BranchManagement() {
               <Button
                 onClick={() => setIsModalOpen(false)}
                 variant="outline"
-                className="border-[var(--foodchain-espresso)]/20"
-                style={{ color: 'var(--foodchain-espresso)' }}
+                className="border-[var(--espresso)]/20"
+                style={{ color: 'var(--espresso)' }}
                 disabled={isSaving}
               >
                 Cancel
@@ -325,7 +359,7 @@ export function BranchManagement() {
                 onClick={handleSave}
                 disabled={isSaving}
                 className="transition-all hover:opacity-90"
-                style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
+                style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
               >
                 {isSaving ? 'Saving...' : editingBranch ? 'Save Changes' : 'Add Branch'}
               </Button>

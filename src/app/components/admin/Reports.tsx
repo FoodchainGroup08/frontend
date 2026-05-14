@@ -40,9 +40,9 @@ const REPORT_TYPE_LABELS: Record<ReportType, string> = {
 };
 
 const REPORT_TYPE_COLORS: Record<string, string> = {
-  BRANCH_PERFORMANCE: 'var(--foodchain-golden-amber)',
-  SALES_SUMMARY: 'var(--foodchain-sage-green)',
-  ORDER_SUMMARY: 'var(--foodchain-espresso)',
+  BRANCH_PERFORMANCE: 'var(--golden-amber)',
+  SALES_SUMMARY: 'var(--sage-green)',
+  ORDER_SUMMARY: 'var(--espresso)',
 };
 
 // ── Generate form ─────────────────────────────────────────────────────────────
@@ -85,14 +85,14 @@ function GenerateReportModal({
     }
   };
 
-  const labelStyle = { color: 'var(--foodchain-espresso)', opacity: 0.7, fontSize: '13px', fontWeight: 500 };
+  const labelStyle = { color: 'var(--espresso)', opacity: 0.7, fontSize: '13px', fontWeight: 500 };
   const inputStyle = {
-    border: '1px solid var(--foodchain-espresso)',
+    border: '1px solid var(--espresso)',
     borderRadius: '6px',
     padding: '8px 12px',
     fontSize: '14px',
-    color: 'var(--foodchain-espresso)',
-    backgroundColor: 'var(--foodchain-warm-white)',
+    color: 'var(--espresso)',
+    backgroundColor: 'var(--warm-white)',
     width: '100%',
     outline: 'none',
     opacity: 0.8,
@@ -100,9 +100,9 @@ function GenerateReportModal({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <DialogContent className="max-w-md" style={{ backgroundColor: 'var(--warm-white)' }}>
         <DialogHeader>
-          <DialogTitle style={{ color: 'var(--foodchain-espresso)' }}>Generate Report</DialogTitle>
+          <DialogTitle style={{ color: 'var(--espresso)' }}>Generate Report</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
 
@@ -138,11 +138,11 @@ function GenerateReportModal({
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={onClose} disabled={isLoading}
-              style={{ borderColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+              style={{ borderColor: 'var(--espresso)', color: 'var(--espresso)', opacity: 0.7 }}>
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={isLoading}
-              style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
+              style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}>
               {isLoading ? 'Generating…' : 'Generate'}
             </Button>
           </div>
@@ -167,22 +167,22 @@ function ReportDetailModal({ reportId, onClose }: { reportId: number; onClose: (
 
   const row = (label: string, value: string) => (
     <div key={label} className="flex justify-between items-center py-2 border-b last:border-0"
-      style={{ borderColor: 'var(--foodchain-espresso)' }}>
-      <span className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>{label}</span>
-      <span className="text-sm font-medium" style={{ color: 'var(--foodchain-espresso)' }}>{value}</span>
+      style={{ borderColor: 'var(--espresso)' }}>
+      <span className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>{label}</span>
+      <span className="text-sm font-medium" style={{ color: 'var(--espresso)' }}>{value}</span>
     </div>
   );
 
   return (
     <Dialog open onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <DialogContent className="max-w-md" style={{ backgroundColor: 'var(--warm-white)' }}>
         <DialogHeader>
-          <DialogTitle style={{ color: 'var(--foodchain-espresso)' }}>Report Details</DialogTitle>
+          <DialogTitle style={{ color: 'var(--espresso)' }}>Report Details</DialogTitle>
         </DialogHeader>
         {isLoading ? (
           <div className="space-y-2 mt-4">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 w-full" />)}</div>
         ) : report ? (
-          <div className="mt-2 divide-y" style={{ borderColor: 'var(--foodchain-espresso)' }}>
+          <div className="mt-2 divide-y" style={{ borderColor: 'var(--espresso)' }}>
             {row('Type', REPORT_TYPE_LABELS[report.reportType as ReportType] ?? report.reportType)}
             {row('Period', `${fmtDate(report.startDate)} → ${fmtDate(report.endDate)}`)}
             {row('Generated', fmtDateTime(report.generatedAt))}
@@ -199,7 +199,7 @@ function ReportDetailModal({ reportId, onClose }: { reportId: number; onClose: (
             {report.deliveryCount != null && row('Delivery', report.deliveryCount.toLocaleString())}
           </div>
         ) : (
-          <p className="text-center py-8" style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>Report not found</p>
+          <p className="text-center py-8" style={{ color: 'var(--espresso)', opacity: 0.5 }}>Report not found</p>
         )}
       </DialogContent>
     </Dialog>
@@ -242,24 +242,24 @@ export function Reports() {
   };
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="p-6 sm:p-8 space-y-6">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold mb-1" style={{ color: 'var(--foodchain-espresso)' }}>Reports</h1>
-            <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+            <h1 className="text-3xl font-semibold mb-1" style={{ color: 'var(--espresso)' }}>Reports</h1>
+            <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
               Generate and download business performance reports
             </p>
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => fetchReports(page)}
-              className="border-[var(--foodchain-espresso)]/20 p-2" style={{ color: 'var(--foodchain-espresso)' }}>
+              className="border-[var(--espresso)]/20 p-2" style={{ color: 'var(--espresso)' }}>
               <RefreshCw className="w-4 h-4" />
             </Button>
             <Button size="sm" onClick={() => setShowGenerate(true)}
-              className="gap-2" style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
+              className="gap-2" style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}>
               <Plus className="w-4 h-4" />
               Generate Report
             </Button>
@@ -267,9 +267,9 @@ export function Reports() {
         </div>
 
         {/* Reports list */}
-        <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+            <CardTitle className="flex items-center gap-2" style={{ color: 'var(--espresso)' }}>
               <FileText className="w-4 h-4" />
               Generated Reports
             </CardTitle>
@@ -281,10 +281,10 @@ export function Reports() {
               </div>
             ) : reports.length === 0 ? (
               <div className="text-center py-16">
-                <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--foodchain-espresso)', opacity: 0.3 }} />
-                <p className="mb-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>No reports generated yet</p>
+                <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--espresso)', opacity: 0.3 }} />
+                <p className="mb-4" style={{ color: 'var(--espresso)', opacity: 0.5 }}>No reports generated yet</p>
                 <Button size="sm" onClick={() => setShowGenerate(true)}
-                  style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}>
+                  style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}>
                   Generate your first report
                 </Button>
               </div>
@@ -292,47 +292,47 @@ export function Reports() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b" style={{ borderColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                    <tr className="border-b" style={{ borderColor: 'var(--espresso)', opacity: 0.1 }}>
                       {['Type', 'Branch', 'Period', 'Revenue', 'Orders', 'Generated', ''].map(h => (
                         <th key={h} className="text-left py-3 px-4 font-medium"
-                          style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>{h}</th>
+                          style={{ color: 'var(--espresso)', opacity: 0.6 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {reports.map(r => (
-                      <tr key={r.id} className="border-b last:border-0 hover:bg-[var(--foodchain-espresso)]/3 transition-colors"
-                        style={{ borderColor: 'var(--foodchain-espresso)' }}>
+                      <tr key={r.id} className="border-b last:border-0 hover:bg-[var(--espresso)]/3 transition-colors"
+                        style={{ borderColor: 'var(--espresso)' }}>
                         <td className="py-3 px-4">
                           <Badge className="text-xs border-0 font-medium" style={{
-                            backgroundColor: REPORT_TYPE_COLORS[r.reportType] ?? 'var(--foodchain-espresso)',
+                            backgroundColor: REPORT_TYPE_COLORS[r.reportType] ?? 'var(--espresso)',
                             color: 'white',
                             opacity: 1,
                           }}>
                             {REPORT_TYPE_LABELS[r.reportType as ReportType] ?? r.reportType}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                        <td className="py-3 px-4" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                           {r.branchId
                             ? (branches.find(b => b.id === r.branchId)?.name ?? r.branchId.slice(0, 8) + '…')
                             : 'All Branches'}
                         </td>
-                        <td className="py-3 px-4 text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                        <td className="py-3 px-4 text-xs" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                           {fmtDate(r.startDate)} → {fmtDate(r.endDate)}
                         </td>
-                        <td className="py-3 px-4 font-medium" style={{ color: 'var(--foodchain-sage-green)' }}>
+                        <td className="py-3 px-4 font-medium" style={{ color: 'var(--sage-green)' }}>
                           {fmtRevenue(r.totalRevenue)}
                         </td>
-                        <td className="py-3 px-4" style={{ color: 'var(--foodchain-espresso)' }}>
+                        <td className="py-3 px-4" style={{ color: 'var(--espresso)' }}>
                           {r.totalOrders?.toLocaleString() ?? '—'}
                         </td>
-                        <td className="py-3 px-4 text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>
+                        <td className="py-3 px-4 text-xs" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
                           {fmtDateTime(r.generatedAt)}
                         </td>
                         <td className="py-3 px-4">
                           <Button size="sm" variant="outline" onClick={() => setViewReportId(r.id)}
-                            className="h-7 px-2 border-[var(--foodchain-espresso)]/20 gap-1"
-                            style={{ color: 'var(--foodchain-espresso)' }}>
+                            className="h-7 px-2 border-[var(--espresso)]/20 gap-1"
+                            style={{ color: 'var(--espresso)' }}>
                             <Eye className="w-3 h-3" />
                             View
                           </Button>
@@ -346,17 +346,17 @@ export function Reports() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t" style={{ borderColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>
+              <div className="flex items-center justify-between p-4 border-t" style={{ borderColor: 'var(--espresso)', opacity: 0.1 }}>
+                <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
                   Page {page + 1} of {totalPages}
                 </p>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}
-                    className="border-[var(--foodchain-espresso)]/20 p-1.5" style={{ color: 'var(--foodchain-espresso)' }}>
+                    className="border-[var(--espresso)]/20 p-1.5" style={{ color: 'var(--espresso)' }}>
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
                   <Button size="sm" variant="outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
-                    className="border-[var(--foodchain-espresso)]/20 p-1.5" style={{ color: 'var(--foodchain-espresso)' }}>
+                    className="border-[var(--espresso)]/20 p-1.5" style={{ color: 'var(--espresso)' }}>
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>

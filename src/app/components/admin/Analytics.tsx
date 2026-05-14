@@ -65,9 +65,9 @@ function fmtPct(v: number): string {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  COMPLETED: 'var(--foodchain-sage-green)',
-  CANCELLED: 'var(--foodchain-burnt-orange)',
-  PREPARING: 'var(--foodchain-golden-amber)',
+  COMPLETED: 'var(--sage-green)',
+  CANCELLED: 'var(--burnt-orange)',
+  PREPARING: 'var(--golden-amber)',
   RECEIVED: '#6B7280',
   CONFIRMED: '#3B82F6',
   READY: '#8B5CF6',
@@ -85,8 +85,8 @@ function RangeButton({ label, selected, onClick }: { label: string; selected: bo
       onClick={onClick}
       className="transition-all"
       style={selected
-        ? { backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }
-        : { borderColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-espresso)', opacity: 0.6 }}
+        ? { backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }
+        : { borderColor: 'var(--espresso)', color: 'var(--espresso)', opacity: 0.6 }}
     >
       {label}
     </Button>
@@ -102,25 +102,25 @@ function KpiCard({
 }) {
   const positive = trend === undefined || trend >= 0;
   return (
-    <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+    <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>{title}</CardTitle>
+        <CardTitle className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>{title}</CardTitle>
         <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: iconColor, opacity: 0.15 }}>
           <Icon className="w-4 h-4" style={{ color: iconColor }} />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-semibold mb-1" style={{ color: 'var(--foodchain-espresso)' }}>{value}</div>
-        {subtitle && <p className="text-xs mb-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>{subtitle}</p>}
+        <div className="text-2xl font-semibold mb-1" style={{ color: 'var(--espresso)' }}>{value}</div>
+        {subtitle && <p className="text-xs mb-1" style={{ color: 'var(--espresso)', opacity: 0.5 }}>{subtitle}</p>}
         {trend !== undefined && (
           <div className="flex items-center gap-1 text-xs mt-1">
             {positive
-              ? <TrendingUp className="w-3 h-3" style={{ color: 'var(--foodchain-sage-green)' }} />
-              : <TrendingDown className="w-3 h-3" style={{ color: 'var(--foodchain-burnt-orange)' }} />}
-            <span style={{ color: positive ? 'var(--foodchain-sage-green)' : 'var(--foodchain-burnt-orange)', fontWeight: 600 }}>
+              ? <TrendingUp className="w-3 h-3" style={{ color: 'var(--sage-green)' }} />
+              : <TrendingDown className="w-3 h-3" style={{ color: 'var(--burnt-orange)' }} />}
+            <span style={{ color: positive ? 'var(--sage-green)' : 'var(--burnt-orange)', fontWeight: 600 }}>
               {fmtPct(trend)}
             </span>
-            <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>{trendLabel ?? 'vs prior period'}</span>
+            <span style={{ color: 'var(--espresso)', opacity: 0.6 }}>{trendLabel ?? 'vs prior period'}</span>
           </div>
         )}
       </CardContent>
@@ -130,7 +130,7 @@ function KpiCard({
 
 function LoadingSkeleton() {
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div><Skeleton className="h-10 w-64 mb-2" /><Skeleton className="h-5 w-72" /></div>
@@ -199,9 +199,9 @@ export function Analytics() {
 
   if (error) {
     return (
-      <div className="h-screen overflow-auto flex items-center justify-center" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto flex items-center justify-center" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
+          <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
           <Button onClick={() => fetchAll(range)} variant="outline" className="gap-2">
             <RefreshCw className="w-4 h-4" /> Retry
           </Button>
@@ -213,16 +213,16 @@ export function Analytics() {
   const sortedByRevenue = [...comparison].sort((a, b) => b.totalRevenue - a.totalRevenue);
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="p-6 sm:p-8 space-y-8">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold mb-1" style={{ color: 'var(--foodchain-espresso)' }}>
+            <h1 className="text-3xl font-semibold mb-1" style={{ color: 'var(--espresso)' }}>
               Executive Dashboard
             </h1>
-            <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+            <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
               Org-wide performance · {overview?.totalBranches ?? 0} branches
             </p>
           </div>
@@ -231,8 +231,8 @@ export function Analytics() {
               <RangeButton key={r} label={r} selected={range === r} onClick={() => setRange(r)} />
             ))}
             <Button size="sm" variant="outline" onClick={() => fetchAll(range)}
-              className="border-[var(--foodchain-espresso)]/20 p-2"
-              style={{ color: 'var(--foodchain-espresso)' }}>
+              className="border-[var(--espresso)]/20 p-2"
+              style={{ color: 'var(--espresso)' }}>
               <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
@@ -244,27 +244,27 @@ export function Analytics() {
             title="Total Orders"
             value={(overview?.totalOrders ?? 0).toLocaleString()}
             icon={ShoppingCart}
-            iconColor="var(--foodchain-golden-amber)"
+            iconColor="var(--golden-amber)"
             trend={overview?.ordersGrowthPercent}
           />
           <KpiCard
             title="Total Revenue"
             value={fmtRevenue(overview?.totalRevenue ?? 0)}
             icon={DollarSign}
-            iconColor="var(--foodchain-sage-green)"
+            iconColor="var(--sage-green)"
             trend={overview?.revenueGrowthPercent}
           />
           <KpiCard
             title="Avg Order Value"
             value={fmtRevenue(overview?.avgOrderValue ?? 0)}
             icon={BarChart2}
-            iconColor="var(--foodchain-espresso)"
+            iconColor="var(--espresso)"
           />
           <KpiCard
             title="Completion Rate"
             value={`${(overview?.completionRate ?? 0).toFixed(1)}%`}
             icon={CheckCircle2}
-            iconColor="var(--foodchain-sage-green)"
+            iconColor="var(--sage-green)"
             subtitle={`Cancellation: ${(overview?.cancellationRate ?? 0).toFixed(1)}%`}
           />
           <KpiCard
@@ -272,7 +272,7 @@ export function Analytics() {
             value={fmtPct(overview?.revenueGrowthPercent ?? 0)}
             icon={overview?.revenueGrowthPercent != null && overview.revenueGrowthPercent >= 0 ? TrendingUp : TrendingDown}
             iconColor={overview?.revenueGrowthPercent != null && overview.revenueGrowthPercent >= 0
-              ? 'var(--foodchain-sage-green)' : 'var(--foodchain-burnt-orange)'}
+              ? 'var(--sage-green)' : 'var(--burnt-orange)'}
             subtitle="vs prior period"
           />
           <KpiCard
@@ -280,7 +280,7 @@ export function Analytics() {
             value={fmtPct(overview?.ordersGrowthPercent ?? 0)}
             icon={overview?.ordersGrowthPercent != null && overview.ordersGrowthPercent >= 0 ? TrendingUp : TrendingDown}
             iconColor={overview?.ordersGrowthPercent != null && overview.ordersGrowthPercent >= 0
-              ? 'var(--foodchain-sage-green)' : 'var(--foodchain-burnt-orange)'}
+              ? 'var(--sage-green)' : 'var(--burnt-orange)'}
             subtitle="vs prior period"
           />
         </div>
@@ -288,19 +288,19 @@ export function Analytics() {
         {/* Branch highlights */}
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           {[
-            { label: 'Top Revenue Branch', value: overview?.topPerformingBranch, icon: Award, color: 'var(--foodchain-golden-amber)' },
-            { label: 'Fastest Branch', value: overview?.fastestBranch, icon: Zap, color: 'var(--foodchain-sage-green)' },
-            { label: 'Slowest Branch', value: overview?.slowestBranch, icon: Clock, color: 'var(--foodchain-burnt-orange)' },
+            { label: 'Top Revenue Branch', value: overview?.topPerformingBranch, icon: Award, color: 'var(--golden-amber)' },
+            { label: 'Fastest Branch', value: overview?.fastestBranch, icon: Zap, color: 'var(--sage-green)' },
+            { label: 'Slowest Branch', value: overview?.slowestBranch, icon: Clock, color: 'var(--burnt-orange)' },
           ].map(({ label, value, icon: Icon, color }) => (
-            <Card key={label} className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+            <Card key={label} className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
               <CardContent className="flex items-center gap-3 p-4">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: color, opacity: 0.15 }}>
                   <Icon className="w-5 h-5" style={{ color }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs mb-0.5" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>{label}</p>
-                  <p className="font-semibold truncate" style={{ color: 'var(--foodchain-espresso)' }}>
+                  <p className="text-xs mb-0.5" style={{ color: 'var(--espresso)', opacity: 0.6 }}>{label}</p>
+                  <p className="font-semibold truncate" style={{ color: 'var(--espresso)' }}>
                     {value ?? '—'}
                   </p>
                 </div>
@@ -311,22 +311,22 @@ export function Analytics() {
 
         {/* Revenue trend chart */}
         {trends && trends.dataPoints.length > 0 && (
-          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>Revenue & Orders Trend</CardTitle>
+              <CardTitle style={{ color: 'var(--espresso)' }}>Revenue & Orders Trend</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trends.dataPoints}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--foodchain-espresso)" opacity={0.08} />
-                    <XAxis dataKey="period" stroke="var(--foodchain-espresso)" style={{ fontSize: '11px' }}
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--espresso)" opacity={0.08} />
+                    <XAxis dataKey="period" stroke="var(--espresso)" style={{ fontSize: '11px' }}
                       tickFormatter={v => v.length > 7 ? v.slice(5) : v} />
-                    <YAxis yAxisId="rev" stroke="var(--foodchain-espresso)" style={{ fontSize: '11px' }}
+                    <YAxis yAxisId="rev" stroke="var(--espresso)" style={{ fontSize: '11px' }}
                       tickFormatter={v => fmtRevenue(v)} width={72} />
-                    <YAxis yAxisId="ord" orientation="right" stroke="var(--foodchain-espresso)" style={{ fontSize: '11px' }} />
+                    <YAxis yAxisId="ord" orientation="right" stroke="var(--espresso)" style={{ fontSize: '11px' }} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: 'var(--foodchain-warm-white)', border: '1px solid var(--foodchain-espresso)', borderRadius: '8px' }}
+                      contentStyle={{ backgroundColor: 'var(--warm-white)', border: '1px solid var(--espresso)', borderRadius: '8px' }}
                       formatter={(value: number, name: string) => [
                         name === 'Revenue' ? fmtRevenue(value) : value,
                         name,
@@ -334,9 +334,9 @@ export function Analytics() {
                     />
                     <Legend wrapperStyle={{ paddingTop: '12px' }} iconType="circle" />
                     <Line yAxisId="rev" type="monotone" dataKey="revenue" name="Revenue"
-                      stroke="var(--foodchain-golden-amber)" strokeWidth={2} dot={false} />
+                      stroke="var(--golden-amber)" strokeWidth={2} dot={false} />
                     <Line yAxisId="ord" type="monotone" dataKey="orders" name="Orders"
-                      stroke="var(--foodchain-sage-green)" strokeWidth={2} dot={false} />
+                      stroke="var(--sage-green)" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -349,9 +349,9 @@ export function Analytics() {
 
           {/* Orders by status */}
           {operational && operational.ordersByStatus.length > 0 && (
-            <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+            <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
               <CardHeader>
-                <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>Orders by Status</CardTitle>
+                <CardTitle style={{ color: 'var(--espresso)' }}>Orders by Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[220px]">
@@ -372,7 +372,7 @@ export function Analytics() {
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{ backgroundColor: 'var(--foodchain-warm-white)', border: '1px solid var(--foodchain-espresso)', borderRadius: '8px' }}
+                        contentStyle={{ backgroundColor: 'var(--warm-white)', border: '1px solid var(--espresso)', borderRadius: '8px' }}
                         formatter={(value: number, name: string) => [value, name]}
                       />
                     </PieChart>
@@ -383,7 +383,7 @@ export function Analytics() {
                     <div key={s.status} className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: STATUS_COLORS[s.status] ?? '#94A3B8' }} />
-                      <span className="text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                      <span className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                         {s.status} ({s.count})
                       </span>
                     </div>
@@ -395,10 +395,10 @@ export function Analytics() {
 
           {/* Popular items */}
           {popularItems.length > 0 && (
-            <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+            <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
-                  <Star className="w-4 h-4" style={{ color: 'var(--foodchain-golden-amber)' }} />
+                <CardTitle className="flex items-center gap-2" style={{ color: 'var(--espresso)' }}>
+                  <Star className="w-4 h-4" style={{ color: 'var(--golden-amber)' }} />
                   Top Menu Items
                 </CardTitle>
               </CardHeader>
@@ -406,21 +406,21 @@ export function Analytics() {
                 {popularItems.slice(0, 6).map((item, i) => (
                   <div key={item.id} className="flex items-center gap-3">
                     <span className="w-5 text-xs font-semibold flex-shrink-0 text-right"
-                      style={{ color: i < 3 ? 'var(--foodchain-golden-amber)' : 'var(--foodchain-espresso)', opacity: i < 3 ? 1 : 0.4 }}>
+                      style={{ color: i < 3 ? 'var(--golden-amber)' : 'var(--espresso)', opacity: i < 3 ? 1 : 0.4 }}>
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--foodchain-espresso)' }}>{item.name}</p>
-                      <p className="text-xs" style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--espresso)' }}>{item.name}</p>
+                      <p className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
                         {item.quantitySold} sold · {fmtRevenue(item.revenue)}
                       </p>
                     </div>
                     <div className="w-20 h-1.5 rounded-full overflow-hidden flex-shrink-0"
-                      style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                      style={{ backgroundColor: 'var(--espresso)', opacity: 0.1 }}>
                       <div className="h-full rounded-full"
                         style={{
                           width: `${(item.quantitySold / (popularItems[0]?.quantitySold || 1)) * 100}%`,
-                          backgroundColor: 'var(--foodchain-golden-amber)',
+                          backgroundColor: 'var(--golden-amber)',
                           opacity: 1,
                         }} />
                     </div>
@@ -433,9 +433,9 @@ export function Analytics() {
 
         {/* Branch comparison table */}
         {sortedByRevenue.length > 0 && (
-          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2" style={{ color: 'var(--foodchain-espresso)' }}>
+              <CardTitle className="flex items-center gap-2" style={{ color: 'var(--espresso)' }}>
                 <Building2 className="w-4 h-4" />
                 Branch Comparison
               </CardTitle>
@@ -444,42 +444,42 @@ export function Analytics() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b" style={{ borderColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
+                    <tr className="border-b" style={{ borderColor: 'var(--espresso)', opacity: 0.1 }}>
                       {['Branch', 'Orders', 'Revenue', 'Avg Order', 'Completion', 'Cancellation', 'Avg Prep'].map(h => (
                         <th key={h} className="text-left py-3 px-2 font-medium"
-                          style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>{h}</th>
+                          style={{ color: 'var(--espresso)', opacity: 0.6 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {sortedByRevenue.map((b, i) => (
                       <tr key={b.branchId} className="border-b last:border-0"
-                        style={{ borderColor: 'var(--foodchain-espresso)' }}>
+                        style={{ borderColor: 'var(--espresso)' }}>
                         <td className="py-3 px-2">
                           <div className="flex items-center gap-2">
                             {i === 0 && <Badge className="text-xs px-1.5 py-0 h-5"
-                              style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)', border: 'none' }}>
+                              style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)', border: 'none' }}>
                               #1
                             </Badge>}
-                            <span className="font-medium" style={{ color: 'var(--foodchain-espresso)' }}>
+                            <span className="font-medium" style={{ color: 'var(--espresso)' }}>
                               {b.name ?? b.branchId}
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 px-2" style={{ color: 'var(--foodchain-espresso)' }}>{b.totalOrders.toLocaleString()}</td>
-                        <td className="py-3 px-2 font-medium" style={{ color: 'var(--foodchain-sage-green)' }}>{fmtRevenue(b.totalRevenue)}</td>
-                        <td className="py-3 px-2" style={{ color: 'var(--foodchain-espresso)' }}>{fmtRevenue(b.avgOrderValue)}</td>
+                        <td className="py-3 px-2" style={{ color: 'var(--espresso)' }}>{b.totalOrders.toLocaleString()}</td>
+                        <td className="py-3 px-2 font-medium" style={{ color: 'var(--sage-green)' }}>{fmtRevenue(b.totalRevenue)}</td>
+                        <td className="py-3 px-2" style={{ color: 'var(--espresso)' }}>{fmtRevenue(b.avgOrderValue)}</td>
                         <td className="py-3 px-2">
-                          <span className="font-medium" style={{ color: b.completionRate >= 80 ? 'var(--foodchain-sage-green)' : 'var(--foodchain-burnt-orange)' }}>
+                          <span className="font-medium" style={{ color: b.completionRate >= 80 ? 'var(--sage-green)' : 'var(--burnt-orange)' }}>
                             {b.completionRate.toFixed(1)}%
                           </span>
                         </td>
                         <td className="py-3 px-2">
-                          <span className="font-medium" style={{ color: b.cancellationRate <= 10 ? 'var(--foodchain-espresso)' : 'var(--foodchain-burnt-orange)', opacity: b.cancellationRate <= 10 ? 0.7 : 1 }}>
+                          <span className="font-medium" style={{ color: b.cancellationRate <= 10 ? 'var(--espresso)' : 'var(--burnt-orange)', opacity: b.cancellationRate <= 10 ? 0.7 : 1 }}>
                             {b.cancellationRate.toFixed(1)}%
                           </span>
                         </td>
-                        <td className="py-3 px-2" style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                        <td className="py-3 px-2" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                           {b.avgPreparationTimeMinutes != null ? `${b.avgPreparationTimeMinutes.toFixed(0)}m` : '—'}
                         </td>
                       </tr>
@@ -493,13 +493,13 @@ export function Analytics() {
 
         {/* Hourly heatmap */}
         {operational && operational.ordersByHour.length > 0 && (
-          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between" style={{ color: 'var(--foodchain-espresso)' }}>
+              <CardTitle className="flex items-center justify-between" style={{ color: 'var(--espresso)' }}>
                 <span>Orders by Hour</span>
                 {operational.peakHour && (
                   <Badge className="text-xs"
-                    style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)', border: 'none' }}>
+                    style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)', border: 'none' }}>
                     Peak: {operational.peakHour}
                   </Badge>
                 )}
@@ -509,13 +509,13 @@ export function Analytics() {
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={operational.ordersByHour}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--foodchain-espresso)" opacity={0.08} />
-                    <XAxis dataKey="hour" stroke="var(--foodchain-espresso)" style={{ fontSize: '11px' }} />
-                    <YAxis stroke="var(--foodchain-espresso)" style={{ fontSize: '11px' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--espresso)" opacity={0.08} />
+                    <XAxis dataKey="hour" stroke="var(--espresso)" style={{ fontSize: '11px' }} />
+                    <YAxis stroke="var(--espresso)" style={{ fontSize: '11px' }} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: 'var(--foodchain-warm-white)', border: '1px solid var(--foodchain-espresso)', borderRadius: '8px' }}
+                      contentStyle={{ backgroundColor: 'var(--warm-white)', border: '1px solid var(--espresso)', borderRadius: '8px' }}
                     />
-                    <Bar dataKey="orders" name="Orders" fill="var(--foodchain-golden-amber)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="orders" name="Orders" fill="var(--golden-amber)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -526,8 +526,8 @@ export function Analytics() {
         {/* Empty state */}
         {!overview && !isLoading && (
           <div className="text-center py-16">
-            <BarChart2 className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.3 }} />
-            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.5 }}>No analytics data for this period</p>
+            <BarChart2 className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--espresso)', opacity: 0.3 }} />
+            <p style={{ color: 'var(--espresso)', opacity: 0.5 }}>No analytics data for this period</p>
           </div>
         )}
 

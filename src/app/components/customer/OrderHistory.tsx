@@ -73,7 +73,7 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <Skeleton className="h-10 w-48 mb-6" />
           <div className="space-y-4">
@@ -86,10 +86,10 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
 
   if (error) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
-          <Button onClick={fetchHistory} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
+          <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
+          <Button onClick={fetchHistory} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
             Retry
           </Button>
         </div>
@@ -99,21 +99,21 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
 
   if (orders.length === 0) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <h1 className="text-2xl sm:text-3xl mb-8" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+          <h1 className="text-2xl sm:text-3xl mb-8" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
             Order History
           </h1>
 
-          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardContent className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                <Package className="w-10 h-10" style={{ color: 'var(--foodchain-espresso)' }} />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'var(--espresso)', opacity: 0.1 }}>
+                <Package className="w-10 h-10" style={{ color: 'var(--espresso)' }} />
               </div>
-              <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+              <h3 className="text-xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                 No Order History
               </h3>
-              <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              <p style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                 Your past orders will appear here
               </p>
               {onBrowseMenu && (
@@ -121,8 +121,8 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
                   onClick={onBrowseMenu}
                   className="mt-4 transition-all hover:opacity-90 hover:shadow-lg"
                   style={{
-                    backgroundColor: 'var(--foodchain-golden-amber)',
-                    color: 'var(--foodchain-charcoal)'
+                    backgroundColor: 'var(--golden-amber)',
+                    color: 'var(--charcoal)'
                   }}
                 >
                   Browse Menu
@@ -136,10 +136,10 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+          <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
             Order History
           </h1>
           {onBrowseMenu && (
@@ -147,8 +147,8 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
               onClick={onBrowseMenu}
               className="transition-all hover:opacity-90 hover:shadow-lg"
               style={{
-                backgroundColor: 'var(--foodchain-golden-amber)',
-                color: 'var(--foodchain-charcoal)'
+                backgroundColor: 'var(--golden-amber)',
+                color: 'var(--charcoal)'
               }}
             >
               Browse Menu
@@ -160,40 +160,40 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
           {orders.map((order) => (
             <Card
               key={order.id}
-              className="border-[var(--foodchain-espresso)]/10 cursor-pointer transition-all hover:shadow-lg"
+              className="border-[var(--espresso)]/10 cursor-pointer transition-all hover:shadow-lg"
               onClick={() => onViewDetails(order)}
-              style={{ backgroundColor: 'var(--foodchain-white)' }}
+              style={{ backgroundColor: 'var(--white)' }}
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <CardTitle className="text-lg" style={{ color: 'var(--foodchain-espresso)' }}>
+                      <CardTitle className="text-lg" style={{ color: 'var(--espresso)' }}>
                         Order #{order.id}
                       </CardTitle>
                       <Badge
                         className="border-0"
                         style={{
-                          backgroundColor: order.status === 'delivered' ? 'var(--foodchain-sage-green)' : 'var(--foodchain-burnt-orange)',
-                          color: 'var(--foodchain-white)'
+                          backgroundColor: order.status === 'delivered' ? 'var(--sage-green)' : 'var(--burnt-orange)',
+                          color: 'var(--white)'
                         }}
                       >
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 flex-wrap text-sm">
-                      <div className="flex items-center gap-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                      <div className="flex items-center gap-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                         <Calendar className="w-4 h-4" />
                         <span>{order.orderDate}</span>
                       </div>
-                      <div className="flex items-center gap-1" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                      <div className="flex items-center gap-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                         <MapPin className="w-4 h-4" />
                         <span>{order.branchName}</span>
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl" style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
+                    <p className="text-xl" style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                       ₦{order.total.toLocaleString()}
                     </p>
                   </div>
@@ -203,8 +203,8 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
                 <div className="space-y-2 mb-4">
                   {order.items.map((item) => (
                     <div key={item.id} className="flex items-center gap-2 text-sm">
-                      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
-                      <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.8 }}>
+                      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
+                      <span style={{ color: 'var(--espresso)', opacity: 0.8 }}>
                         {item.name} × {item.quantity}
                       </span>
                     </div>
@@ -212,7 +212,7 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
                 </div>
 
                 {order.deliveryDate && (
-                  <CardDescription className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                  <CardDescription className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                     Delivered on {order.deliveryDate}
                   </CardDescription>
                 )}
@@ -221,8 +221,8 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-[var(--foodchain-espresso)]/20"
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    className="border-[var(--espresso)]/20"
+                    style={{ color: 'var(--espresso)' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       onViewDetails(order);

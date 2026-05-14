@@ -32,10 +32,10 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 ];
 
 const STATUS_COLORS: Record<LiveOrder['status'], { bg: string; text: string }> = {
-  received: { bg: 'var(--foodchain-espresso)', text: 'var(--foodchain-warm-white)' },
-  preparing: { bg: 'var(--foodchain-golden-amber)', text: 'var(--foodchain-charcoal)' },
-  ready: { bg: 'var(--foodchain-sage-green)', text: 'var(--foodchain-white)' },
-  'out-for-delivery': { bg: 'var(--foodchain-burnt-orange)', text: 'var(--foodchain-white)' },
+  received: { bg: 'var(--espresso)', text: 'var(--warm-white)' },
+  preparing: { bg: 'var(--golden-amber)', text: 'var(--charcoal)' },
+  ready: { bg: 'var(--sage-green)', text: 'var(--white)' },
+  'out-for-delivery': { bg: 'var(--burnt-orange)', text: 'var(--white)' },
 };
 
 const PAGE_SIZE = 20;
@@ -133,17 +133,17 @@ export function LiveOrders() {
     return (
       <Card
         key={order.id}
-        className="border-[var(--foodchain-espresso)]/10"
-        style={{ backgroundColor: 'var(--foodchain-white)' }}
+        className="border-[var(--espresso)]/10"
+        style={{ backgroundColor: 'var(--white)' }}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <p className="text-sm mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+              <p className="text-sm mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                 #{order.id.split('-')[2] ?? order.id}
               </p>
               {order.customerName && (
-                <p className="text-xs mb-2" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                   {order.customerName}
                 </p>
               )}
@@ -152,17 +152,17 @@ export function LiveOrders() {
                   className="border-0 text-xs"
                   style={{
                     backgroundColor: order.orderType === 'dine-in'
-                      ? 'var(--foodchain-sage-green)'
+                      ? 'var(--sage-green)'
                       : order.orderType === 'delivery'
-                        ? 'var(--foodchain-golden-amber)'
-                        : 'var(--foodchain-espresso)',
-                    color: 'var(--foodchain-white)'
+                        ? 'var(--golden-amber)'
+                        : 'var(--espresso)',
+                    color: 'var(--white)'
                   }}
                 >
                   {order.orderType === 'dine-in' ? 'Dine-In' : order.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
                 </Badge>
                 {order.tableNumber && (
-                  <Badge className="border-0 text-xs" style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}>
+                  <Badge className="border-0 text-xs" style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}>
                     Table {order.tableNumber}
                   </Badge>
                 )}
@@ -173,8 +173,8 @@ export function LiveOrders() {
             </div>
             <div className="text-right flex-shrink-0">
               <div className="flex items-center gap-1 text-sm">
-                <Clock className="w-4 h-4" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }} />
-                <span style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                <Clock className="w-4 h-4" style={{ color: 'var(--espresso)', opacity: 0.6 }} />
+                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                   {elapsedMinutes}m
                 </span>
               </div>
@@ -186,16 +186,16 @@ export function LiveOrders() {
             {order.items.length > 0
               ? order.items.map((item) => (
                   <div key={item.id} className="flex items-center gap-2 text-sm">
-                    <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
-                    <span style={{ color: 'var(--foodchain-espresso)' }}>
+                    <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
+                    <span style={{ color: 'var(--espresso)' }}>
                       {item.quantity}× {item.name}
                     </span>
                   </div>
                 ))
               : (
                 <div className="flex items-center gap-2 text-sm">
-                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--foodchain-golden-amber)' }} />
-                  <span style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
+                  <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                     {order.itemCount ?? '—'} {(order.itemCount ?? 0) === 1 ? 'item' : 'items'}
                     {order.total ? ` · ₦${order.total.toLocaleString()}` : ''}
                   </span>
@@ -210,7 +210,7 @@ export function LiveOrders() {
 
   if (isLoading) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8">
           <Skeleton className="h-10 w-48 mb-2" />
           <Skeleton className="h-5 w-72 mb-6" />
@@ -225,10 +225,10 @@ export function LiveOrders() {
 
   if (error) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
-          <Button onClick={fetchOrders} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
+          <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
+          <Button onClick={fetchOrders} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
             Retry
           </Button>
         </div>
@@ -238,20 +238,20 @@ export function LiveOrders() {
 
   if (orders.length === 0) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8">
-          <h1 className="text-3xl mb-8" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+          <h1 className="text-3xl mb-8" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
             Live Orders
           </h1>
-          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardContent className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'var(--foodchain-espresso)', opacity: 0.1 }}>
-                <Clock className="w-10 h-10" style={{ color: 'var(--foodchain-espresso)' }} />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'var(--espresso)', opacity: 0.1 }}>
+                <Clock className="w-10 h-10" style={{ color: 'var(--espresso)' }} />
               </div>
-              <h3 className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+              <h3 className="text-xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                 No Active Orders
               </h3>
-              <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              <p style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                 Active orders will appear here
               </p>
             </CardContent>
@@ -262,14 +262,14 @@ export function LiveOrders() {
   }
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl mb-1" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
               Live Orders
             </h1>
-            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+            <p style={{ color: 'var(--espresso)', opacity: 0.7 }}>
               {orders.length} {orders.length === 1 ? 'order' : 'orders'} in progress
             </p>
           </div>
@@ -280,9 +280,9 @@ export function LiveOrders() {
               onChange={(e) => handleFilterChange(e.target.value as StatusFilter)}
               className="rounded-md px-3 py-2 text-sm border outline-none cursor-pointer"
               style={{
-                borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 20%, transparent)',
-                backgroundColor: 'var(--foodchain-white)',
-                color: 'var(--foodchain-espresso)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 20%, transparent)',
+                backgroundColor: 'var(--white)',
+                color: 'var(--espresso)',
               }}
             >
               {STATUS_OPTIONS.map(opt => (
@@ -295,9 +295,9 @@ export function LiveOrders() {
         </div>
 
         {filtered.length === 0 ? (
-          <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardContent className="text-center py-12">
-              <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+              <p style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                 No {statusFilter === 'all' ? '' : STATUS_OPTIONS.find(o => o.value === statusFilter)?.label.toLowerCase() + ' '}orders right now
               </p>
             </CardContent>
@@ -310,7 +310,7 @@ export function LiveOrders() {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-2">
-                <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                   Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} orders
                 </p>
                 <div className="flex items-center gap-2">
@@ -319,13 +319,13 @@ export function LiveOrders() {
                     size="sm"
                     onClick={() => setPage(p => p - 1)}
                     disabled={page === 1}
-                    className="border-[var(--foodchain-espresso)]/20 gap-1"
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    className="border-[var(--espresso)]/20 gap-1"
+                    style={{ color: 'var(--espresso)' }}
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Prev
                   </Button>
-                  <span className="text-sm px-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                  <span className="text-sm px-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                     {page} / {totalPages}
                   </span>
                   <Button
@@ -333,8 +333,8 @@ export function LiveOrders() {
                     size="sm"
                     onClick={() => setPage(p => p + 1)}
                     disabled={page === totalPages}
-                    className="border-[var(--foodchain-espresso)]/20 gap-1"
-                    style={{ color: 'var(--foodchain-espresso)' }}
+                    className="border-[var(--espresso)]/20 gap-1"
+                    style={{ color: 'var(--espresso)' }}
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />

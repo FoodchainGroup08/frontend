@@ -18,6 +18,7 @@ import {
   updateMenuItem,
   deleteMenuItem,
   toggleMenuItemAvailability,
+  uploadMenuItemImage,
   getCategoriesFull,
   type MenuItem,
 } from "@/services/api";
@@ -43,6 +44,10 @@ export function MenuCatalogue() {
     categoryId: "",
     isActive: true
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -73,6 +78,8 @@ export function MenuCatalogue() {
   const handleAdd = () => {
     setEditingItem(null);
     setFormData({ name: "", description: "", price: 0, categoryId: categories[0]?.id ?? "", isActive: true });
+    setImageFile(null);
+    setImagePreview(null);
     setIsModalOpen(true);
   };
 
@@ -86,6 +93,8 @@ export function MenuCatalogue() {
       categoryId: matchedCat?.id ?? categories[0]?.id ?? "",
       isActive: item.isActive ?? item.available
     });
+    setImageFile(null);
+    setImagePreview(item.imageUrl ?? item.image ?? null);
     setIsModalOpen(true);
   };
 
@@ -95,17 +104,23 @@ export function MenuCatalogue() {
     setIsSaving(true);
     try {
       if (editingItem) {
-        const updated = await updateMenuItem(editingItem.id, {
+        let updated = await updateMenuItem(editingItem.id, {
           name: formData.name, description: formData.description,
           categoryId: formData.categoryId, price: formData.price,
         });
+        if (imageFile) {
+          updated = await uploadMenuItemImage(editingItem.id, imageFile);
+        }
         setItems(items.map(i => i.id === editingItem.id ? updated : i));
         toast.success("Menu item updated");
       } else {
-        const created = await createMenuItem({
+        let created = await createMenuItem({
           name: formData.name, description: formData.description,
           categoryId: formData.categoryId, price: formData.price,
         });
+        if (imageFile) {
+          created = await uploadMenuItemImage(created.id, imageFile);
+        }
         setItems([...items, created]);
         toast.success("Menu item added");
       }
@@ -139,7 +154,7 @@ export function MenuCatalogue() {
 
   if (isLoading) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -156,10 +171,10 @@ export function MenuCatalogue() {
 
   if (error) {
     return (
-      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+      <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
-          <p className="mb-4" style={{ color: 'var(--foodchain-burnt-orange)' }}>{error}</p>
-          <Button onClick={fetchItems} variant="outline" className="border-[var(--foodchain-espresso)]/20" style={{ color: 'var(--foodchain-espresso)' }}>
+          <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
+          <Button onClick={fetchItems} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
             Retry
           </Button>
         </div>
@@ -168,14 +183,14 @@ export function MenuCatalogue() {
   }
 
   return (
-    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--foodchain-warm-white)' }}>
+    <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl mb-2" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
               Menu Catalogue
             </h1>
-            <p style={{ color: 'var(--foodchain-espresso)', opacity: 0.7 }}>
+            <p style={{ color: 'var(--espresso)', opacity: 0.7 }}>
               Manage all menu items across all branches
             </p>
           </div>
@@ -183,48 +198,62 @@ export function MenuCatalogue() {
           <Button
             onClick={handleAdd}
             className="gap-2 transition-all hover:opacity-90"
-            style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
+            style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
           >
             <Plus className="w-4 h-4" />
             Add Menu Item
           </Button>
         </div>
 
-        <Card className="border-[var(--foodchain-espresso)]/10" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+        <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
-            <CardTitle style={{ color: 'var(--foodchain-espresso)' }}>All Menu Items ({items.length})</CardTitle>
+            <CardTitle style={{ color: 'var(--espresso)' }}>All Menu Items ({items.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Name</TableHead>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Category</TableHead>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Price</TableHead>
-                    <TableHead style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Status</TableHead>
-                    <TableHead className="text-right" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>Actions</TableHead>
+                    <TableHead className="w-10" />
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600 }}>Name</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600 }}>Category</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600 }}>Price</TableHead>
+                    <TableHead style={{ color: 'var(--espresso)', fontWeight: 600 }}>Status</TableHead>
+                    <TableHead className="w-px text-right" style={{ color: 'var(--espresso)', fontWeight: 600 }}>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
+                  {items.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((item) => (
                     <TableRow key={item.id}>
+                      <TableCell className="w-10 pr-0">
+                        {(item.imageUrl || item.image) ? (
+                          <img
+                            src={item.imageUrl ?? item.image}
+                            alt={item.name}
+                            className="w-10 h-10 rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ backgroundColor: 'rgba(59,35,20,0.06)' }}>
+                            <span className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.3 }}>—</span>
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div>
-                          <p style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
+                          <p style={{ color: 'var(--espresso)', fontWeight: 600 }}>
                             {item.name}
                           </p>
-                          <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                          <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                             {item.description}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className="border-0" style={{ backgroundColor: 'var(--foodchain-espresso)', color: 'var(--foodchain-warm-white)' }}>
+                        <Badge className="border-0" style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}>
                           {item.category}
                         </Badge>
                       </TableCell>
-                      <TableCell style={{ color: 'var(--foodchain-golden-amber)', fontWeight: 600 }}>
+                      <TableCell style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                         ₦{item.price.toLocaleString()}
                       </TableCell>
                       <TableCell>
@@ -233,14 +262,14 @@ export function MenuCatalogue() {
                           onCheckedChange={() => handleToggleActive(item.id)}
                         />
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="w-px whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             onClick={() => handleEdit(item)}
                             variant="outline"
                             size="sm"
-                            className="gap-1 border-[var(--foodchain-espresso)]/20"
-                            style={{ color: 'var(--foodchain-espresso)' }}
+                            className="gap-1 border-[var(--espresso)]/20"
+                            style={{ color: 'var(--espresso)' }}
                           >
                             <Edit className="w-4 h-4" />
                             Edit
@@ -249,8 +278,8 @@ export function MenuCatalogue() {
                             onClick={() => handleDelete(item.id)}
                             variant="outline"
                             size="sm"
-                            className="gap-1 border-[var(--foodchain-burnt-orange)]"
-                            style={{ color: 'var(--foodchain-burnt-orange)' }}
+                            className="gap-1 border-[var(--burnt-orange)]"
+                            style={{ color: 'var(--burnt-orange)' }}
                           >
                             <Trash2 className="w-4 h-4" />
                             Delete
@@ -262,67 +291,99 @@ export function MenuCatalogue() {
                 </TableBody>
               </Table>
             </div>
+            {Math.ceil(items.length / ITEMS_PER_PAGE) > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--espresso)]/10">
+                <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, items.length)} of {items.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="border-[var(--espresso)]/20"
+                    style={{ color: 'var(--espresso)' }}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm" style={{ color: 'var(--espresso)' }}>
+                    {currentPage} / {Math.ceil(items.length / ITEMS_PER_PAGE)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(items.length / ITEMS_PER_PAGE), p + 1))}
+                    disabled={currentPage === Math.ceil(items.length / ITEMS_PER_PAGE)}
+                    className="border-[var(--espresso)]/20"
+                    style={{ color: 'var(--espresso)' }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent style={{ backgroundColor: 'var(--foodchain-warm-white)' }} className="max-w-2xl">
+          <DialogContent style={{ backgroundColor: 'var(--warm-white)' }} className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle style={{ color: 'var(--foodchain-espresso)' }}>
+              <DialogTitle style={{ color: 'var(--espresso)' }}>
                 {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="itemName" style={{ color: 'var(--foodchain-espresso)' }}>Item Name</Label>
+                <Label htmlFor="itemName" style={{ color: 'var(--espresso)' }}>Item Name</Label>
                 <Input
                   id="itemName"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Jollof Rice & Chicken"
-                  className="border-[var(--foodchain-espresso)]/20"
-                  style={{ backgroundColor: 'var(--foodchain-white)' }}
+                  className="border-[var(--espresso)]/20"
+                  style={{ backgroundColor: 'var(--white)' }}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" style={{ color: 'var(--foodchain-espresso)' }}>Description</Label>
+                <Label htmlFor="description" style={{ color: 'var(--espresso)' }}>Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Classic Nigerian jollof rice served with grilled chicken"
                   rows={3}
-                  className="border-[var(--foodchain-espresso)]/20 resize-none"
-                  style={{ backgroundColor: 'var(--foodchain-white)' }}
+                  className="border-[var(--espresso)]/20 resize-none"
+                  style={{ backgroundColor: 'var(--white)' }}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price" style={{ color: 'var(--foodchain-espresso)' }}>Price (₦)</Label>
+                  <Label htmlFor="price" style={{ color: 'var(--espresso)' }}>Price (₦)</Label>
                   <Input
                     id="price"
                     type="number"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
                     placeholder="2500"
-                    className="border-[var(--foodchain-espresso)]/20"
-                    style={{ backgroundColor: 'var(--foodchain-white)' }}
+                    className="border-[var(--espresso)]/20"
+                    style={{ backgroundColor: 'var(--white)' }}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category" style={{ color: 'var(--foodchain-espresso)' }}>Category</Label>
+                  <Label htmlFor="category" style={{ color: 'var(--espresso)' }}>Category</Label>
                   <Select
                     value={formData.categoryId}
                     onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
                   >
                     <SelectTrigger
                       id="category"
-                      className="border-[var(--foodchain-espresso)]/20"
-                      style={{ backgroundColor: 'var(--foodchain-white)' }}
+                      className="border-[var(--espresso)]/20"
+                      style={{ backgroundColor: 'var(--white)' }}
                     >
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -335,10 +396,44 @@ export function MenuCatalogue() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-md" style={{ backgroundColor: 'var(--foodchain-white)' }}>
+              <div className="space-y-2">
+                <Label style={{ color: 'var(--espresso)' }}>Meal Image</Label>
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-40 object-cover rounded-md"
+                  />
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  className="border-[var(--espresso)]/20"
+                  style={{ backgroundColor: 'var(--white)' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setImageFile(file);
+                      setImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                {imagePreview && (
+                  <button
+                    type="button"
+                    className="text-xs"
+                    style={{ color: 'var(--burnt-orange)' }}
+                    onClick={() => { setImageFile(null); setImagePreview(null); }}
+                  >
+                    Remove image
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-md" style={{ backgroundColor: 'var(--white)' }}>
                 <div>
-                  <Label htmlFor="itemActive" style={{ color: 'var(--foodchain-espresso)' }}>Active Status</Label>
-                  <p className="text-sm" style={{ color: 'var(--foodchain-espresso)', opacity: 0.6 }}>
+                  <Label htmlFor="itemActive" style={{ color: 'var(--espresso)' }}>Active Status</Label>
+                  <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
                     Item is {formData.isActive ? 'available' : 'unavailable'}
                   </p>
                 </div>
@@ -354,8 +449,8 @@ export function MenuCatalogue() {
               <Button
                 onClick={() => setIsModalOpen(false)}
                 variant="outline"
-                className="border-[var(--foodchain-espresso)]/20"
-                style={{ color: 'var(--foodchain-espresso)' }}
+                className="border-[var(--espresso)]/20"
+                style={{ color: 'var(--espresso)' }}
                 disabled={isSaving}
               >
                 Cancel
@@ -364,7 +459,7 @@ export function MenuCatalogue() {
                 onClick={handleSave}
                 disabled={isSaving}
                 className="transition-all hover:opacity-90"
-                style={{ backgroundColor: 'var(--foodchain-golden-amber)', color: 'var(--foodchain-charcoal)' }}
+                style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
               >
                 {isSaving ? 'Saving...' : editingItem ? 'Save Changes' : 'Add Item'}
               </Button>

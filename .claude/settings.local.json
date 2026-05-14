@@ -15,7 +15,8 @@
       "Bash(Head -50)",
       "Bash(xargs grep -l \"validate\\\\|validator\\\\|schema\\\\|yup\\\\|zod\")",
       "Bash(npm run *)",
-      "Bash(Get-Content *)"
+      "Bash(Get-Content *)",
+      "Bash(xargs grep -l -- '--foodchain-')"
     ]
   }
 }
