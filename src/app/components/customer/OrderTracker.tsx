@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { getOrderById, cancelOrder, type Order, type OrderStatus, type WsOrderUpdate } from "@/services/api";
 import { useOrderTracker } from "@/hooks/useOrderTracker";
 import { useAuth } from "@/context/AuthContext";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 // Mirrors the backend status lifecycle exactly.
 type LocalStatus =
@@ -276,7 +277,7 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
             <div className="flex items-start justify-between flex-wrap gap-2">
               <div>
                 <CardTitle className="text-base font-mono" style={{ color: 'var(--espresso)' }}>
-                  #{activeOrder.id.slice(-8).toUpperCase()}
+                  {formatOrderReference(activeOrder.id)}
                 </CardTitle>
                 <p className="text-sm mt-0.5" style={{ color: 'var(--espresso)', opacity: 0.55 }}>
                   Placed at {placedTime} · {activeOrder.branchName}

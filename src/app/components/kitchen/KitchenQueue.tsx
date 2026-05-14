@@ -9,6 +9,7 @@ import { getKitchenQueue, acceptKitchenOrder, readyKitchenOrder, pickupKitchenOr
 import { useKitchenQueue } from "@/hooks/useKitchenQueue";
 import { useAuth } from "@/context/AuthContext";
 import { playKitchenAlert } from "@/utils/kitchenAlert";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface KitchenQueueProps {
   onOrderClick: (order: KitchenOrder) => void;
@@ -220,7 +221,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p className="text-sm mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
-                #{order.id.split('-')[2] ?? order.id}
+                {formatOrderReference(order.id)}
               </p>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge

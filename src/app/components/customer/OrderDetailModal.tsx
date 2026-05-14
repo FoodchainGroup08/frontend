@@ -9,6 +9,7 @@ import {
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
+import { formatOrderReference } from "@/utils/orderDisplay";
 import { getOrderStatusDisplay } from "./orderStatusDisplay";
 
 interface OrderDetail {
@@ -51,7 +52,7 @@ export function OrderDetailModal({ order, isOpen, onClose }: OrderDetailModalPro
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>
-                Order #{order.id}
+                Order {formatOrderReference(order.id)}
               </DialogTitle>
               <DialogDescription className="flex items-center gap-2 mt-2">
                 <Calendar className="w-4 h-4" />
