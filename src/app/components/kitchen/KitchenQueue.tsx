@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { getKitchenQueue, acceptKitchenOrder, readyKitchenOrder, pickupKitchenOrder, serveKitchenOrder, type KitchenOrder, type WsOrderUpdate } from "@/services/api";
 import { useKitchenQueue } from "@/hooks/useKitchenQueue";
 import { useAuth } from "@/context/AuthContext";
-import { isNetworkError, DEMO_KITCHEN_ORDERS } from "@/utils/demoData";
 import { playKitchenAlert } from "@/utils/kitchenAlert";
 
 interface KitchenQueueProps {
@@ -90,15 +89,9 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     try {
       const data = await getKitchenQueue(page, QUEUE_SIZE);
       applyQueuePage(data);
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setOrders(DEMO_KITCHEN_ORDERS);
-        setServerTotals({ received: 0, preparing: 0, ready: 0 });
-        setTotalPages(1);
-      } else {
-        setError("Failed to load kitchen queue");
-        toast.error("Failed to load kitchen queue");
-      }
+    } catch {
+      setError("Failed to load kitchen queue");
+      toast.error("Failed to load kitchen queue");
     } finally {
       setIsLoading(false);
     }
@@ -108,16 +101,21 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     fetchQueue(0);
   }, []);
 
-  useKitchenQueue(branchId, (data) => {
+  useKitchenQueue(branchId, (data: any) => {
+    // SLA alert — { orderId, severity, minutesWaiting, message } — no newStatus field
+    if (data.severity) {
+      setOrders(prev => prev.map(o =>
+        o.id === data.orderId ? { ...o, isUrgent: true } : o
+      ));
+      return;
+    }
     const msg = data as WsOrderUpdate;
     if (msg.orderId && msg.newStatus) {
       const mapped = mapKitchenStatus(msg.newStatus);
       if (mapped === 'received') {
-        // New order — play alert and refetch so it appears in the list
         playKitchenAlert();
         fetchQueue(currentPage);
       } else if (mapped === 'picked-up' || mapped === 'served') {
-        // Terminal — remove from queue (backend already dropped it)
         setOrders(prev => prev.filter(o => o.id !== msg.orderId));
       } else {
         setOrders(prev => prev.map(o =>
@@ -131,7 +129,6 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
 
   const handleStatusChange = async (orderId: string, newStatus: 'preparing' | 'ready' | 'picked-up' | 'served') => {
     if (updatingOrders.has(orderId)) return;
-    const staffId = user?.id ?? '';
     setUpdatingOrders(prev => new Set(prev).add(orderId));
 
     const isTerminal = newStatus === 'picked-up' || newStatus === 'served';
@@ -161,17 +158,14 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     };
 
     try {
-      if (newStatus === 'preparing') await acceptKitchenOrder(orderId, staffId);
-      else if (newStatus === 'ready')     await readyKitchenOrder(orderId, staffId);
-      else if (newStatus === 'picked-up') await pickupKitchenOrder(orderId, staffId);
-      else if (newStatus === 'served')    await serveKitchenOrder(orderId, staffId);
+      if (newStatus === 'preparing') await acceptKitchenOrder(orderId);
+      else if (newStatus === 'ready')     await readyKitchenOrder(orderId);
+      else if (newStatus === 'picked-up') await pickupKitchenOrder(orderId);
+      else if (newStatus === 'served')    await serveKitchenOrder(orderId);
       applyLocally();
       toast.success(isTerminal ? 'Order completed' : `Order marked as ${newStatus}`);
     } catch (err: any) {
-      if (isNetworkError(err)) {
-        applyLocally();
-        toast.success(isTerminal ? 'Order completed' : `Order marked as ${newStatus}`);
-      } else if (err?.response?.status === 409) {
+      if (err?.response?.status === 409) {
         toast.info('Order already updated — refreshing queue');
         fetchQueue();
       } else {

@@ -32,14 +32,10 @@ export function useCustomerNotifications(userId: string | undefined) {
   useEffect(() => {
     if (!userId) return;
 
-    let attempts = 0;
-    const MAX_ATTEMPTS = 5;
-
     const client = new Client({
       brokerURL: `${WS_BASE}/ws-notifications`,
       reconnectDelay: 5000,
       onConnect: () => {
-        attempts = 0;
         client.subscribe(`/topic/customer/${userId}`, (msg) => {
           try {
             const n: WsNotification = JSON.parse(msg.body);
@@ -50,17 +46,8 @@ export function useCustomerNotifications(userId: string | undefined) {
           }
         });
       },
-      onDisconnect: () => {
-        attempts += 1;
-        if (attempts >= MAX_ATTEMPTS) {
-          client.deactivate();
-        }
-      },
-      onWebSocketError: () => {
-        attempts += 1;
-        if (attempts >= MAX_ATTEMPTS) {
-          client.deactivate();
-        }
+      onStompError: (frame) => {
+        console.error('STOMP error', frame);
       },
     });
 
