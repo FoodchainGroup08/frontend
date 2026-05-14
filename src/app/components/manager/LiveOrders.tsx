@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { getManagerLiveOrders, type Order, type WsOrderUpdate } from "@/services/api";
 import { useManagerOrders } from "@/hooks/useManagerOrders";
 import { useAuth } from "@/context/AuthContext";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface LiveOrder {
   id: string;
@@ -140,7 +141,7 @@ export function LiveOrders() {
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p className="text-sm mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
-                #{order.id.split('-')[2] ?? order.id}
+                {formatOrderReference(order.id)}
               </p>
               {order.customerName && (
                 <p className="text-xs mb-2" style={{ color: 'var(--espresso)', opacity: 0.6 }}>

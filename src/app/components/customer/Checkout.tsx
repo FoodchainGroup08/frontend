@@ -12,6 +12,7 @@ import { placeOrder, type Order, type BranchTable } from "@/services/api";
 import { LocationPicker } from "../auth/LocationPicker";
 import { getSavedDeliveryLocation, saveDeliveryLocation } from "@/services/locationService";
 import { useAuth } from "@/context/AuthContext";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface CartItem {
   id: string;
@@ -126,7 +127,7 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
         orderType,
       };
       onPlaceOrder(formData, order);
-      toast.success("Order placed successfully!", { description: `Order #${order.id}` });
+      toast.success("Order placed successfully!", { description: `Order ${formatOrderReference(order.id)}` });
     } catch {
       toast.error("Failed to place order", { description: "Please try again" });
     } finally {

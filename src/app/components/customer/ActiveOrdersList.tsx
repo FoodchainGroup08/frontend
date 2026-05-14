@@ -7,6 +7,7 @@ import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
 import { getActiveOrders, type Order } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface ActiveOrdersListProps {
   onSelectOrder: (orderId: string) => void;
@@ -133,7 +134,7 @@ export function ActiveOrdersList({ onSelectOrder, onGoBack }: ActiveOrdersListPr
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                           <span className="text-xs font-mono" style={{ color: 'var(--espresso)', opacity: 0.45 }}>
-                            #{(order.id ?? '').slice(-8).toUpperCase() || '—'}
+                            {formatOrderReference(order.id)}
                           </span>
                           <Badge className="border-0 text-xs" style={statusStyle(order.status)}>
                             {statusLabel(order.status)}

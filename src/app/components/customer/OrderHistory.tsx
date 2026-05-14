@@ -7,6 +7,7 @@ import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
 import { getOrderHistory, getOrderById, type Order } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { formatOrderReference } from "@/utils/orderDisplay";
 import { getOrderStatusDisplay } from "./orderStatusDisplay";
 
 interface HistoricalOrder {
@@ -172,7 +173,7 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <CardTitle className="text-lg" style={{ color: 'var(--espresso)' }}>
-                          Order #{order.id}
+                          Order {formatOrderReference(order.id)}
                         </CardTitle>
                         <Badge
                           className="border-0"

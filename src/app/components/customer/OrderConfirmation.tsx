@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Badge } from "../ui/badge";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface Order {
   id: string;
@@ -50,7 +51,7 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
         <Card className="border-[var(--espresso)]/10 mb-6" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle style={{ color: 'var(--espresso)' }}>Order #{order.id}</CardTitle>
+              <CardTitle style={{ color: 'var(--espresso)' }}>Order {formatOrderReference(order.id)}</CardTitle>
               <Badge className="border-0" style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}>
                 Processing
               </Badge>
