@@ -1,11 +1,15 @@
-import { ShoppingCart, History, MapPin, User, Sparkles } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { ShoppingCart, History, MapPin, User, Sparkles, Bell } from "lucide-react";
 import { Badge } from "../ui/badge";
+import { NotificationPanel } from "./NotificationPanel";
+import { useCustomerNotifications } from "@/hooks/useCustomerNotifications";
 
 interface CustomerNavbarProps {
   currentScreen: string;
   onNavigate: (screen: string) => void;
   cartItemCount: number;
   userName?: string;
+  userId?: string;
   selectedBranch?: string;
   onLogout: () => void;
 }
@@ -15,9 +19,25 @@ export function CustomerNavbar({
   onNavigate,
   cartItemCount,
   userName,
+  userId,
   selectedBranch,
-  onLogout
+  onLogout,
 }: CustomerNavbarProps) {
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const { unreadCount, resetUnreadCount, decrementUnread } = useCustomerNotifications(userId);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   return (
     <nav className="border-b sticky top-0 z-50" style={{ backgroundColor: 'var(--foodchain-espresso)', borderColor: 'var(--foodchain-espresso)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -84,6 +104,32 @@ export function CustomerNavbar({
             >
               <History className="w-5 h-5" />
             </button>
+
+            {/* Notification bell */}
+            <div ref={notifRef} className="relative">
+              <button
+                onClick={() => setIsNotifOpen(o => !o)}
+                className="relative p-2 rounded-md transition-colors opacity-70 hover:opacity-100"
+                style={{ color: 'var(--foodchain-warm-white)' }}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <Badge
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs border-0"
+                    style={{ backgroundColor: 'var(--foodchain-burnt-orange)', color: 'var(--foodchain-white)' }}
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Badge>
+                )}
+              </button>
+              <NotificationPanel
+                isOpen={isNotifOpen}
+                onClose={() => setIsNotifOpen(false)}
+                unreadCount={unreadCount}
+                onResetUnread={resetUnreadCount}
+                onDecrementUnread={decrementUnread}
+              />
+            </div>
 
             <button
               onClick={() => onNavigate('cart')}

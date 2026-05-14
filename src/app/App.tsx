@@ -410,6 +410,7 @@ function CustomerLayout() {
           onNavigate={s => navigate(screenToPath[s] ?? '/branches')}
           cartItemCount={cartItemCount}
           userName={user?.name}
+          userId={user?.id}
           selectedBranch={selectedBranch.name}
           onLogout={logout}
         />

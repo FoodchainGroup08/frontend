@@ -9,6 +9,7 @@ import { getKitchenQueue, acceptKitchenOrder, readyKitchenOrder, pickupKitchenOr
 import { useKitchenQueue } from "@/hooks/useKitchenQueue";
 import { useAuth } from "@/context/AuthContext";
 import { isNetworkError, DEMO_KITCHEN_ORDERS } from "@/utils/demoData";
+import { playKitchenAlert } from "@/utils/kitchenAlert";
 
 interface KitchenQueueProps {
   onOrderClick: (order: KitchenOrder) => void;
@@ -111,7 +112,11 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     const msg = data as WsOrderUpdate;
     if (msg.orderId && msg.newStatus) {
       const mapped = mapKitchenStatus(msg.newStatus);
-      if (mapped === 'picked-up' || mapped === 'served') {
+      if (mapped === 'received') {
+        // New order — play alert and refetch so it appears in the list
+        playKitchenAlert();
+        fetchQueue(currentPage);
+      } else if (mapped === 'picked-up' || mapped === 'served') {
         // Terminal — remove from queue (backend already dropped it)
         setOrders(prev => prev.filter(o => o.id !== msg.orderId));
       } else {
@@ -120,7 +125,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
         ));
       }
     } else {
-      fetchQueue();
+      fetchQueue(currentPage);
     }
   });
 
