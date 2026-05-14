@@ -9,7 +9,6 @@ import { Calendar } from "../ui/calendar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { getPopularItems, type PopularItem } from "@/services/api";
-import { isNetworkError, DEMO_POPULAR_ITEMS } from "@/utils/demoData";
 
 function DatePicker({ date, onChange }: { date: Date | null; onChange: (d: Date | null) => void }) {
   return (
@@ -47,13 +46,9 @@ export function PopularItems() {
     try {
       const data = await getPopularItems(dateStr);
       setItems(data);
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setItems(DEMO_POPULAR_ITEMS);
-      } else {
-        setError("Failed to load popular items");
-        toast.error("Failed to load popular items");
-      }
+    } catch {
+      setError("Failed to load popular items");
+      toast.error("Failed to load popular items");
     } finally {
       setIsLoading(false);
     }

@@ -50,11 +50,11 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl" style={{ backgroundColor: 'var(--foodchain-white)', border: '2px solid var(--foodchain-espresso)' }}>
-        <DialogHeader>
+      <DialogContent className="max-w-lg w-full max-h-[88vh] flex flex-col overflow-hidden p-0" style={{ backgroundColor: 'var(--foodchain-white)', border: '2px solid var(--foodchain-espresso)' }}>
+        <DialogHeader className="px-5 pt-5 pb-3 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-2xl mb-2" style={{ color: 'var(--foodchain-warm-white)' }}>
+              <DialogTitle className="text-xl mb-2" style={{ color: 'var(--foodchain-espresso)' }}>
                 Order #{order.id.split('-')[2]}
               </DialogTitle>
               <div className="flex items-center gap-2 flex-wrap">
@@ -98,7 +98,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-5 overflow-y-auto flex-1 min-h-0 px-5">
           {(isOverdue || order.isUrgent) && (
             <div className="p-4 rounded-md flex items-start gap-3" style={{ backgroundColor: 'var(--foodchain-burnt-orange)', opacity: 0.9 }}>
               <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--foodchain-white)' }} />
@@ -114,7 +114,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
           )}
 
           <div>
-            <h3 className="text-lg mb-4" style={{ color: 'var(--foodchain-warm-white)', fontWeight: 600 }}>
+            <h3 className="text-base mb-3" style={{ color: 'var(--foodchain-espresso)', fontWeight: 600 }}>
               Order Items
             </h3>
             <div className="space-y-3">
@@ -180,7 +180,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
           </div>
         </div>
 
-        <div className="mt-6 flex gap-3">
+        <div className="flex gap-3 px-5 py-4 flex-shrink-0 border-t" style={{ borderColor: 'var(--foodchain-espresso)', borderOpacity: 0.1 }}>
           {order.status === 'received' && (
             <>
               <Button

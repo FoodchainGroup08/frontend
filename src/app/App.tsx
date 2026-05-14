@@ -38,6 +38,7 @@ import { MenuCatalogue } from "./components/admin/MenuCatalogue";
 import { UserManagement } from "./components/admin/UserManagement";
 import { Reports } from "./components/admin/Reports";
 import { AdminNotifications } from "./components/admin/AdminNotifications";
+import { LandingPage } from "./components/landing/LandingPage";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 
@@ -409,6 +410,7 @@ function CustomerLayout() {
           onNavigate={s => navigate(screenToPath[s] ?? '/branches')}
           cartItemCount={cartItemCount}
           userName={user?.name}
+          userId={user?.id}
           selectedBranch={selectedBranch.name}
           onLogout={logout}
         />
@@ -592,13 +594,25 @@ function LoadingScreen() {
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 function AppRoutes() {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
 
   return (
     <>
       <Routes>
+        {/* Landing page */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to={getRoleHome(user?.role)} replace />
+            ) : (
+              <LandingPage />
+            )
+          }
+        />
+
         {/* Public auth routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

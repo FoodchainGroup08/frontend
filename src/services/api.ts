@@ -176,8 +176,8 @@ const mapKitchenOrder = (order: any): KitchenOrder => ({
   id: order.id ?? order.orderId,
   status: normalizeKitchenStatus(order.displayStatus ?? order.status),
   items: Array.isArray(order.items)
-    ? order.items.map((item: any) => ({
-        id: item.id ?? item.menuItemId,
+    ? order.items.map((item: any, i: number) => ({
+        id: item.id ?? item.menuItemId ?? `${item.name ?? 'item'}-${i}`,
         name: item.name ?? item.menuItemName ?? 'Menu item',
         quantity: item.quantity ?? 1,
         specialInstructions: item.specialInstructions ?? undefined,
@@ -777,17 +777,17 @@ export const getKitchenQueue = (page = 0, size = 20): Promise<KitchenQueuePage> 
     };
   });
 
-export const acceptKitchenOrder = (orderId: string, staffId: string) =>
-  apiClient.post(`/kitchen/orders/${orderId}/accept`, { staffId, notes: '' }).then(r => r.data);
+export const acceptKitchenOrder = (orderId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/accept`).then(r => r.data);
 
-export const readyKitchenOrder = (orderId: string, staffId: string) =>
-  apiClient.post(`/kitchen/orders/${orderId}/ready`, { staffId, notes: '' }).then(r => r.data);
+export const readyKitchenOrder = (orderId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/ready`).then(r => r.data);
 
-export const pickupKitchenOrder = (orderId: string, staffId: string) =>
-  apiClient.post(`/kitchen/orders/${orderId}/pickup`, { staffId, notes: '' }).then(r => r.data);
+export const pickupKitchenOrder = (orderId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/pickup`).then(r => r.data);
 
-export const serveKitchenOrder = (orderId: string, staffId: string) =>
-  apiClient.post(`/kitchen/orders/${orderId}/serve`, { staffId, notes: '' }).then(r => r.data);
+export const serveKitchenOrder = (orderId: string) =>
+  apiClient.post(`/kitchen/orders/${orderId}/serve`).then(r => r.data);
 
 // ─── MANAGER ──────────────────────────────────────────────────────────────────
 
@@ -806,7 +806,12 @@ export const getManagerLiveOrders = () =>
   apiClient.get<any>('/manager/orders/live').then(r => {
     const data = r.data;
     const rows: any[] = data?.content ?? (Array.isArray(data) ? data : []);
-    return rows.map(mapOrder);
+    return rows.map(o => ({
+      ...mapOrder(o),
+      total: Math.round((o.total ?? 0) / 100),
+      subtotal: Math.round((o.subtotal ?? o.totalAmount ?? 0) / 100),
+      deliveryFee: Math.round((o.deliveryFee ?? 0) / 100),
+    }));
   });
 
 export const getDailySales = (date?: string) =>

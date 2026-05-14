@@ -8,7 +8,6 @@ import { Calendar } from "../ui/calendar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { toast } from "sonner";
 import { getManagerHistory, type ManagerHistoryDay } from "@/services/api";
-import { isNetworkError } from "@/utils/demoData";
 
 function DateRangePicker({
   from,
@@ -70,13 +69,9 @@ export function ManagerHistory() {
         toDate.toISOString().split('T')[0],
       );
       setHistory(data);
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setHistory([]);
-      } else {
-        setError("Failed to load history");
-        toast.error("Failed to load history");
-      }
+    } catch {
+      setError("Failed to load history");
+      toast.error("Failed to load history");
     } finally {
       setIsLoading(false);
     }
