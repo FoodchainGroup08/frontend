@@ -5,7 +5,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-import { getActiveOrders, type Order, type OrderStatus } from "@/services/api";
+import { getActiveOrders, type Order } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 
 interface ActiveOrdersListProps {
@@ -13,7 +13,7 @@ interface ActiveOrdersListProps {
   onGoBack: () => void;
 }
 
-function statusLabel(s: OrderStatus): string {
+function statusLabel(s: string): string {
   switch (s) {
 
     case 'RECEIVED':  return 'Order Placed';
@@ -28,7 +28,7 @@ function statusLabel(s: OrderStatus): string {
   }
 }
 
-function statusStyle(s: OrderStatus): React.CSSProperties {
+function statusStyle(s: string): React.CSSProperties {
   switch (s) {
 
     case 'RECEIVED':

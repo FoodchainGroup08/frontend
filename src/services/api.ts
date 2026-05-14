@@ -105,7 +105,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  status: OrderStatus;
+  status: string;
   items: OrderItem[];
   itemCount?: number;
   subtotal: number;
@@ -492,9 +492,7 @@ function normaliseOrderType(raw: string): 'dine-in' | 'takeaway' | 'delivery' {
   }
 }
 
-// Maps backend-only statuses to the nearest frontend-visible value so the
-// order tracker never receives an unknown enum string.
-function normaliseOrderStatus(raw: string): OrderStatus {
+function normaliseOrderStatus(raw: string): string {
   switch (raw) {
     case 'RECEIVED':
     case 'CONFIRMED':
@@ -504,9 +502,9 @@ function normaliseOrderStatus(raw: string): OrderStatus {
     case 'SERVED':
     case 'COMPLETED':
     case 'CANCELLED':
-      return raw as OrderStatus;
-    case 'PAYMENT_PENDING': return 'RECEIVED';
-    default:                return 'RECEIVED';
+      return raw;
+    default:
+      return raw ?? 'RECEIVED';
   }
 }
 

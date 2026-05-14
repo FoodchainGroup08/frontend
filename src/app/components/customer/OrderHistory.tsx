@@ -7,10 +7,11 @@ import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
 import { getOrderHistory, getOrderById, type Order } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { getOrderStatusDisplay } from "./orderStatusDisplay";
 
 interface HistoricalOrder {
   id: string;
-  status: 'delivered' | 'cancelled';
+  status: string;
   items: Array<{ id: string; name: string; quantity: number }>;
   total: number;
   branchName: string;
@@ -28,10 +29,9 @@ interface OrderHistoryProps {
 }
 
 function mapApiOrder(order: Order): HistoricalOrder {
-  const deliveredStatuses = ['SERVED', 'PICKED_UP'];
   return {
     id: order.id,
-    status: deliveredStatuses.includes(order.status) ? 'delivered' : 'cancelled',
+    status: order.status,
     items: order.items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity })),
     total: order.total,
     branchName: order.branchName,
@@ -157,83 +157,84 @@ export function OrderHistory({ onViewDetails, onBrowseMenu }: OrderHistoryProps)
         </div>
 
         <div className="space-y-4">
-          {orders.map((order) => (
-            <Card
-              key={order.id}
-              className="border-[var(--espresso)]/10 cursor-pointer transition-all hover:shadow-lg"
-              onClick={() => onViewDetails(order)}
-              style={{ backgroundColor: 'var(--white)' }}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <CardTitle className="text-lg" style={{ color: 'var(--espresso)' }}>
-                        Order #{order.id}
-                      </CardTitle>
-                      <Badge
-                        className="border-0"
-                        style={{
-                          backgroundColor: order.status === 'delivered' ? 'var(--sage-green)' : 'var(--burnt-orange)',
-                          color: 'var(--white)'
-                        }}
-                      >
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </Badge>
+          {orders.map((order) => {
+            const statusDisplay = getOrderStatusDisplay(order.status);
+
+            return (
+              <Card
+                key={order.id}
+                className="border-[var(--espresso)]/10 cursor-pointer transition-all hover:shadow-lg"
+                onClick={() => onViewDetails(order)}
+                style={{ backgroundColor: 'var(--white)' }}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <CardTitle className="text-lg" style={{ color: 'var(--espresso)' }}>
+                          Order #{order.id}
+                        </CardTitle>
+                        <Badge
+                          className="border-0"
+                          style={statusDisplay.style}
+                        >
+                          {statusDisplay.label}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 flex-wrap text-sm">
+                        <div className="flex items-center gap-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                          <Calendar className="w-4 h-4" />
+                          <span>{order.orderDate}</span>
+                        </div>
+                        <div className="flex items-center gap-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                          <MapPin className="w-4 h-4" />
+                          <span>{order.branchName}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 flex-wrap text-sm">
-                      <div className="flex items-center gap-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
-                        <Calendar className="w-4 h-4" />
-                        <span>{order.orderDate}</span>
-                      </div>
-                      <div className="flex items-center gap-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
-                        <MapPin className="w-4 h-4" />
-                        <span>{order.branchName}</span>
-                      </div>
+                    <div className="text-right">
+                      <p className="text-xl" style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
+                        ₦{order.total.toLocaleString()}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xl" style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
-                      ₦{order.total.toLocaleString()}
-                    </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 mb-4">
+                    {order.items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-2 text-sm">
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
+                        <span style={{ color: 'var(--espresso)', opacity: 0.8 }}>
+                          {item.name} × {item.quantity}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 text-sm">
-                      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
-                      <span style={{ color: 'var(--espresso)', opacity: 0.8 }}>
-                        {item.name} × {item.quantity}
-                      </span>
-                    </div>
-                  ))}
-                </div>
 
-                {order.deliveryDate && (
-                  <CardDescription className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
-                    Delivered on {order.deliveryDate}
-                  </CardDescription>
-                )}
+                  {order.deliveryDate && (
+                    <CardDescription className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                      Delivered on {order.deliveryDate}
+                    </CardDescription>
+                  )}
 
-                <div className="flex items-center justify-end gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-[var(--espresso)]/20"
-                    style={{ color: 'var(--espresso)' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewDetails(order);
-                    }}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-[var(--espresso)]/20"
+                      style={{ color: 'var(--espresso)' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetails(order);
+                      }}
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>
