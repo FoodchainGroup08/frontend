@@ -28,10 +28,12 @@ type Step =
   | 'hunger'
   | 'mood'
   | 'meal-type'
+  | 'fulfillment'
   | 'budget'
   | 'dietary'
   | 'notes'
   | 'loading'
+  | 'clarify'
   | 'results'
   | 'error';
 
@@ -39,6 +41,7 @@ interface WizardAnswers {
   hungerLevel: string | null;
   moods: string[];
   mealType: string | null;
+  fulfillmentType: string | null;
   budget: string | null;
   dietaryPreferences: string[];
   notes: string;
@@ -64,7 +67,7 @@ export interface AIFoodAssistantModalProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const QUESTION_STEPS: Step[] = ['hunger', 'mood', 'meal-type', 'budget', 'dietary', 'notes'];
+const QUESTION_STEPS: Step[] = ['hunger', 'mood', 'meal-type', 'fulfillment', 'budget', 'dietary', 'notes'];
 
 interface StepMeta {
   question: string;
@@ -83,6 +86,7 @@ const STEP_META: Partial<Record<Step, StepMeta>> = {
     optional: true,
   },
   'meal-type': { question: 'What type of meal?', optional: true },
+  fulfillment: { question: 'How will you receive your order?', optional: true },
   budget: { question: "What's your budget?", optional: true },
   dietary: {
     question: 'Any dietary preferences?',
@@ -127,6 +131,12 @@ const BUDGET_OPTIONS = [
   { label: 'No limit', emoji: '🤑' },
 ];
 
+const FULFILLMENT_OPTIONS = [
+  { label: 'Dine-in', emoji: '🪑' },
+  { label: 'Pickup', emoji: '🛍️' },
+  { label: 'Delivery', emoji: '🚚' },
+];
+
 const DIETARY_OPTIONS = [
   { label: 'No restrictions', emoji: '✅' },
   { label: 'Halal', emoji: '☪️' },
@@ -142,6 +152,7 @@ const DEFAULT_ANSWERS: WizardAnswers = {
   hungerLevel: null,
   moods: [],
   mealType: null,
+  fulfillmentType: null,
   budget: null,
   dietaryPreferences: [],
   notes: '',
@@ -200,6 +211,15 @@ function buildSuggestionRequest(
   };
   const mealType = answers.mealType ? mealTypeMap[answers.mealType] : undefined;
 
+  const fulfillmentMap: Record<string, FoodSuggestionRequest['fulfillmentType']> = {
+    'Dine-in': 'dine-in',
+    Pickup: 'pickup',
+    Delivery: 'delivery',
+  };
+  const fulfillmentType = answers.fulfillmentType
+    ? fulfillmentMap[answers.fulfillmentType]
+    : undefined;
+
   return {
     branchId,
     branchName,
@@ -207,6 +227,7 @@ function buildSuggestionRequest(
     peopleCount: count,
     ...(budget !== undefined && { budget }),
     ...(mealType && { mealType }),
+    ...(fulfillmentType && { fulfillmentType }),
     ...(dietaryPrefs.length > 0 && { dietaryPreferences: [...new Set(dietaryPrefs)] }),
     limit: 5,
   };
@@ -383,6 +404,7 @@ export function AIFoodAssistantModal({
   const [answers, setAnswers] = useState<WizardAnswers>(DEFAULT_ANSWERS);
   const [result, setResult] = useState<FoodSuggestionResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [clarifyText, setClarifyText] = useState('');
   const [direction, setDirection] = useState<1 | -1>(1);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -422,12 +444,18 @@ export function AIFoodAssistantModal({
 
   // ── API call ─────────────────────────────────────────────────────────────────
 
-  const submitAnswers = async () => {
+  const submitAnswers = async (extraNote?: string) => {
     goTo('loading');
     setErrorMsg('');
     setResult(null);
     try {
-      const req = buildSuggestionRequest(answers, branchId, branchName);
+      const req = buildSuggestionRequest(
+        extraNote
+          ? { ...answers, notes: [answers.notes, extraNote].filter(Boolean).join('. ') }
+          : answers,
+        branchId,
+        branchName
+      );
       const res = await getFoodSuggestions(req);
       setResult(res);
       if (res.readyForSuggestions && res.suggestions.length > 0) {
@@ -435,6 +463,9 @@ export function AIFoodAssistantModal({
       } else if (res.readyForSuggestions) {
         setErrorMsg('No suggestions matched your preferences. Try adjusting your choices.');
         goTo('error');
+      } else if (res.questions?.length > 0) {
+        setClarifyText('');
+        goTo('clarify');
       } else {
         setErrorMsg(
           res.message || 'Our AI needs a bit more information. Please complete all fields.'
@@ -453,6 +484,7 @@ export function AIFoodAssistantModal({
     setAnswers(DEFAULT_ANSWERS);
     setResult(null);
     setErrorMsg('');
+    setClarifyText('');
     goTo('welcome');
   };
 
@@ -476,7 +508,7 @@ export function AIFoodAssistantModal({
 
   // ── Answer helpers ────────────────────────────────────────────────────────────
 
-  const setSingle = (key: 'hungerLevel' | 'mealType' | 'budget', val: string) =>
+  const setSingle = (key: 'hungerLevel' | 'mealType' | 'budget' | 'fulfillmentType', val: string) =>
     setAnswers((a) => ({ ...a, [key]: a[key] === val ? null : val }));
 
   const toggleMulti = (key: 'moods' | 'dietaryPreferences', val: string) =>
@@ -576,6 +608,21 @@ export function AIFoodAssistantModal({
                 emoji={o.emoji}
                 selected={answers.mealType === o.label}
                 onClick={() => setSingle('mealType', o.label)}
+              />
+            ))}
+          </div>
+        );
+
+      case 'fulfillment':
+        return (
+          <div className='grid grid-cols-1 gap-2'>
+            {FULFILLMENT_OPTIONS.map((o) => (
+              <OptionChip
+                key={o.label}
+                label={o.label}
+                emoji={o.emoji}
+                selected={answers.fulfillmentType === o.label}
+                onClick={() => setSingle('fulfillmentType', o.label)}
               />
             ))}
           </div>
@@ -704,6 +751,38 @@ export function AIFoodAssistantModal({
             </p>
           </div>
         );
+
+      case 'clarify':
+        return (
+          <div className='space-y-3'>
+            {result?.message && (
+              <p className='text-sm' style={{ color: 'var(--foodchain-espresso)' }}>
+                {result.message}
+              </p>
+            )}
+            {result?.questions?.map((q, i) => (
+              <p
+                key={i}
+                className='text-sm font-medium'
+                style={{ color: 'var(--foodchain-espresso)' }}
+              >
+                • {q}
+              </p>
+            ))}
+            <textarea
+              value={clarifyText}
+              onChange={(e) => setClarifyText(e.target.value)}
+              placeholder='Type your answer here…'
+              rows={4}
+              className='w-full rounded-xl border px-3.5 py-3 text-sm resize-none outline-none transition-colors'
+              style={{
+                borderColor: 'color-mix(in srgb, var(--foodchain-espresso) 20%, transparent)',
+                color: 'var(--foodchain-charcoal)',
+                backgroundColor: 'transparent',
+              }}
+            />
+          </div>
+        );
     }
   };
 
@@ -744,7 +823,7 @@ export function AIFoodAssistantModal({
             <RotateCcw className='w-3.5 h-3.5' />
             Start over
           </Button>
-          <Button size='sm' variant='outline' onClick={submitAnswers} className='text-xs gap-1'>
+          <Button size='sm' variant='outline' onClick={() => submitAnswers()} className='text-xs gap-1'>
             <RefreshCw className='w-3.5 h-3.5' />
             Regenerate
           </Button>
@@ -775,7 +854,7 @@ export function AIFoodAssistantModal({
             Start over
           </Button>
           <Button
-            onClick={submitAnswers}
+            onClick={() => submitAnswers()}
             className='flex-1 text-sm gap-1.5'
             style={{
               backgroundColor: 'var(--golden-amber)',
@@ -784,6 +863,28 @@ export function AIFoodAssistantModal({
           >
             <RefreshCw className='w-3.5 h-3.5' />
             Try again
+          </Button>
+        </div>
+      );
+    }
+
+    if (step === 'clarify') {
+      return (
+        <div className='flex gap-2'>
+          <Button variant='ghost' onClick={handleStartOver} className='flex-1 text-sm'>
+            Start over
+          </Button>
+          <Button
+            onClick={() => submitAnswers(clarifyText)}
+            disabled={!clarifyText.trim()}
+            className='flex-1 text-sm gap-1.5'
+            style={{
+              backgroundColor: 'var(--foodchain-golden-amber)',
+              color: 'var(--foodchain-charcoal)',
+            }}
+          >
+            <Sparkles className='w-3.5 h-3.5' />
+            Submit answer
           </Button>
         </div>
       );
