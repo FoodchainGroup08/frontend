@@ -122,7 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('foodchain_user');
     setToken(null);
     setUser(null);
-    window.location.href = '/login';
   };
 
   const syncPendingLocation = async () => {

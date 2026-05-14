@@ -61,10 +61,24 @@ export interface User {
   longitude?: number | null;
 }
 
+export interface BranchHour {
+  id?: string;
+  dayOfWeek: number; // 0=Monday … 6=Sunday
+  dayName?: string;
+  openTime: string;  // "08:00"
+  closeTime: string; // "22:00"
+  closed: boolean;
+}
+
 export interface Branch {
   id: string;
   name: string;
   address: string;
+  phone?: string;
+  description?: string;
+  managerId?: string;
+  latitude?: number;
+  longitude?: number;
   location?: string;
   distance?: string;
   hours: string;
@@ -391,10 +405,13 @@ function mapBranch(b: any): Branch {
     id: b.id,
     name: b.name,
     address: b.address,
+    phone: b.phone,
+    description: b.description,
+    managerId: b.managerId,
+    latitude: b.latitude,
+    longitude: b.longitude,
     location: b.address,
     distance: b.distanceKm != null ? `${Number(b.distanceKm).toFixed(1)} km` : b.distance,
-    // Branch service returns hoursDisplay when no hours rows are configured.
-    // Fall back through hours → hoursDisplay → placeholder.
     hours: (b.hours && b.hours !== 'Hours not set') ? b.hours : (b.hoursDisplay && b.hoursDisplay !== 'Hours not set') ? b.hoursDisplay : '—',
     rating: b.rating ?? 0,
     isOpen: b.isOpen ?? false,
@@ -603,6 +620,12 @@ export const patchBranchStatus = (id: string, isActive: boolean) =>
     .patch<any>(`/branches/${id}/${isActive ? 'activate' : 'deactivate'}`)
     .then((r) => mapBranch(r.data));
 
+export const getBranchHours = (id: string): Promise<BranchHour[]> =>
+  apiClient.get<any>(`/branches/${id}/hours`).then(r => r.data ?? []);
+
+export const setBranchHours = (id: string, hours: Omit<BranchHour, 'id' | 'dayName'>[]): Promise<BranchHour[]> =>
+  apiClient.put<any>(`/branches/${id}/hours`, hours).then(r => r.data ?? []);
+
 export const getBranchesPublic = (): Promise<Branch[]> =>
   apiClient.get<any>('/branches').then((r) => {
     const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
@@ -707,7 +730,7 @@ export const getFoodSuggestions = (request: FoodSuggestionRequest): Promise<AiRe
 
 export const uploadMenuItemImage = async (id: string, file: File) => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('image', file);
   const r = await apiClient.post<any>(`/menu/items/${id}/image`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
   return mapMenuItem(r.data);
 };
