@@ -68,7 +68,8 @@ function mapApiStatus(s: OrderStatus): LocalStatus {
 
 // Step definitions differ by order type for the last two steps.
 function getSteps(orderType?: string) {
-  const isDineIn   = orderType === 'dine-in';
+  const isDineIn  = orderType === 'dine-in';
+  const isPickup  = orderType === 'takeaway' || orderType === 'pickup';
 
   return [
     { key: 'received'  as LocalStatus, label: 'Order Placed',      icon: CheckCircle2    },
@@ -81,22 +82,24 @@ function getSteps(orderType?: string) {
     },
     {
       key:   (isDineIn ? 'served' : 'picked-up') as LocalStatus,
-      label: isDineIn ? 'Served at Table' : 'Out for Delivery',
-      icon:  isDineIn ? Home : Truck,
+      label: isDineIn ? 'Served at Table' : isPickup ? 'Ready for Pickup!' : 'Out for Delivery',
+      icon:  isDineIn ? Home : isPickup ? Package : Truck,
     },
   ];
 }
 
 function stepSubtext(status: LocalStatus, orderType?: string): string {
+  const isPickup = orderType === 'takeaway' || orderType === 'pickup';
   switch (status) {
     case 'received':  return 'Waiting for the branch to confirm your order…';
     case 'confirmed': return 'The kitchen is about to start on your order…';
     case 'preparing': return 'The kitchen is preparing your order…';
     case 'ready':
-      if (orderType === 'dine-in')   return 'Your food is ready — a server is on the way!';
-      if (orderType === 'takeaway')  return 'Head to the counter — your order is ready!';
+      if (orderType === 'dine-in') return 'Your food is ready — a server is on the way!';
+      if (isPickup)                return 'Head to the counter — your order is ready!';
       return 'A rider is collecting your order…';
-    case 'picked-up': return 'Your order is on its way to you!';
+    case 'picked-up':
+      return isPickup ? 'Your order is ready to collect!' : 'Your order is on its way to you!';
     case 'served':    return 'Enjoy your meal!';
     case 'completed': return 'Order complete!';
     default:          return 'In progress…';
@@ -113,7 +116,10 @@ function badgeStyle(status: LocalStatus): React.CSSProperties {
   return { backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' };
 }
 
-function badgeLabel(status: LocalStatus): string {
+function badgeLabel(status: LocalStatus, orderType?: string): string {
+  if (status === 'picked-up' && (orderType === 'takeaway' || orderType === 'pickup')) {
+    return 'Ready for Pickup';
+  }
   const labels: Record<LocalStatus, string> = {
     'received':  'Order Placed',
     'confirmed': 'Confirmed',
@@ -258,7 +264,7 @@ export function OrderTracker({ orderId, onGoBack }: OrderTrackerProps) {
                 </p>
               </div>
               <Badge className="border-0" style={badgeStyle(activeOrder.status)}>
-                {badgeLabel(activeOrder.status)}
+                {badgeLabel(activeOrder.status, activeOrder.orderType)}
               </Badge>
             </div>
           </CardHeader>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Edit, Trash2, UploadCloud } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
@@ -28,6 +28,48 @@ const DEMO_MENU_ITEMS: MenuItem[] = [
   { id: '1', name: 'Jollof Rice with Chicken', description: 'Spicy Nigerian jollof rice served with grilled chicken', price: 3500, category: 'Mains', available: true, isActive: true },
   { id: '2', name: 'Fried Rice Combo', description: 'Delicious fried rice with beef and plantain', price: 3200, category: 'Mains', available: true, isActive: true },
 ];
+
+function ImageUploadZone({ onFileChange }: { onFileChange: (file: File) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) onFileChange(file);
+  };
+
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+      className="flex flex-col items-center justify-center gap-2 p-6 rounded-md border-2 border-dashed cursor-pointer transition-colors"
+      style={{
+        borderColor: isDragging ? 'var(--golden-amber)' : 'rgba(59,35,20,0.2)',
+        backgroundColor: isDragging ? 'rgba(240,165,0,0.06)' : 'var(--white)',
+      }}
+    >
+      <UploadCloud className="w-8 h-8" style={{ color: isDragging ? 'var(--golden-amber)' : 'var(--espresso)', opacity: isDragging ? 1 : 0.4 }} />
+      <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+        Click or drag & drop to upload image
+      </p>
+      <p className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.4 }}>PNG, JPG, WEBP</p>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFileChange(file);
+        }}
+      />
+    </div>
+  );
+}
 
 export function MenuCatalogue() {
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -405,17 +447,10 @@ export function MenuCatalogue() {
                     className="w-full h-40 object-cover rounded-md"
                   />
                 )}
-                <Input
-                  type="file"
-                  accept="image/*"
-                  className="border-[var(--espresso)]/20"
-                  style={{ backgroundColor: 'var(--white)' }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setImageFile(file);
-                      setImagePreview(URL.createObjectURL(file));
-                    }
+                <ImageUploadZone
+                  onFileChange={(file) => {
+                    setImageFile(file);
+                    setImagePreview(URL.createObjectURL(file));
                   }}
                 />
                 {imagePreview && (

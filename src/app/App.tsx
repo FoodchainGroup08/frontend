@@ -59,6 +59,7 @@ type ConfirmationOrder = {
   items: Array<{ id: string; name: string; price: number; quantity: number }>;
   subtotal: number;
   deliveryFee: number;
+  reservationFee?: number;
   total: number;
   deliveryAddress: string;
   phoneNumber: string;
@@ -66,7 +67,7 @@ type ConfirmationOrder = {
   paymentMethod: string;
   branchName: string;
   estimatedTime: string;
-  orderType?: 'delivery' | 'dine-in';
+  orderType?: 'delivery' | 'dine-in' | 'pickup';
 };
 
 type OrderDetailData = {
@@ -207,8 +208,15 @@ function CustomerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [selectedBranch, setSelectedBranch] = useState<ApiBranch | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const cartKey = `foodchain_cart_${user?.id}`;
+  const branchKey = `foodchain_branch_${user?.id}`;
+
+  const [selectedBranch, setSelectedBranch] = useState<ApiBranch | null>(() => {
+    try { return JSON.parse(localStorage.getItem(branchKey) ?? 'null'); } catch { return null; }
+  });
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem(cartKey) ?? '[]'); } catch { return []; }
+  });
   const [currentOrder, setCurrentOrder] = useState<ConfirmationOrder | null>(null);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   // Track which branches have already shown the AI modal this session
@@ -216,6 +224,16 @@ function CustomerLayout() {
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) localStorage.setItem(cartKey, JSON.stringify(cart));
+  }, [cart, cartKey, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (selectedBranch) localStorage.setItem(branchKey, JSON.stringify(selectedBranch));
+    else localStorage.removeItem(branchKey);
+  }, [selectedBranch, branchKey, user?.id]);
 
   const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -293,6 +311,7 @@ function CustomerLayout() {
       items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
       subtotal: formData.subtotal,
       deliveryFee: formData.deliveryFee,
+      reservationFee: formData.reservationFee,
       total: formData.total,
       deliveryAddress: formData.deliveryAddress,
       phoneNumber: formData.phoneNumber,
@@ -304,6 +323,7 @@ function CustomerLayout() {
     });
     setTrackingOrderId(apiOrder.id);
     setCart([]);
+    if (user?.id) localStorage.removeItem(`foodchain_cart_${user.id}`);
     navigate('/order-confirmation');
   };
 
@@ -358,6 +378,7 @@ function CustomerLayout() {
             cart={cart}
             branchId={selectedBranch.id}
             branchName={selectedBranch.name}
+            branchAddress={selectedBranch.address}
             onPlaceOrder={handlePlaceOrder}
             onGoBack={() => navigate('/cart')}
           />

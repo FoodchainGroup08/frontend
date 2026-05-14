@@ -581,6 +581,25 @@ export const getBranchesPublic = (): Promise<Branch[]> =>
     return items.map(mapBranch);
   });
 
+export interface BranchTable {
+  id: string;
+  tableNumber: string | number;
+  capacity: number;
+  isAvailable: boolean;
+}
+
+// Expects GET /branches/{branchId}/tables returning an array or Spring Page of table objects.
+export const getTablesByBranch = (branchId: string): Promise<BranchTable[]> =>
+  apiClient.get<any>(`/branches/${branchId}/tables`).then(r => {
+    const items: any[] = r.data?.content ?? r.data?.tables ?? (Array.isArray(r.data) ? r.data : []);
+    return items.map(t => ({
+      id: t.id ?? String(t.tableNumber ?? t.number),
+      tableNumber: t.tableNumber ?? t.number ?? '?',
+      capacity: t.capacity ?? t.seats ?? 4,
+      isAvailable: t.isAvailable ?? t.available ?? true,
+    }));
+  });
+
 // ─── MENU ─────────────────────────────────────────────────────────────────────
 // All paths include /v1/ — the menu service uses that as an internal prefix.
 // Gateway base is /api so full URL becomes /api/menu/...

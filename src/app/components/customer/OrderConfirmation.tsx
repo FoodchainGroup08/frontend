@@ -14,6 +14,7 @@ interface Order {
   }>;
   subtotal: number;
   deliveryFee: number;
+  reservationFee?: number;
   total: number;
   deliveryAddress?: string;
   phoneNumber: string;
@@ -21,7 +22,7 @@ interface Order {
   paymentMethod: string;
   branchName: string;
   estimatedTime: string;
-  orderType?: 'delivery' | 'dine-in';
+  orderType?: 'delivery' | 'dine-in' | 'pickup';
 }
 
 interface OrderConfirmationProps {
@@ -90,7 +91,9 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
 
             <div>
               <h3 className="text-lg mb-3" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
-                {order.orderType === 'dine-in' ? 'Dine-In Information' : 'Delivery Information'}
+                {order.orderType === 'dine-in' ? 'Dine-In Information'
+                  : order.orderType === 'pickup' ? 'Pickup Information'
+                  : 'Delivery Information'}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
@@ -104,7 +107,7 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
                     </p>
                   </div>
                 </div>
-                {order.orderType === 'dine-in' ? (
+                {(order.orderType === 'dine-in' || order.orderType === 'pickup') ? (
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 mt-1" style={{ color: 'var(--espresso)', opacity: 0.6 }} />
                     <div>
@@ -137,7 +140,7 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
                     </p>
                     <p style={{ color: 'var(--espresso)', textTransform: 'capitalize' }}>
                       {order.paymentMethod === 'card' ? 'Card Payment' :
-                       order.paymentMethod === 'cash' ? (order.orderType === 'dine-in' ? 'Cash Payment' : 'Cash on Delivery') :
+                       order.paymentMethod === 'cash' ? (order.orderType === 'delivery' ? 'Cash on Delivery' : 'Cash Payment') :
                        'Bank Transfer'}
                     </p>
                   </div>
@@ -172,10 +175,16 @@ export function OrderConfirmation({ order, onTrackOrder, onBackToMenu }: OrderCo
                 <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Subtotal</span>
                 <span style={{ color: 'var(--espresso)' }}>₦{order.subtotal.toLocaleString()}</span>
               </div>
-              {order.orderType !== 'dine-in' && (
+              {order.orderType === 'delivery' && (
                 <div className="flex justify-between text-sm">
                   <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Delivery Fee</span>
                   <span style={{ color: 'var(--espresso)' }}>₦{order.deliveryFee.toLocaleString()}</span>
+                </div>
+              )}
+              {(order.reservationFee ?? 0) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Reservation Fee</span>
+                  <span style={{ color: 'var(--espresso)' }}>₦{(order.reservationFee ?? 0).toLocaleString()}</span>
                 </div>
               )}
             </div>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MapPin, Phone, User, CreditCard, ArrowLeft, Truck, UtensilsCrossed } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MapPin, Phone, User, CreditCard, ArrowLeft, Truck, UtensilsCrossed, ShoppingBag, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -8,7 +8,7 @@ import { Separator } from "../ui/separator";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Textarea } from "../ui/textarea";
 import { toast } from "sonner";
-import { placeOrder, type Order } from "@/services/api";
+import { placeOrder, getTablesByBranch, type Order, type BranchTable } from "@/services/api";
 import { LocationPicker } from "../auth/LocationPicker";
 import { getSavedDeliveryLocation, saveDeliveryLocation } from "@/services/locationService";
 import { useAuth } from "@/context/AuthContext";
@@ -24,6 +24,7 @@ interface CheckoutProps {
   cart: CartItem[];
   branchId: string;
   branchName: string;
+  branchAddress?: string;
   onPlaceOrder: (formData: OrderDetails, order: Order) => void;
   onGoBack: () => void;
 }
@@ -36,14 +37,15 @@ export interface OrderDetails {
   specialInstructions: string;
   subtotal: number;
   deliveryFee: number;
+  reservationFee: number;
   total: number;
-  orderType: 'delivery' | 'dine-in';
+  orderType: 'delivery' | 'dine-in' | 'pickup';
 }
 
-export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }: CheckoutProps) {
+export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrder, onGoBack }: CheckoutProps) {
   const { user } = useAuth();
 
-  const [orderType, setOrderType] = useState<'delivery' | 'dine-in'>('delivery');
+  const [orderType, setOrderType] = useState<'delivery' | 'dine-in' | 'pickup'>('delivery');
   const [customerName, setCustomerName] = useState(user?.name ?? "");
   const [phoneNumber, setPhoneNumber] = useState(localStorage.getItem('foodchain_phone_number') || "");
   const [deliveryAddress, setDeliveryAddress] = useState(getSavedDeliveryLocation());
@@ -51,20 +53,42 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const [tables, setTables] = useState<BranchTable[]>([]);
+  const [tablesLoading, setTablesLoading] = useState(false);
+  const [selectedTable, setSelectedTable] = useState<BranchTable | null>(null);
+
+  // RESERVATION_FEE is a fixed per-order charge for dine-in table reservation.
+  // TODO: fetch from /branches/{id}/config once the backend exposes this value.
+  const RESERVATION_FEE = 500;
+
+  useEffect(() => {
+    if (orderType !== 'dine-in') return;
+    setTablesLoading(true);
+    setSelectedTable(null);
+    getTablesByBranch(branchId)
+      .then(ts => setTables(ts.filter(t => t.isAvailable)))
+      .catch(() => setTables([]))
+      .finally(() => setTablesLoading(false));
+  }, [orderType, branchId]);
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = orderType === 'delivery' ? 500 : 0;
-  const total = subtotal + deliveryFee;
+  const reservationFee = orderType === 'dine-in' && selectedTable ? RESERVATION_FEE : 0;
+  const total = subtotal + deliveryFee + reservationFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
+    // 'pickup' is a UI-only label — the backend receives 'takeaway' for this flow.
+    const apiOrderType = orderType === 'pickup' ? 'takeaway' : orderType;
+
     const payload = {
       branchId,
       branchName,
-      orderType,
+      orderType: apiOrderType,
       deliveryAddress: orderType === 'delivery' ? deliveryAddress : undefined,
-
+      tableNumber: orderType === 'dine-in' && selectedTable ? String(selectedTable.tableNumber) : undefined,
       items: cart.map(item => ({
         menuItemId: item.id,
         menuItemName: item.name,
@@ -90,6 +114,7 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
         specialInstructions,
         subtotal,
         deliveryFee,
+        reservationFee,
         total,
         orderType,
       };
@@ -134,10 +159,11 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {([
                       { value: 'delivery' as const, label: 'Delivery', sub: 'Order delivered to you', Icon: Truck },
-                      { value: 'dine-in' as const, label: 'Dine In', sub: 'Eat at the restaurant', Icon: UtensilsCrossed },
+                      { value: 'pickup' as const,   label: 'Pickup',   sub: 'Collect from branch',   Icon: ShoppingBag },
+                      { value: 'dine-in' as const,  label: 'Dine In',  sub: 'Eat at the restaurant', Icon: UtensilsCrossed },
                     ]).map(({ value, label, sub, Icon }) => (
                       <button
                         key={value}
@@ -218,8 +244,8 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                 </CardContent>
               </Card>
 
-              {/* Delivery Address / Dine-In Details */}
-              {orderType === 'delivery' ? (
+              {/* Delivery Address */}
+              {orderType === 'delivery' && (
                 <Card
                   className="border-[var(--espresso)]/10"
                   style={{ backgroundColor: "var(--white)" }}
@@ -260,9 +286,49 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                     />
                   </CardContent>
                 </Card>
-              ) : (
+              )}
+
+              {/* Pickup Details */}
+              {orderType === 'pickup' && (
                 <Card
-                  className="border-[var(--espresso)]/10 pb-4"
+                  className="border-[var(--espresso)]/10"
+                  style={{ backgroundColor: "var(--white)" }}
+                >
+                  <CardHeader>
+                    <CardTitle
+                      className="flex items-center gap-2"
+                      style={{ color: "var(--espresso)" }}
+                    >
+                      <ShoppingBag className="w-5 h-5" />
+                      Pickup Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div
+                      className="p-3 rounded-md"
+                      style={{ backgroundColor: "rgba(240,165,0,0.08)" }}
+                    >
+                      <p className="text-sm" style={{ color: "var(--espresso)", fontWeight: 600 }}>
+                        You're picking up at {branchName}!
+                      </p>
+                    </div>
+                    {/* Google Maps embed — requires VITE_GOOGLE_MAPS_API_KEY env var */}
+                    <iframe
+                      title="Branch location"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ''}&q=${encodeURIComponent(branchAddress ?? branchName)}`}
+                      style={{ width: '100%', height: '220px', border: 0, borderRadius: '8px' }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Dine-In — Table Reservation */}
+              {orderType === 'dine-in' && (
+                <Card
+                  className="border-[var(--espresso)]/10"
                   style={{ backgroundColor: "var(--white)" }}
                 >
                   <CardHeader>
@@ -271,9 +337,79 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                       style={{ color: "var(--espresso)" }}
                     >
                       <UtensilsCrossed className="w-5 h-5" />
-                      You're Dining at <span style={{ fontWeight: 600 }}>{branchName}</span>
+                      Reserve a Table
                     </CardTitle>
                   </CardHeader>
+                  <CardContent>
+                    {tablesLoading ? (
+                      <p className="text-sm text-center py-4" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
+                        Loading available tables…
+                      </p>
+                    ) : tables.length === 0 ? (
+                      <div
+                        className="p-4 rounded-md text-center"
+                        style={{ backgroundColor: 'rgba(232,98,42,0.08)' }}
+                      >
+                        <p className="text-sm" style={{ color: 'var(--burnt-orange)', fontWeight: 600 }}>
+                          No tables are currently available at this branch.
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                          Try again later or choose Pickup or Delivery instead.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {tables.map(table => {
+                          const isSelected = selectedTable?.id === table.id;
+                          return (
+                            <button
+                              key={table.id}
+                              type="button"
+                              onClick={() => setSelectedTable(isSelected ? null : table)}
+                              className="w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all text-left"
+                              style={{
+                                borderColor: isSelected ? 'var(--golden-amber)' : 'rgba(59,35,20,0.1)',
+                                backgroundColor: isSelected ? 'rgba(240,165,0,0.08)' : 'transparent',
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                                  style={{
+                                    backgroundColor: isSelected ? 'var(--golden-amber)' : 'rgba(59,35,20,0.08)',
+                                    color: isSelected ? 'var(--charcoal)' : 'var(--espresso)',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {table.tableNumber}
+                                </div>
+                                <div>
+                                  <p className="text-sm" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                                    Table {table.tableNumber}
+                                  </p>
+                                  <p className="text-xs flex items-center gap-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                                    <Users className="w-3 h-3" />
+                                    Seats {table.capacity}
+                                  </p>
+                                </div>
+                              </div>
+                              <span
+                                className="text-xs px-2 py-0.5 rounded-full"
+                                style={{ backgroundColor: 'var(--sage-green)', color: 'var(--white)' }}
+                              >
+                                Available
+                              </span>
+                            </button>
+                          );
+                        })}
+                        {selectedTable && (
+                          <p className="text-xs mt-2" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                            A reservation fee of ₦{RESERVATION_FEE.toLocaleString()} will be added to your total.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
               )}
 
@@ -295,7 +431,7 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                     {[
                       { value: "card", label: "Card Payment" },
-                      { value: "cash", label: orderType === 'dine-in' ? "Cash Payment" : "Cash on Delivery" },
+                      { value: "cash", label: (orderType === 'dine-in' || orderType === 'pickup') ? "Cash Payment" : "Cash on Delivery" },
                       { value: "transfer", label: "Bank Transfer" },
                     ].map(opt => (
                       <div
@@ -364,6 +500,18 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                     ))}
                   </div>
 
+                  {selectedTable && (
+                    <>
+                      <Separator />
+                      <div className="flex justify-between text-sm">
+                        <span style={{ color: "var(--espresso)", opacity: 0.7 }}>Reserved Table</span>
+                        <span style={{ color: "var(--espresso)", fontWeight: 600 }}>
+                          Table {selectedTable.tableNumber} (seats {selectedTable.capacity})
+                        </span>
+                      </div>
+                    </>
+                  )}
+
                   <Separator />
 
                   <div className="space-y-2">
@@ -385,6 +533,16 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                         </span>
                       </div>
                     )}
+                    {reservationFee > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span style={{ color: "var(--espresso)", opacity: 0.7 }}>
+                          Reservation Fee
+                        </span>
+                        <span style={{ color: "var(--espresso)", fontWeight: 600 }}>
+                          ₦{reservationFee.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
@@ -400,7 +558,11 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
 
                   <Button
                     type="submit"
-                    disabled={isProcessing || (orderType === 'delivery' && !deliveryAddress.trim())}
+                    disabled={
+                      isProcessing ||
+                      (orderType === 'delivery' && !deliveryAddress.trim()) ||
+                      (orderType === 'dine-in' && (tablesLoading || tables.length === 0 || !selectedTable))
+                    }
                     className="w-full transition-all hover:opacity-90 hover:shadow-lg"
                     style={{
                       backgroundColor: "var(--golden-amber)",
@@ -410,11 +572,18 @@ export function Checkout({ cart, branchId, branchName, onPlaceOrder, onGoBack }:
                     {isProcessing ? "Processing…" : "Place Order"}
                   </Button>
                   {orderType === 'delivery' && !deliveryAddress.trim() && (
-                    <p
-                      className="text-xs text-center"
-                      style={{ color: "var(--espresso)", opacity: 0.5 }}
-                    >
+                    <p className="text-xs text-center" style={{ color: "var(--espresso)", opacity: 0.5 }}>
                       Please enter a delivery address to continue
+                    </p>
+                  )}
+                  {orderType === 'dine-in' && !tablesLoading && tables.length === 0 && (
+                    <p className="text-xs text-center" style={{ color: 'var(--burnt-orange)', opacity: 0.8 }}>
+                      No tables available — please choose another order type
+                    </p>
+                  )}
+                  {orderType === 'dine-in' && !tablesLoading && tables.length > 0 && !selectedTable && (
+                    <p className="text-xs text-center" style={{ color: "var(--espresso)", opacity: 0.5 }}>
+                      Please select a table to continue
                     </p>
                   )}
                 </CardContent>
