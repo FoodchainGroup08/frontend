@@ -9,6 +9,7 @@ import {
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
+import { getOrderStatusDisplay } from "./orderStatusDisplay";
 
 interface OrderDetail {
   id: string;
@@ -41,6 +42,8 @@ interface OrderDetailModalProps {
 export function OrderDetailModal({ order, isOpen, onClose }: OrderDetailModalProps) {
   if (!order) return null;
 
+  const statusDisplay = getOrderStatusDisplay(order.status);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
@@ -57,17 +60,9 @@ export function OrderDetailModal({ order, isOpen, onClose }: OrderDetailModalPro
             </div>
             <Badge
               className="border-0"
-              style={{
-                backgroundColor:
-                  order.status === 'delivered' ? 'var(--sage-green)' :
-                  order.status === 'cancelled' ? 'var(--burnt-orange)' :
-                  order.status === 'out-for-delivery' ? 'var(--golden-amber)' :
-                  'var(--espresso)',
-                color: 'var(--white)'
-              }}
+              style={statusDisplay.style}
             >
-              {order.status === 'out-for-delivery' ? 'Out for Delivery' :
-               order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              {statusDisplay.label}
             </Badge>
           </div>
         </DialogHeader>

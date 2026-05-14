@@ -62,7 +62,7 @@ const STATUS_INDEX: Record<LocalStatus, number> = {
   'completed': 4,
 };
 
-function mapApiStatus(s: OrderStatus): LocalStatus {
+function mapApiStatus(s: string): LocalStatus {
   return STATUS_MAP[s] ?? 'received';
 }
 

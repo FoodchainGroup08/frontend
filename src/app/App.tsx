@@ -88,7 +88,7 @@ type OrderDetailData = {
 
 type HistoricalOrder = {
   id: string;
-  status: 'delivered' | 'cancelled';
+  status: string;
   items: Array<{ id: string; name: string; quantity: number }>;
   total: number;
   branchName: string;
