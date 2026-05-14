@@ -8,7 +8,7 @@ import { Separator } from "../ui/separator";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Textarea } from "../ui/textarea";
 import { toast } from "sonner";
-import { placeOrder, getTablesByBranch, type Order, type BranchTable } from "@/services/api";
+import { placeOrder, type Order, type BranchTable } from "@/services/api";
 import { LocationPicker } from "../auth/LocationPicker";
 import { getSavedDeliveryLocation, saveDeliveryLocation } from "@/services/locationService";
 import { useAuth } from "@/context/AuthContext";
@@ -57,18 +57,25 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
   const [tablesLoading, setTablesLoading] = useState(false);
   const [selectedTable, setSelectedTable] = useState<BranchTable | null>(null);
 
-  // RESERVATION_FEE is a fixed per-order charge for dine-in table reservation.
-  // TODO: fetch from /branches/{id}/config once the backend exposes this value.
   const RESERVATION_FEE = 500;
+
+  const DEMO_TABLES: BranchTable[] = [
+    { id: 't1', tableNumber: 1, capacity: 2, isAvailable: true },
+    { id: 't2', tableNumber: 2, capacity: 4, isAvailable: true },
+    { id: 't3', tableNumber: 3, capacity: 4, isAvailable: true },
+    { id: 't4', tableNumber: 4, capacity: 6, isAvailable: true },
+    { id: 't5', tableNumber: 5, capacity: 2, isAvailable: true },
+    { id: 't6', tableNumber: 6, capacity: 8, isAvailable: true },
+  ];
 
   useEffect(() => {
     if (orderType !== 'dine-in') return;
     setTablesLoading(true);
     setSelectedTable(null);
-    getTablesByBranch(branchId)
-      .then(ts => setTables(ts.filter(t => t.isAvailable)))
-      .catch(() => setTables([]))
-      .finally(() => setTablesLoading(false));
+    setTimeout(() => {
+      setTables(DEMO_TABLES);
+      setTablesLoading(false);
+    }, 600);
   }, [orderType, branchId]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
