@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { FileText, Plus, RefreshCw, ChevronLeft, ChevronRight, Eye, X } from "lucide-react";
+import { FileText, Plus, RefreshCw, ChevronLeft, ChevronRight, Eye, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -13,6 +13,7 @@ import {
   type GenerateReportRequest, type Report, type ReportListItem,
   type ReportType, type Branch,
 } from "@/services/api";
+import { downloadReportPdf, downloadReportXlsx } from "@/utils/reportExport";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -154,7 +155,13 @@ function GenerateReportModal({
 
 // ── Report detail modal ───────────────────────────────────────────────────────
 
-function ReportDetailModal({ reportId, onClose }: { reportId: number; onClose: () => void }) {
+function ReportDetailModal({
+  reportId, branches, onClose,
+}: {
+  reportId: number;
+  branches: Branch[];
+  onClose: () => void;
+}) {
   const [report, setReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -173,6 +180,10 @@ function ReportDetailModal({ reportId, onClose }: { reportId: number; onClose: (
     </div>
   );
 
+  const branchName = report?.branchId
+    ? (branches.find(b => b.id === report.branchId)?.name ?? report.branchId)
+    : 'All Branches';
+
   return (
     <Dialog open onOpenChange={v => !v && onClose()}>
       <DialogContent className="max-w-md" style={{ backgroundColor: 'var(--warm-white)' }}>
@@ -182,22 +193,38 @@ function ReportDetailModal({ reportId, onClose }: { reportId: number; onClose: (
         {isLoading ? (
           <div className="space-y-2 mt-4">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 w-full" />)}</div>
         ) : report ? (
-          <div className="mt-2 divide-y" style={{ borderColor: 'var(--espresso)' }}>
-            {row('Type', REPORT_TYPE_LABELS[report.reportType as ReportType] ?? report.reportType)}
-            {row('Period', `${fmtDate(report.startDate)} → ${fmtDate(report.endDate)}`)}
-            {row('Generated', fmtDateTime(report.generatedAt))}
-            {row('Branch', report.branchId ?? 'All Branches')}
-            {row('Total Orders', (report.totalOrders ?? 0).toLocaleString())}
-            {row('Completed', (report.completedOrders ?? 0).toLocaleString())}
-            {row('Cancelled', (report.cancelledOrders ?? 0).toLocaleString())}
-            {row('Total Revenue', fmtRevenue(report.totalRevenue))}
-            {row('Avg Order Value', fmtRevenue(report.avgOrderValue))}
-            {row('Completion Rate', `${report.completionRate.toFixed(1)}%`)}
-            {row('Cancellation Rate', `${report.cancellationRate.toFixed(1)}%`)}
-            {report.dineInCount != null && row('Dine-In', report.dineInCount.toLocaleString())}
-            {report.takeawayCount != null && row('Takeaway', report.takeawayCount.toLocaleString())}
-            {report.deliveryCount != null && row('Delivery', report.deliveryCount.toLocaleString())}
-          </div>
+          <>
+            <div className="flex justify-end gap-2 mt-2">
+              <Button size="sm" variant="outline" onClick={() => downloadReportPdf(report, branchName)}
+                className="h-8 border-[var(--espresso)]/20 gap-1"
+                style={{ color: 'var(--espresso)' }}>
+                <Download className="w-3.5 h-3.5" />
+                PDF
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => downloadReportXlsx(report, branchName)}
+                className="h-8 border-[var(--espresso)]/20 gap-1"
+                style={{ color: 'var(--espresso)' }}>
+                <Download className="w-3.5 h-3.5" />
+                XLSX
+              </Button>
+            </div>
+            <div className="mt-2 divide-y" style={{ borderColor: 'var(--espresso)' }}>
+              {row('Type', REPORT_TYPE_LABELS[report.reportType as ReportType] ?? report.reportType)}
+              {row('Period', `${fmtDate(report.startDate)} → ${fmtDate(report.endDate)}`)}
+              {row('Generated', fmtDateTime(report.generatedAt))}
+              {row('Branch', branchName)}
+              {row('Total Orders', (report.totalOrders ?? 0).toLocaleString())}
+              {row('Completed', (report.completedOrders ?? 0).toLocaleString())}
+              {row('Cancelled', (report.cancelledOrders ?? 0).toLocaleString())}
+              {row('Total Revenue', fmtRevenue(report.totalRevenue))}
+              {row('Avg Order Value', fmtRevenue(report.avgOrderValue))}
+              {row('Completion Rate', `${report.completionRate.toFixed(1)}%`)}
+              {row('Cancellation Rate', `${report.cancellationRate.toFixed(1)}%`)}
+              {report.dineInCount != null && row('Dine-In', report.dineInCount.toLocaleString())}
+              {report.takeawayCount != null && row('Takeaway', report.takeawayCount.toLocaleString())}
+              {report.deliveryCount != null && row('Delivery', report.deliveryCount.toLocaleString())}
+            </div>
+          </>
         ) : (
           <p className="text-center py-8" style={{ color: 'var(--espresso)', opacity: 0.5 }}>Report not found</p>
         )}
@@ -239,6 +266,21 @@ export function Reports() {
   const handleGenerated = () => {
     setPage(0);
     fetchReports(0);
+  };
+
+  const branchNameFor = (branchId: string | null | undefined) => branchId
+    ? (branches.find(b => b.id === branchId)?.name ?? branchId)
+    : 'All Branches';
+
+  const downloadReport = async (reportId: number, format: 'pdf' | 'xlsx') => {
+    try {
+      const report = await getReportById(reportId);
+      const branchName = branchNameFor(report.branchId);
+      if (format === 'pdf') downloadReportPdf(report, branchName);
+      else downloadReportXlsx(report, branchName);
+    } catch {
+      toast.error(`Failed to download ${format.toUpperCase()} report`);
+    }
   };
 
   return (
@@ -313,9 +355,7 @@ export function Reports() {
                           </Badge>
                         </td>
                         <td className="py-3 px-4" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
-                          {r.branchId
-                            ? (branches.find(b => b.id === r.branchId)?.name ?? r.branchId.slice(0, 8) + '…')
-                            : 'All Branches'}
+                          {branchNameFor(r.branchId)}
                         </td>
                         <td className="py-3 px-4 text-xs" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
                           {fmtDate(r.startDate)} → {fmtDate(r.endDate)}
@@ -330,12 +370,24 @@ export function Reports() {
                           {fmtDateTime(r.generatedAt)}
                         </td>
                         <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
                           <Button size="sm" variant="outline" onClick={() => setViewReportId(r.id)}
                             className="h-7 px-2 border-[var(--espresso)]/20 gap-1"
                             style={{ color: 'var(--espresso)' }}>
                             <Eye className="w-3 h-3" />
                             View
                           </Button>
+                          <Button size="sm" variant="outline" onClick={() => downloadReport(r.id, 'pdf')}
+                            className="h-7 px-2 border-[var(--espresso)]/20 gap-1"
+                            style={{ color: 'var(--espresso)' }}>
+                            PDF
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => downloadReport(r.id, 'xlsx')}
+                            className="h-7 px-2 border-[var(--espresso)]/20 gap-1"
+                            style={{ color: 'var(--espresso)' }}>
+                            XLSX
+                          </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -377,7 +429,7 @@ export function Reports() {
         />
       )}
       {viewReportId != null && (
-        <ReportDetailModal reportId={viewReportId} onClose={() => setViewReportId(null)} />
+        <ReportDetailModal reportId={viewReportId} branches={branches} onClose={() => setViewReportId(null)} />
       )}
     </div>
   );
