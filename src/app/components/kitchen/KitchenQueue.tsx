@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Clock, ChevronRight, Flame, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -48,6 +48,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   // Used for accurate badge counts even before all pages are loaded.
   const [serverTotals, setServerTotals] = useState({ received: 0, preparing: 0, ready: 0 });
   const [currentPage, setCurrentPage] = useState(0);
+  const currentPageRef = useRef(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
@@ -67,7 +68,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       ...data.received.orders,
       ...data.preparing.orders,
       ...data.ready.orders,
-    ];
+    ].sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
     setOrders(serverOrders);
     const totals = {
       received: data.received.total,
@@ -81,24 +82,30 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       Math.ceil(totals.ready / QUEUE_SIZE),
     ));
     setCurrentPage(data.page);
+    currentPageRef.current = data.page;
   };
 
-  const fetchQueue = async (page = 0) => {
-    setIsLoading(true);
+  const fetchQueue = async (page = 0, silent = false) => {
+    if (!silent) setIsLoading(true);
     setError("");
     try {
       const data = await getKitchenQueue(page, QUEUE_SIZE);
       applyQueuePage(data);
     } catch {
-      setError("Failed to load kitchen queue");
-      toast.error("Failed to load kitchen queue");
+      if (!silent) {
+        setError("Failed to load kitchen queue");
+        toast.error("Failed to load kitchen queue");
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchQueue(0);
+    // Poll every 15 s as a fallback in case the WS doesn't push order events
+    const poll = setInterval(() => fetchQueue(currentPageRef.current, true), 5000);
+    return () => clearInterval(poll);
   }, []);
 
   useKitchenQueue(branchId, (data: any) => {
@@ -114,7 +121,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       const mapped = mapKitchenStatus(msg.newStatus);
       if (mapped === 'received') {
         playKitchenAlert();
-        fetchQueue(currentPage);
+        fetchQueue(currentPageRef.current, true);
       } else if (mapped === 'picked-up' || mapped === 'served') {
         setOrders(prev => prev.filter(o => o.id !== msg.orderId));
       } else {
@@ -123,7 +130,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
         ));
       }
     } else {
-      fetchQueue(currentPage);
+      fetchQueue(currentPageRef.current, true);
     }
   });
 
