@@ -43,6 +43,7 @@ interface WizardAnswers {
   mealType: string | null;
   fulfillmentType: string | null;
   budget: string | null;
+  customBudget: string;
   dietaryPreferences: string[];
   notes: string;
 }
@@ -90,7 +91,7 @@ const STEP_META: Partial<Record<Step, StepMeta>> = {
   budget: { question: "What's your budget?", optional: true },
   dietary: {
     question: 'Any dietary preferences?',
-    subtitle: 'Optional — skip if none apply.',
+    subtitle: 'Optional — pick up to 3.',
     optional: true,
   },
   notes: {
@@ -128,7 +129,6 @@ const BUDGET_OPTIONS = [
   { label: 'Under ₦2,000', emoji: '💵' },
   { label: '₦2,000 – ₦5,000', emoji: '💸' },
   { label: '₦5,000 – ₦10,000', emoji: '💰' },
-  { label: 'No limit', emoji: '🤑' },
 ];
 
 const FULFILLMENT_OPTIONS = [
@@ -154,6 +154,7 @@ const DEFAULT_ANSWERS: WizardAnswers = {
   mealType: null,
   fulfillmentType: null,
   budget: null,
+  customBudget: '',
   dietaryPreferences: [],
   notes: '',
 };
@@ -194,13 +195,16 @@ function buildSuggestionRequest(
     count: 1,
   };
 
-  const budgetMap: Record<string, number | undefined> = {
+  const budgetMap: Record<string, number> = {
     'Under ₦2,000': 2000,
     '₦2,000 – ₦5,000': 5000,
     '₦5,000 – ₦10,000': 10000,
-    'No limit': undefined,
   };
-  const budget = answers.budget ? budgetMap[answers.budget] : undefined;
+  const budget = answers.customBudget
+    ? parseFloat(answers.customBudget)
+    : answers.budget
+      ? budgetMap[answers.budget]
+      : undefined;
 
   const mealTypeMap: Record<string, FoodSuggestionRequest['mealType']> = {
     Breakfast: 'breakfast',
@@ -524,12 +528,14 @@ export function AIFoodAssistantModal({
     setAnswers((a) => ({ ...a, [key]: a[key] === val ? null : val }));
 
   const toggleMulti = (key: 'moods' | 'dietaryPreferences', val: string) =>
-    setAnswers((a) => ({
-      ...a,
-      [key]: (a[key] as string[]).includes(val)
-        ? (a[key] as string[]).filter((v) => v !== val)
-        : [...(a[key] as string[]), val],
-    }));
+    setAnswers((a) => {
+      const list = a[key] as string[];
+      if (!list.includes(val) && key === 'dietaryPreferences' && list.length >= 3) return a;
+      return {
+        ...a,
+        [key]: list.includes(val) ? list.filter((v) => v !== val) : [...list, val],
+      };
+    });
 
   // ── Slide animation ───────────────────────────────────────────────────────────
 
@@ -642,16 +648,48 @@ export function AIFoodAssistantModal({
 
       case 'budget':
         return (
-          <div className='grid grid-cols-2 gap-2'>
-            {BUDGET_OPTIONS.map((o) => (
-              <OptionChip
-                key={o.label}
-                label={o.label}
-                emoji={o.emoji}
-                selected={answers.budget === o.label}
-                onClick={() => setSingle('budget', o.label)}
-              />
-            ))}
+          <div className='space-y-3'>
+            <div className='grid grid-cols-2 gap-2'>
+              {BUDGET_OPTIONS.map((o) => (
+                <OptionChip
+                  key={o.label}
+                  label={o.label}
+                  emoji={o.emoji}
+                  selected={answers.budget === o.label && !answers.customBudget}
+                  onClick={() => {
+                    setSingle('budget', o.label);
+                    setAnswers((a) => ({ ...a, customBudget: '' }));
+                  }}
+                />
+              ))}
+            </div>
+            <div className='flex items-center gap-2'>
+              <div
+                className='flex-1 flex items-center gap-2 rounded-xl border px-3 py-2'
+                style={{
+                  borderColor: answers.customBudget
+                    ? 'var(--golden-amber)'
+                    : 'color-mix(in srgb, var(--espresso) 18%, transparent)',
+                  backgroundColor: answers.customBudget
+                    ? 'color-mix(in srgb, var(--golden-amber) 6%, transparent)'
+                    : 'transparent',
+                  transition: 'border-color 0.2s, background-color 0.2s',
+                }}
+              >
+                <span className='text-sm' style={{ color: 'var(--espresso)', opacity: 0.5 }}>₦</span>
+                <input
+                  type='number'
+                  min={0}
+                  placeholder='Custom amount'
+                  value={answers.customBudget}
+                  onChange={(e) => {
+                    setAnswers((a) => ({ ...a, customBudget: e.target.value, budget: null }));
+                  }}
+                  className='flex-1 bg-transparent text-sm outline-none'
+                  style={{ color: 'var(--charcoal)' }}
+                />
+              </div>
+            </div>
           </div>
         );
 

@@ -332,12 +332,15 @@ export function AISuggestions({
   const [error, setError] = useState('');
 
   const toggleDietary = (pref: string) => {
-    setForm((f) => ({
-      ...f,
-      dietaryPreferences: f.dietaryPreferences.includes(pref)
-        ? f.dietaryPreferences.filter((p) => p !== pref)
-        : [...f.dietaryPreferences, pref],
-    }));
+    setForm((f) => {
+      if (!f.dietaryPreferences.includes(pref) && f.dietaryPreferences.length >= 3) return f;
+      return {
+        ...f,
+        dietaryPreferences: f.dietaryPreferences.includes(pref)
+          ? f.dietaryPreferences.filter((p) => p !== pref)
+          : [...f.dietaryPreferences, pref],
+      };
+    });
   };
 
   const buildRequest = (): FoodSuggestionRequest => ({
@@ -502,7 +505,7 @@ export function AISuggestions({
               {/* Dietary preference toggles */}
               <div className='space-y-2'>
                 <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>
-                  Dietary Preferences
+                  Dietary Preferences <span style={{ opacity: 0.5 }}>(max 3)</span>
                 </label>
                 <div className='flex flex-wrap gap-2'>
                   {DIETARY_OPTIONS.map((pref) => {
