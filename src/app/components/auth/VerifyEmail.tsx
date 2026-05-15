@@ -16,7 +16,7 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     if (!token) return;
@@ -89,19 +89,24 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
           {/* Success */}
           {status === 'success' && (
             <>
-              <CardHeader className="space-y-1 text-center">
+              <CardHeader className="space-y-1 text-center pb-2">
                 <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(76, 175, 125, 0.15)' }}>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17L4 12" stroke="var(--sage-green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(76, 175, 125, 0.15)' }}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="var(--sage-green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                 </div>
-                <CardTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>Email verified!</CardTitle>
-                <CardDescription style={{ color: 'var(--espresso)', opacity: 0.7 }}>
-                  Your account is now active. Taking you to sign in{countdown > 0 ? ` in ${countdown}…` : '…'}
+                <CardTitle className="text-3xl" style={{ color: 'var(--espresso)' }}>Account verified!</CardTitle>
+                <CardDescription className="text-base pt-1" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+                  Your email has been confirmed and your account is now active.
                 </CardDescription>
               </CardHeader>
+              <CardContent className="text-center pb-2">
+                <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
+                  Redirecting to sign in{countdown > 0 ? ` in ${countdown}…` : '…'}
+                </p>
+              </CardContent>
               <CardFooter>
                 <Button onClick={onNavigateToLogin} className="w-full hover:opacity-90" style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}>
                   Sign in now
@@ -148,7 +153,7 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
                   Didn't receive it? Check your spam folder or contact support.
                 </p>
               </CardContent>
-              <CardFooter className="flex flex-col gap-3">
+              <CardFooter>
                 {email && (
                   <Button
                     onClick={handleResend}
@@ -159,9 +164,6 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
                     {isResending ? 'Sending…' : 'Resend verification email'}
                   </Button>
                 )}
-                <Button onClick={onNavigateToLogin} variant="outline" className="w-full border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
-                  Back to Login
-                </Button>
               </CardFooter>
             </>
           )}
