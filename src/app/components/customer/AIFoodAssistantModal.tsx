@@ -17,8 +17,8 @@ import { toast } from 'sonner';
 import {
   getFoodSuggestions,
   type FoodSuggestionRequest,
-  type FoodSuggestionItem,
-  type FoodSuggestionResponse,
+  type ComboSuggestion,
+  type AiRecommendationResponse,
 } from '@/services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -294,97 +294,114 @@ function OptionChip({
   );
 }
 
-// ─── Suggestion result card ───────────────────────────────────────────────────
+// ─── Combo card (modal compact variant) ──────────────────────────────────────
 
-function SuggestionCard({
-  item,
+function ComboCard({
+  combo,
+  source,
+  onAddCombo,
   onAddToCart,
 }: {
-  item: FoodSuggestionItem;
+  combo: ComboSuggestion;
+  source: string;
+  onAddCombo: (combo: ComboSuggestion) => void;
   onAddToCart: (item: AddToCartItem, qty: number) => void;
 }) {
-  const [justAdded, setJustAdded] = useState(false);
+  const [added, setAdded] = useState(false);
+  const isAi = source === 'GEMINI';
+  const scoreColor = combo.healthScore >= 75 ? '#4ade80' : combo.healthScore >= 50 ? '#facc15' : '#f87171';
 
   const handleAdd = () => {
-    onAddToCart(
-      {
-        id: item.menuItemId,
-        name: item.menuItemName,
-        description: '',
-        price: item.price,
-        category: '',
-        available: true,
-      },
-      1
-    );
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 2000);
+    onAddCombo(combo);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   return (
     <div
-      className='flex items-start gap-3 p-3 rounded-xl border'
+      className='p-3 rounded-xl border space-y-2'
       style={{
         borderColor: 'color-mix(in srgb, var(--espresso) 10%, transparent)',
         backgroundColor: 'color-mix(in srgb, var(--espresso) 2%, transparent)',
       }}
     >
-      <div className='flex-1 min-w-0'>
-        <div className='flex items-start justify-between gap-2'>
-          <h4
-            className='font-semibold text-sm leading-snug'
-            style={{ color: 'var(--espresso)' }}
-          >
-            {item.menuItemName}
+      {/* Header row */}
+      <div className='flex items-start justify-between gap-2'>
+        <div className='flex-1 min-w-0'>
+          <h4 className='font-semibold text-sm leading-snug' style={{ color: 'var(--espresso)' }}>
+            {combo.comboName}
           </h4>
-          <span
-            className='text-sm font-bold shrink-0'
-            style={{ color: 'var(--golden-amber)' }}
-          >
-            ₦{item.price.toLocaleString()}
+          <span className='text-xs font-bold' style={{ color: 'var(--golden-amber)' }}>
+            ₦{combo.totalPrice.toLocaleString()}
           </span>
         </div>
-
-        {item.reason && (
-          <div className='flex items-start gap-1.5 mt-1.5'>
-            <Sparkles
-              className='w-3 h-3 mt-0.5 shrink-0'
-              style={{ color: 'var(--golden-amber)' }}
-            />
-            <p
-              className='text-xs leading-relaxed'
-              style={{ color: 'var(--charcoal)', opacity: 0.7 }}
-            >
-              {item.reason}
-            </p>
-          </div>
-        )}
-
-        {item.optionalAddOns?.length > 0 && (
-          <div className='flex flex-wrap gap-1 mt-2'>
-            {item.optionalAddOns.slice(0, 2).map((addon) => (
-              <Badge key={addon} variant='secondary' className='text-xs py-0'>
-                {addon}
-              </Badge>
-            ))}
-          </div>
-        )}
+        <div className='flex flex-col items-end gap-1 shrink-0'>
+          <span
+            className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium'
+            style={{
+              backgroundColor: isAi
+                ? 'color-mix(in srgb, var(--golden-amber) 18%, transparent)'
+                : 'color-mix(in srgb, #6366f1 15%, transparent)',
+              color: isAi ? 'var(--golden-amber)' : '#6366f1',
+            }}
+          >
+            {isAi ? '✨ AI' : '⚡ Smart'}
+          </span>
+          <span className='text-xs font-semibold' style={{ color: scoreColor }}>
+            ❤ {combo.healthScore}/100
+          </span>
+        </div>
       </div>
 
+      {/* Wellness tags */}
+      {combo.wellnessTags?.length > 0 && (
+        <div className='flex flex-wrap gap-1'>
+          {combo.wellnessTags.map((tag: string) => (
+            <Badge key={tag} variant='secondary' className='text-xs py-0'
+              style={{ backgroundColor: 'color-mix(in srgb, #4ade80 12%, transparent)', color: '#166534' }}>
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* Items */}
+      <div className='space-y-1'>
+        {combo.items.map((item) => (
+          <div key={item.menuItemId}
+            className='flex items-center justify-between gap-2 text-xs rounded px-2 py-1'
+            style={{ backgroundColor: 'color-mix(in srgb, var(--espresso) 4%, transparent)' }}>
+            <span className='truncate font-medium' style={{ color: 'var(--espresso)' }}>{item.name}</span>
+            <div className='flex items-center gap-1.5 shrink-0'>
+              <span style={{ color: 'var(--golden-amber)' }}>₦{item.price.toLocaleString()}</span>
+              <button
+                className='h-5 w-5 rounded flex items-center justify-center'
+                style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}
+                title='Add item to cart'
+                onClick={() => onAddToCart({ id: item.menuItemId, name: item.name, description: '', price: item.price, category: '', available: true }, 1)}
+              >
+                <ShoppingCart className='w-2.5 h-2.5' />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Reason */}
+      {combo.reason && (
+        <div className='flex items-start gap-1.5'>
+          <Sparkles className='w-3 h-3 mt-0.5 shrink-0' style={{ color: 'var(--golden-amber)' }} />
+          <p className='text-xs leading-relaxed' style={{ color: 'var(--charcoal)', opacity: 0.7 }}>{combo.reason}</p>
+        </div>
+      )}
+
+      {/* Add combo button */}
       <button
         onClick={handleAdd}
-        className='shrink-0 h-8 w-8 rounded-lg flex items-center justify-center transition-colors'
-        style={{
-          backgroundColor: justAdded ? 'var(--sage-green)' : 'var(--espresso)',
-          color: 'var(--warm-white)',
-        }}
-        title={justAdded ? 'Added!' : 'Add to cart'}
+        className='w-full h-8 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium transition-colors'
+        style={{ backgroundColor: added ? 'var(--sage-green)' : 'var(--espresso)', color: 'var(--warm-white)' }}
       >
-        {justAdded ? (
-          <span className='text-xs font-bold'>✓</span>
-        ) : (
-          <ShoppingCart className='w-3.5 h-3.5' />
-        )}
+        {added ? <><span>✓</span> Added!</> : <><ShoppingCart className='w-3.5 h-3.5' /> Add Combo</>}
       </button>
     </div>
   );
@@ -402,7 +419,7 @@ export function AIFoodAssistantModal({
 }: AIFoodAssistantModalProps) {
   const [step, setStep] = useState<Step>('welcome');
   const [answers, setAnswers] = useState<WizardAnswers>(DEFAULT_ANSWERS);
-  const [result, setResult] = useState<FoodSuggestionResponse | null>(null);
+  const [result, setResult] = useState<AiRecommendationResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [clarifyText, setClarifyText] = useState('');
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -490,20 +507,15 @@ export function AIFoodAssistantModal({
 
   const handleAddAll = () => {
     if (!result?.suggestions?.length) return;
-    result.suggestions.forEach((item) =>
-      onAddToCart(
-        {
-          id: item.menuItemId,
-          name: item.menuItemName,
-          description: '',
-          price: item.price,
-          category: '',
-          available: true,
-        },
-        1
+    result.suggestions.forEach((combo) =>
+      combo.items.forEach((item) =>
+        onAddToCart(
+          { id: item.menuItemId, name: item.name, description: '', price: item.price, category: '', available: true },
+          1
+        )
       )
     );
-    toast.success(`Added ${result.suggestions.length} items to cart`);
+    toast.success(`Added ${result.suggestions.length} combo${result.suggestions.length > 1 ? 's' : ''} to cart`);
   };
 
   // ── Answer helpers ────────────────────────────────────────────────────────────
@@ -724,14 +736,24 @@ export function AIFoodAssistantModal({
                 Est. total: ₦{result.estimatedTotalCost.toLocaleString()}
               </p>
             )}
-            {result.suggestions.map((item, i) => (
+            {result.suggestions.map((combo, i) => (
               <motion.div
-                key={item.menuItemId}
+                key={`${combo.comboName}-${i}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.07 }}
               >
-                <SuggestionCard item={item} onAddToCart={onAddToCart} />
+                <ComboCard
+                  combo={combo}
+                  source={result.recommendationSource}
+                  onAddCombo={(c) => {
+                    c.items.forEach((item) =>
+                      onAddToCart({ id: item.menuItemId, name: item.name, description: '', price: item.price, category: '', available: true }, 1)
+                    );
+                    toast.success(`Added "${c.comboName}" to cart`);
+                  }}
+                  onAddToCart={onAddToCart}
+                />
               </motion.div>
             ))}
           </div>

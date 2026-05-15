@@ -9,6 +9,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useEffect, useState } from "react";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface KitchenOrderDetail {
   id: string;
@@ -55,7 +56,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-xl mb-2" style={{ color: 'var(--espresso)' }}>
-                Order #{order.id.split('-')[2]}
+                Order {formatOrderReference(order.id)}
               </DialogTitle>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge
@@ -156,7 +157,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Order ID</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>{order.id}</span>
+                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>{formatOrderReference(order.id)}</span>
               </div>
               <div className="flex justify-between">
                 <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Received At</span>

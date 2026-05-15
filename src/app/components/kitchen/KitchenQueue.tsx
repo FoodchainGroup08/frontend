@@ -9,6 +9,7 @@ import { getKitchenQueue, acceptKitchenOrder, readyKitchenOrder, pickupKitchenOr
 import { useKitchenQueue } from "@/hooks/useKitchenQueue";
 import { useAuth } from "@/context/AuthContext";
 import { playKitchenAlert } from "@/utils/kitchenAlert";
+import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface KitchenQueueProps {
   onOrderClick: (order: KitchenOrder) => void;
@@ -49,6 +50,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   const [serverTotals, setServerTotals] = useState({ received: 0, preparing: 0, ready: 0 });
   const [currentPage, setCurrentPage] = useState(0);
   const currentPageRef = useRef(0);
+  const prevReceivedTotalRef = useRef<number | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
@@ -83,6 +85,12 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     ));
     setCurrentPage(data.page);
     currentPageRef.current = data.page;
+
+    // Ping if new orders arrived since the last fetch (poll-based detection)
+    if (prevReceivedTotalRef.current !== null && totals.received > prevReceivedTotalRef.current) {
+      playKitchenAlert();
+    }
+    prevReceivedTotalRef.current = totals.received;
   };
 
   const fetchQueue = async (page = 0, silent = false) => {
@@ -220,7 +228,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p className="text-sm mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
-                #{order.id.split('-')[2] ?? order.id}
+                {formatOrderReference(order.id)}
               </p>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge

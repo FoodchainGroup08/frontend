@@ -37,7 +37,6 @@ import { BranchManagement } from "./components/admin/BranchManagement";
 import { MenuCatalogue } from "./components/admin/MenuCatalogue";
 import { UserManagement } from "./components/admin/UserManagement";
 import { Reports } from "./components/admin/Reports";
-import { AdminNotifications } from "./components/admin/AdminNotifications";
 import { LandingPage } from "./components/landing/LandingPage";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
@@ -287,14 +286,14 @@ function CustomerLayout() {
   };
 
   const handleAddToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
-    const existing = cart.find(c => c.id === item.id);
-    if (existing) {
-      setCart(cart.map(c => c.id === item.id ? { ...c, quantity: c.quantity + quantity } : c));
-      toast.success(`Updated ${item.name}`, { description: `Cart quantity: ${existing.quantity + quantity}` });
-    } else {
-      setCart([...cart, { ...item, quantity }]);
-      toast.success(`Added ${item.name}`, { description: `${quantity} item${quantity > 1 ? 's' : ''} added to cart` });
-    }
+    setCart(prev => {
+      const existing = prev.find(c => c.id === item.id);
+      if (existing) {
+        return prev.map(c => c.id === item.id ? { ...c, quantity: c.quantity + quantity } : c);
+      }
+      return [...prev, { ...item, quantity }];
+    });
+    toast.success(`Added ${item.name}`, { description: `${quantity} item${quantity > 1 ? 's' : ''} added to cart` });
   };
 
   const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
@@ -569,7 +568,6 @@ const adminScreenPaths: Record<string, string> = {
   'menu-catalogue': '/admin/menu-catalogue',
   'users': '/admin/users',
   'reports': '/admin/reports',
-  'notifications': '/admin/notifications',
 };
 
 function AdminLayout() {
@@ -583,7 +581,6 @@ function AdminLayout() {
     '/admin/menu-catalogue': 'menu-catalogue',
     '/admin/users': 'users',
     '/admin/reports': 'reports',
-    '/admin/notifications': 'notifications',
   };
   const currentScreen = pathToScreen[location.pathname] ?? 'analytics';
 
@@ -602,7 +599,6 @@ function AdminLayout() {
           <Route path="menu-catalogue" element={<MenuCatalogue />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="notifications" element={<AdminNotifications />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>

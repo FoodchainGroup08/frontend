@@ -65,10 +65,24 @@ export interface User {
   longitude?: number | null;
 }
 
+export interface BranchHour {
+  id?: string;
+  dayOfWeek: number; // 0=Monday … 6=Sunday
+  dayName?: string;
+  openTime: string;  // "08:00"
+  closeTime: string; // "22:00"
+  closed: boolean;
+}
+
 export interface Branch {
   id: string;
   name: string;
   address: string;
+  phone?: string;
+  description?: string;
+  managerId?: string;
+  latitude?: number;
+  longitude?: number;
   location?: string;
   distance?: string;
   hours: string;
@@ -315,6 +329,7 @@ export interface FoodSuggestionRequest {
   limit?: number;
 }
 
+// Legacy single-item types (kept for backward compat)
 export interface FoodSuggestionItem {
   menuItemId: string;
   menuItemName: string;
@@ -331,6 +346,35 @@ export interface FoodSuggestionResponse {
   readyForSuggestions: boolean;
   questions: string[];
   suggestions: FoodSuggestionItem[];
+  estimatedTotalCost: number;
+}
+
+// Enhanced combo types
+export interface ComboItem {
+  menuItemId: string;
+  name: string;
+  price: number;
+}
+
+export interface ComboSuggestion {
+  comboName: string;
+  items: ComboItem[];
+  totalPrice: number;
+  healthScore: number;
+  wellnessTags: string[];
+  reason: string;
+  confidence: number;
+}
+
+export type RecommendationSource = 'GEMINI' | 'RULE_BASED' | 'NONE';
+
+export interface AiRecommendationResponse {
+  recommendationSource: RecommendationSource;
+  fallbackUsed: boolean;
+  message: string;
+  readyForSuggestions: boolean;
+  questions: string[];
+  suggestions: ComboSuggestion[];
   estimatedTotalCost: number;
 }
 
@@ -365,10 +409,13 @@ function mapBranch(b: any): Branch {
     id: b.id,
     name: b.name,
     address: b.address,
+    phone: b.phone,
+    description: b.description,
+    managerId: b.managerId,
+    latitude: b.latitude,
+    longitude: b.longitude,
     location: b.address,
     distance: b.distanceKm != null ? `${Number(b.distanceKm).toFixed(1)} km` : b.distance,
-    // Branch service returns hoursDisplay when no hours rows are configured.
-    // Fall back through hours → hoursDisplay → placeholder.
     hours: (b.hours && b.hours !== 'Hours not set') ? b.hours : (b.hoursDisplay && b.hoursDisplay !== 'Hours not set') ? b.hoursDisplay : '—',
     rating: b.rating ?? 0,
     isOpen: b.isOpen ?? false,
@@ -577,6 +624,12 @@ export const patchBranchStatus = (id: string, isActive: boolean) =>
     .patch<any>(`/branches/${id}/${isActive ? 'activate' : 'deactivate'}`)
     .then((r) => mapBranch(r.data));
 
+export const getBranchHours = (id: string): Promise<BranchHour[]> =>
+  apiClient.get<any>(`/branches/${id}/hours`).then(r => r.data ?? []);
+
+export const setBranchHours = (id: string, hours: Omit<BranchHour, 'id' | 'dayName'>[]): Promise<BranchHour[]> =>
+  apiClient.put<any>(`/branches/${id}/hours`, hours).then(r => r.data ?? []);
+
 export const getBranchesPublic = (): Promise<Branch[]> =>
   apiClient.get<any>('/branches').then((r) => {
     const items: any[] = r.data?.content ?? (Array.isArray(r.data) ? r.data : []);
@@ -676,12 +729,12 @@ export const createCategory = (name: string, displayOrder?: number) =>
 export const updateCategory = (id: string, data: { name?: string; displayOrder?: number }) =>
   apiClient.put<any>(`/menu/categories/${id}`, data).then((r) => r.data);
 
-export const getFoodSuggestions = (request: FoodSuggestionRequest): Promise<FoodSuggestionResponse> =>
-  apiClient.post<FoodSuggestionResponse>('/menu/suggestions', request).then((r) => r.data);
+export const getFoodSuggestions = (request: FoodSuggestionRequest): Promise<AiRecommendationResponse> =>
+  apiClient.post<AiRecommendationResponse>('/menu/suggestions', request).then((r) => r.data);
 
 export const uploadMenuItemImage = async (id: string, file: File) => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('image', file);
   const r = await apiClient.post<any>(`/menu/items/${id}/image`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
   return mapMenuItem(r.data);
 };
@@ -1002,8 +1055,8 @@ export const getAnalytics = (startDate?: string, endDate?: string) =>
 export const getBranchAnalytics = (startDate?: string, endDate?: string) =>
   apiClient.get<BranchAnalytics[]>('/admin/analytics/branches', { params: { startDate, endDate } }).then(r => r.data);
 
-export const getAdminOverview = (startDate?: string, endDate?: string): Promise<AdminOverview> =>
-  apiClient.get<any>('/admin/analytics/overview', { params: { startDate, endDate } }).then(r => ({
+export const getAdminOverview = (startDate?: string, endDate?: string, branchId?: string): Promise<AdminOverview> =>
+  apiClient.get<any>('/admin/analytics/overview', { params: { startDate, endDate, branchId } }).then(r => ({
     ...r.data,
     totalRevenue: Number(r.data.totalRevenue ?? 0),
     avgOrderValue: Number(r.data.avgOrderValue ?? 0),
@@ -1018,8 +1071,8 @@ export const getBranchComparison = (startDate?: string, endDate?: string): Promi
     }))
   );
 
-export const getAdminTrends = (startDate?: string, endDate?: string, interval?: string): Promise<AdminTrends> =>
-  apiClient.get<any>('/admin/analytics/trends', { params: { startDate, endDate, interval } }).then(r => ({
+export const getAdminTrends = (startDate?: string, endDate?: string, interval?: string, branchId?: string): Promise<AdminTrends> =>
+  apiClient.get<any>('/admin/analytics/trends', { params: { startDate, endDate, interval, branchId } }).then(r => ({
     ...r.data,
     dataPoints: (r.data.dataPoints ?? []).map((p: any) => ({
       ...p,
@@ -1027,11 +1080,11 @@ export const getAdminTrends = (startDate?: string, endDate?: string, interval?: 
     })),
   }));
 
-export const getAdminOperational = (startDate?: string, endDate?: string): Promise<AdminOperational> =>
-  apiClient.get<AdminOperational>('/admin/analytics/operational', { params: { startDate, endDate } }).then(r => r.data);
+export const getAdminOperational = (startDate?: string, endDate?: string, branchId?: string): Promise<AdminOperational> =>
+  apiClient.get<AdminOperational>('/admin/analytics/operational', { params: { startDate, endDate, branchId } }).then(r => r.data);
 
-export const getAdminPopularItems = (startDate?: string, endDate?: string, limit = 10): Promise<AdminPopularItem[]> =>
-  apiClient.get<AdminPopularItem[]>('/admin/analytics/popular-items', { params: { startDate, endDate, limit } }).then(r => r.data ?? []);
+export const getAdminPopularItems = (startDate?: string, endDate?: string, limit = 10, branchId?: string): Promise<AdminPopularItem[]> =>
+  apiClient.get<AdminPopularItem[]>('/admin/analytics/popular-items', { params: { startDate, endDate, limit, branchId } }).then(r => r.data ?? []);
 
 export const getAllUsers = (role?: string) =>
   apiClient.get<SystemUser[]>('/admin/users', { params: role ? { role } : undefined }).then(r => r.data);

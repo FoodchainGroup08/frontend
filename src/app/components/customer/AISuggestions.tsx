@@ -7,6 +7,9 @@ import {
   HelpCircle,
   AlertCircle,
   Utensils,
+  Heart,
+  Bot,
+  Cpu,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -17,8 +20,8 @@ import { toast } from 'sonner';
 import {
   getFoodSuggestions,
   type FoodSuggestionRequest,
-  type FoodSuggestionItem,
-  type FoodSuggestionResponse,
+  type ComboSuggestion,
+  type AiRecommendationResponse,
 } from '@/services/api';
 
 // ─── Prop types ───────────────────────────────────────────────────────────────
@@ -88,6 +91,51 @@ const DEFAULT_FORM: SuggestionForm = {
   limit: '5',
 };
 
+// ─── Health score bar ─────────────────────────────────────────────────────────
+
+function HealthScoreBar({ score }: { score: number }) {
+  const pct = Math.min(100, Math.max(0, score));
+  const color =
+    pct >= 75 ? '#4ade80' :
+    pct >= 50 ? '#facc15' : '#f87171';
+
+  return (
+    <div className='flex items-center gap-2'>
+      <Heart className='w-3.5 h-3.5 shrink-0' style={{ color }} />
+      <div className='flex-1 h-1.5 rounded-full overflow-hidden' style={{ backgroundColor: 'color-mix(in srgb, var(--espresso) 10%, transparent)' }}>
+        <div
+          className='h-full rounded-full transition-all'
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
+      </div>
+      <span className='text-xs font-semibold tabular-nums shrink-0' style={{ color, minWidth: '2.5rem', textAlign: 'right' }}>
+        {pct}/100
+      </span>
+    </div>
+  );
+}
+
+// ─── Source badge ─────────────────────────────────────────────────────────────
+
+function SourceBadge({ source }: { source: string }) {
+  const isAi = source === 'GEMINI';
+  return (
+    <span
+      className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0'
+      style={{
+        backgroundColor: isAi
+          ? 'color-mix(in srgb, var(--golden-amber) 18%, transparent)'
+          : 'color-mix(in srgb, #6366f1 15%, transparent)',
+        color: isAi ? 'var(--golden-amber)' : '#6366f1',
+        border: `1px solid ${isAi ? 'color-mix(in srgb, var(--golden-amber) 35%, transparent)' : 'color-mix(in srgb, #6366f1 30%, transparent)'}`,
+      }}
+    >
+      {isAi ? <Bot className='w-3 h-3' /> : <Cpu className='w-3 h-3' />}
+      {isAi ? 'AI' : 'Smart Fallback'}
+    </span>
+  );
+}
+
 // ─── Loading skeletons ────────────────────────────────────────────────────────
 
 function SuggestionSkeleton() {
@@ -100,9 +148,16 @@ function SuggestionSkeleton() {
               <Skeleton className='h-5 w-2/3' />
               <Skeleton className='h-5 w-16 shrink-0' />
             </div>
+            <Skeleton className='h-3 w-full rounded-full' />
+            <div className='flex gap-1'>
+              <Skeleton className='h-5 w-16 rounded-full' />
+              <Skeleton className='h-5 w-20 rounded-full' />
+            </div>
             <Skeleton className='h-14 w-full rounded-md' />
-            <Skeleton className='h-4 w-1/2' />
-            <Skeleton className='h-9 w-full rounded-md' />
+            <div className='flex gap-2'>
+              <Skeleton className='h-9 flex-1 rounded-md' />
+              <Skeleton className='h-9 flex-1 rounded-md' />
+            </div>
           </CardContent>
         </Card>
       ))}
@@ -117,20 +172,15 @@ function SuggestionEmptyState({ onReset }: { onReset: () => void }) {
     <div className='text-center py-16'>
       <div
         className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
-        style={{
-          backgroundColor: 'color-mix(in srgb, var(--golden-amber) 15%, transparent)',
-        }}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--golden-amber) 15%, transparent)' }}
       >
         <Utensils className='w-7 h-7' style={{ color: 'var(--golden-amber)' }} />
       </div>
       <h3 className='text-lg font-semibold mb-2' style={{ color: 'var(--espresso)' }}>
         No suggestions found
       </h3>
-      <p
-        className='text-sm mb-6 max-w-xs mx-auto'
-        style={{ color: 'var(--charcoal)', opacity: 0.6 }}
-      >
-        Try adjusting your preferences, increasing your budget, or removing some dietary filters.
+      <p className='text-sm mb-6 max-w-xs mx-auto' style={{ color: 'var(--charcoal)', opacity: 0.6 }}>
+        Try adjusting your preferences, increasing your budget, or removing dietary filters.
       </p>
       <Button variant='outline' onClick={onReset}>
         Reset Preferences
@@ -139,31 +189,25 @@ function SuggestionEmptyState({ onReset }: { onReset: () => void }) {
   );
 }
 
-// ─── Individual suggestion card ───────────────────────────────────────────────
+// ─── Combo suggestion card ────────────────────────────────────────────────────
 
-function SuggestionCard({
-  item,
-  onAddToCart,
+function ComboCard({
+  combo,
+  source,
+  onAddCombo,
+  onAddItem,
 }: {
-  item: FoodSuggestionItem;
-  onAddToCart: (item: AddToCartItem, qty: number) => void;
+  combo: ComboSuggestion;
+  source: string;
+  onAddCombo: (combo: ComboSuggestion) => void;
+  onAddItem: (item: AddToCartItem, qty: number) => void;
 }) {
-  const [justAdded, setJustAdded] = useState(false);
+  const [comboAdded, setComboAdded] = useState(false);
 
-  const handleAdd = () => {
-    onAddToCart(
-      {
-        id: item.menuItemId,
-        name: item.menuItemName,
-        description: '',
-        price: item.price,
-        category: '',
-        available: true,
-      },
-      1
-    );
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 2000);
+  const handleAddCombo = () => {
+    onAddCombo(combo);
+    setComboAdded(true);
+    setTimeout(() => setComboAdded(false), 2000);
   };
 
   return (
@@ -172,81 +216,102 @@ function SuggestionCard({
       style={{ borderColor: 'color-mix(in srgb, var(--espresso) 12%, transparent)' }}
     >
       <CardContent className='flex flex-col flex-1 p-4 gap-3'>
-        {/* Name + price */}
+        {/* Header: combo name + price + source badge */}
         <div className='flex items-start justify-between gap-2'>
-          <h3
-            className='font-semibold text-base leading-tight'
-            style={{ color: 'var(--espresso)' }}
-          >
-            {item.menuItemName}
-          </h3>
-          <span
-            className='text-sm font-bold shrink-0'
-            style={{ color: 'var(--golden-amber)' }}
-          >
-            ₦{item.price.toLocaleString()}
-          </span>
+          <div className='flex-1 min-w-0'>
+            <h3 className='font-semibold text-base leading-tight' style={{ color: 'var(--espresso)' }}>
+              {combo.comboName}
+            </h3>
+          </div>
+          <div className='flex flex-col items-end gap-1 shrink-0'>
+            <span className='text-sm font-bold' style={{ color: 'var(--golden-amber)' }}>
+              ₦{combo.totalPrice.toLocaleString()}
+            </span>
+            <SourceBadge source={source} />
+          </div>
         </div>
 
-        {/* AI reason chip */}
-        <div
-          className='flex items-start gap-2 rounded-md p-2.5'
-          style={{
-            backgroundColor: 'color-mix(in srgb, var(--golden-amber) 12%, transparent)',
-          }}
-        >
-          <Sparkles
-            className='w-3.5 h-3.5 mt-0.5 shrink-0'
-            style={{ color: 'var(--golden-amber)' }}
-          />
-          <p
-            className='text-xs leading-relaxed'
-            style={{ color: 'var(--espresso)', opacity: 0.85 }}
-          >
-            {item.reason}
-          </p>
-        </div>
+        {/* Health score */}
+        <HealthScoreBar score={combo.healthScore} />
 
-        {/* Optional add-on combos */}
-        {item.optionalAddOns?.length > 0 && (
-          <div>
-            <p
-              className='text-xs mb-1.5'
-              style={{ color: 'var(--charcoal)', opacity: 0.5 }}
-            >
-              Pairs well with:
-            </p>
-            <div className='flex flex-wrap gap-1'>
-              {item.optionalAddOns.map((addon) => (
-                <Badge key={addon} variant='secondary' className='text-xs'>
-                  {addon}
-                </Badge>
-              ))}
-            </div>
+        {/* Wellness tags */}
+        {combo.wellnessTags?.length > 0 && (
+          <div className='flex flex-wrap gap-1'>
+            {combo.wellnessTags.map((tag) => (
+              <Badge
+                key={tag}
+                variant='secondary'
+                className='text-xs'
+                style={{
+                  backgroundColor: 'color-mix(in srgb, #4ade80 15%, transparent)',
+                  color: '#166534',
+                  border: '1px solid color-mix(in srgb, #4ade80 30%, transparent)',
+                }}
+              >
+                {tag}
+              </Badge>
+            ))}
           </div>
         )}
 
-        {/* Estimated total when ordering for multiple people */}
-        {item.estimatedTotalCost > item.price && (
-          <p className='text-xs' style={{ color: 'var(--charcoal)', opacity: 0.5 }}>
-            Est. total: ₦{item.estimatedTotalCost.toLocaleString()}
-          </p>
+        {/* Combo items */}
+        <div className='space-y-1.5'>
+          {combo.items.map((item) => (
+            <div
+              key={item.menuItemId}
+              className='flex items-center justify-between gap-2 text-sm rounded-md px-2.5 py-1.5'
+              style={{ backgroundColor: 'color-mix(in srgb, var(--espresso) 4%, transparent)' }}
+            >
+              <span className='font-medium truncate' style={{ color: 'var(--espresso)' }}>
+                {item.name}
+              </span>
+              <div className='flex items-center gap-2 shrink-0'>
+                <span className='text-xs font-semibold' style={{ color: 'var(--golden-amber)' }}>
+                  ₦{item.price.toLocaleString()}
+                </span>
+                <button
+                  className='h-6 w-6 rounded flex items-center justify-center transition-colors'
+                  style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}
+                  title='Add item to cart'
+                  onClick={() =>
+                    onAddItem(
+                      { id: item.menuItemId, name: item.name, description: '', price: item.price, category: '', available: true },
+                      1
+                    )
+                  }
+                >
+                  <ShoppingCart className='w-3 h-3' />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* AI reason */}
+        {combo.reason && (
+          <div
+            className='flex items-start gap-2 rounded-md p-2.5'
+            style={{ backgroundColor: 'color-mix(in srgb, var(--golden-amber) 12%, transparent)' }}
+          >
+            <Sparkles className='w-3.5 h-3.5 mt-0.5 shrink-0' style={{ color: 'var(--golden-amber)' }} />
+            <p className='text-xs leading-relaxed' style={{ color: 'var(--espresso)', opacity: 0.85 }}>
+              {combo.reason}
+            </p>
+          </div>
         )}
 
-        {/* CTA */}
+        {/* Add combo CTA */}
         <Button
           className='mt-auto w-full transition-colors'
           size='sm'
-          onClick={handleAdd}
+          onClick={handleAddCombo}
           style={{
-            backgroundColor: justAdded
-              ? 'var(--sage-green)'
-              : 'var(--espresso)',
+            backgroundColor: comboAdded ? 'var(--sage-green)' : 'var(--espresso)',
             color: 'var(--warm-white)',
           }}
         >
           <ShoppingCart className='w-4 h-4 mr-1.5' />
-          {justAdded ? 'Added!' : 'Add to Cart'}
+          {comboAdded ? 'Added!' : 'Add Combo to Cart'}
         </Button>
       </CardContent>
     </Card>
@@ -263,7 +328,7 @@ export function AISuggestions({
 }: AISuggestionsProps) {
   const [form, setForm] = useState<SuggestionForm>(DEFAULT_FORM);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<FoodSuggestionResponse | null>(null);
+  const [result, setResult] = useState<AiRecommendationResponse | null>(null);
   const [error, setError] = useState('');
 
   const toggleDietary = (pref: string) => {
@@ -279,19 +344,11 @@ export function AISuggestions({
     branchId,
     branchName,
     ...(form.budget && { budget: parseFloat(form.budget) }),
-    ...(form.mealType && {
-      mealType: form.mealType as FoodSuggestionRequest['mealType'],
-    }),
-    ...(form.appetite && {
-      appetite: form.appetite as FoodSuggestionRequest['appetite'],
-    }),
-    ...(form.dietaryPreferences.length > 0 && {
-      dietaryPreferences: form.dietaryPreferences,
-    }),
+    ...(form.mealType && { mealType: form.mealType as FoodSuggestionRequest['mealType'] }),
+    ...(form.appetite && { appetite: form.appetite as FoodSuggestionRequest['appetite'] }),
+    ...(form.dietaryPreferences.length > 0 && { dietaryPreferences: form.dietaryPreferences }),
     ...(form.peopleCount && { peopleCount: parseInt(form.peopleCount, 10) }),
-    ...(form.fulfillmentType && {
-      fulfillmentType: form.fulfillmentType as FoodSuggestionRequest['fulfillmentType'],
-    }),
+    ...(form.fulfillmentType && { fulfillmentType: form.fulfillmentType as FoodSuggestionRequest['fulfillmentType'] }),
     ...(form.limit && { limit: parseInt(form.limit, 10) }),
   });
 
@@ -302,11 +359,8 @@ export function AISuggestions({
       const response = await getFoodSuggestions(buildRequest());
       setResult(response);
       if (response.readyForSuggestions && response.suggestions.length > 0) {
-        toast.success(
-          `Found ${response.suggestions.length} suggestion${
-            response.suggestions.length > 1 ? 's' : ''
-          } for you!`
-        );
+        const src = response.recommendationSource === 'GEMINI' ? 'AI' : 'Smart Fallback';
+        toast.success(`Found ${response.suggestions.length} combo${response.suggestions.length > 1 ? 's' : ''} via ${src}!`);
       }
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? 'Failed to get suggestions. Please try again.';
@@ -322,22 +376,20 @@ export function AISuggestions({
     fetchSuggestions();
   };
 
-  const handleAddAll = () => {
-    if (!result?.suggestions?.length) return;
-    result.suggestions.forEach((item) =>
+  const handleAddCombo = (combo: ComboSuggestion) => {
+    combo.items.forEach((item) =>
       onAddToCart(
-        {
-          id: item.menuItemId,
-          name: item.menuItemName,
-          description: '',
-          price: item.price,
-          category: '',
-          available: true,
-        },
+        { id: item.menuItemId, name: item.name, description: '', price: item.price, category: '', available: true },
         1
       )
     );
-    toast.success(`Added ${result.suggestions.length} items to cart`);
+    toast.success(`Added "${combo.comboName}" to cart`);
+  };
+
+  const handleAddAll = () => {
+    if (!result?.suggestions?.length) return;
+    result.suggestions.forEach((combo) => handleAddCombo(combo));
+    toast.success(`Added all ${result.suggestions.length} combos to cart`);
   };
 
   const handleReset = () => {
@@ -350,7 +402,6 @@ export function AISuggestions({
   const hasQuestions = result && !result.readyForSuggestions && (result.questions?.length ?? 0) > 0;
   const hasEmptyResults = result?.readyForSuggestions && (result.suggestions?.length ?? 0) === 0;
 
-  // ── Select style shared between all <select> elements ──────────────────────
   const selectStyle: React.CSSProperties = {
     borderColor: 'var(--border)',
     backgroundColor: 'transparent',
@@ -360,6 +411,7 @@ export function AISuggestions({
   return (
     <div className='min-h-screen pb-16' style={{ backgroundColor: 'var(--warm-white)' }}>
       <div className='max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8'>
+
         {/* ── Page header ─────────────────────────────────────────────────── */}
         <div className='mb-8'>
           <div className='flex items-center gap-2 mb-1'>
@@ -369,17 +421,12 @@ export function AISuggestions({
             </h1>
           </div>
           <p className='text-sm' style={{ color: 'var(--charcoal)', opacity: 0.6 }}>
-            Tell us what you're craving and our AI will find the best dishes from {branchName}.
+            Tell us what you're craving and our AI will suggest healthy meal combos from {branchName}.
           </p>
         </div>
 
         {/* ── Preferences form ────────────────────────────────────────────── */}
-        <Card
-          className='mb-8 border'
-          style={{
-            borderColor: 'color-mix(in srgb, var(--espresso) 12%, transparent)',
-          }}
-        >
+        <Card className='mb-8 border' style={{ borderColor: 'color-mix(in srgb, var(--espresso) 12%, transparent)' }}>
           <CardHeader className='pb-4'>
             <CardTitle className='text-base' style={{ color: 'var(--espresso)' }}>
               Your Preferences
@@ -390,47 +437,29 @@ export function AISuggestions({
               {/* Row 1: Budget / People / Max results */}
               <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
                 <div className='space-y-1.5'>
-                  <label
-                    className='text-xs font-medium'
-                    style={{ color: 'var(--espresso)' }}
-                  >
+                  <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>
                     Budget (₦) — optional
                   </label>
                   <Input
-                    type='number'
-                    placeholder='e.g. 5000'
-                    min={0}
-                    value={form.budget}
+                    type='number' placeholder='e.g. 5000' min={0} value={form.budget}
                     onChange={(e) => setForm((f) => ({ ...f, budget: e.target.value }))}
                   />
                 </div>
                 <div className='space-y-1.5'>
-                  <label
-                    className='text-xs font-medium'
-                    style={{ color: 'var(--espresso)' }}
-                  >
+                  <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>
                     Number of People
                   </label>
                   <Input
-                    type='number'
-                    min={1}
-                    max={50}
-                    value={form.peopleCount}
+                    type='number' min={1} max={50} value={form.peopleCount}
                     onChange={(e) => setForm((f) => ({ ...f, peopleCount: e.target.value }))}
                   />
                 </div>
                 <div className='space-y-1.5'>
-                  <label
-                    className='text-xs font-medium'
-                    style={{ color: 'var(--espresso)' }}
-                  >
-                    Max Suggestions (1–10)
+                  <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>
+                    Max Combos (1–10)
                   </label>
                   <Input
-                    type='number'
-                    min={1}
-                    max={10}
-                    value={form.limit}
+                    type='number' min={1} max={10} value={form.limit}
                     onChange={(e) => setForm((f) => ({ ...f, limit: e.target.value }))}
                   />
                 </div>
@@ -439,69 +468,32 @@ export function AISuggestions({
               {/* Row 2: Meal type / Appetite / Order type */}
               <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
                 <div className='space-y-1.5'>
-                  <label
-                    className='text-xs font-medium'
-                    style={{ color: 'var(--espresso)' }}
-                  >
-                    Meal Type
-                  </label>
-                  <select
-                    value={form.mealType}
-                    onChange={(e) => setForm((f) => ({ ...f, mealType: e.target.value }))}
-                    className='w-full h-9 rounded-md border px-3 py-1 text-sm'
-                    style={selectStyle}
-                  >
+                  <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>Meal Type</label>
+                  <select value={form.mealType} onChange={(e) => setForm((f) => ({ ...f, mealType: e.target.value }))}
+                    className='w-full h-9 rounded-md border px-3 py-1 text-sm' style={selectStyle}>
                     <option value=''>Any</option>
                     {MEAL_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t!.charAt(0).toUpperCase() + t!.slice(1)}
-                      </option>
+                      <option key={t} value={t}>{t!.charAt(0).toUpperCase() + t!.slice(1)}</option>
                     ))}
                   </select>
                 </div>
-
                 <div className='space-y-1.5'>
-                  <label
-                    className='text-xs font-medium'
-                    style={{ color: 'var(--espresso)' }}
-                  >
-                    Appetite
-                  </label>
-                  <select
-                    value={form.appetite}
-                    onChange={(e) => setForm((f) => ({ ...f, appetite: e.target.value }))}
-                    className='w-full h-9 rounded-md border px-3 py-1 text-sm'
-                    style={selectStyle}
-                  >
+                  <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>Appetite</label>
+                  <select value={form.appetite} onChange={(e) => setForm((f) => ({ ...f, appetite: e.target.value }))}
+                    className='w-full h-9 rounded-md border px-3 py-1 text-sm' style={selectStyle}>
                     <option value=''>Any</option>
                     <option value='light'>Light</option>
                     <option value='heavy'>Heavy</option>
                   </select>
                 </div>
-
                 <div className='space-y-1.5'>
-                  <label
-                    className='text-xs font-medium'
-                    style={{ color: 'var(--espresso)' }}
-                  >
-                    Order Type
-                  </label>
-                  <select
-                    value={form.fulfillmentType}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        fulfillmentType: e.target.value,
-                      }))
-                    }
-                    className='w-full h-9 rounded-md border px-3 py-1 text-sm'
-                    style={selectStyle}
-                  >
+                  <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>Order Type</label>
+                  <select value={form.fulfillmentType}
+                    onChange={(e) => setForm((f) => ({ ...f, fulfillmentType: e.target.value }))}
+                    className='w-full h-9 rounded-md border px-3 py-1 text-sm' style={selectStyle}>
                     <option value=''>Any</option>
                     {FULFILLMENT_TYPES.map((ft) => (
-                      <option key={ft} value={ft}>
-                        {ft!.charAt(0).toUpperCase() + ft!.slice(1)}
-                      </option>
+                      <option key={ft} value={ft}>{ft!.charAt(0).toUpperCase() + ft!.slice(1)}</option>
                     ))}
                   </select>
                 </div>
@@ -509,29 +501,20 @@ export function AISuggestions({
 
               {/* Dietary preference toggles */}
               <div className='space-y-2'>
-                <label
-                  className='text-xs font-medium'
-                  style={{ color: 'var(--espresso)' }}
-                >
+                <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>
                   Dietary Preferences
                 </label>
                 <div className='flex flex-wrap gap-2'>
                   {DIETARY_OPTIONS.map((pref) => {
                     const active = form.dietaryPreferences.includes(pref);
                     return (
-                      <button
-                        key={pref}
-                        type='button'
-                        onClick={() => toggleDietary(pref)}
+                      <button key={pref} type='button' onClick={() => toggleDietary(pref)}
                         className='px-3 py-1 rounded-full text-xs font-medium border transition-all'
                         style={{
                           backgroundColor: active ? 'var(--espresso)' : 'transparent',
-                          color: active
-                            ? 'var(--warm-white)'
-                            : 'var(--espresso)',
+                          color: active ? 'var(--warm-white)' : 'var(--espresso)',
                           borderColor: 'var(--espresso)',
-                        }}
-                      >
+                        }}>
                         {pref}
                       </button>
                     );
@@ -541,49 +524,21 @@ export function AISuggestions({
 
               {/* Action buttons */}
               <div className='flex flex-col sm:flex-row gap-3 pt-1'>
-                <Button
-                  type='submit'
-                  disabled={isLoading}
-                  className='sm:w-auto'
-                  style={{
-                    backgroundColor: 'var(--golden-amber)',
-                    color: 'var(--charcoal)',
-                  }}
-                >
+                <Button type='submit' disabled={isLoading} className='sm:w-auto'
+                  style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}>
                   {isLoading ? (
-                    <>
-                      <RefreshCw className='w-4 h-4 mr-2 animate-spin' />
-                      Getting suggestions…
-                    </>
+                    <><RefreshCw className='w-4 h-4 mr-2 animate-spin' />Getting suggestions…</>
                   ) : (
-                    <>
-                      <Sparkles className='w-4 h-4 mr-2' />
-                      Get AI Suggestions
-                    </>
+                    <><Sparkles className='w-4 h-4 mr-2' />Get AI Suggestions</>
                   )}
                 </Button>
-
                 {result && (
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={() => fetchSuggestions()}
-                    disabled={isLoading}
-                    className='sm:w-auto'
-                  >
-                    <RefreshCw className='w-4 h-4 mr-2' />
-                    Regenerate
+                  <Button type='button' variant='outline' onClick={() => fetchSuggestions()} disabled={isLoading} className='sm:w-auto'>
+                    <RefreshCw className='w-4 h-4 mr-2' />Regenerate
                   </Button>
                 )}
-
                 {(result || error) && (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    onClick={handleReset}
-                    disabled={isLoading}
-                    className='sm:w-auto'
-                  >
+                  <Button type='button' variant='ghost' onClick={handleReset} disabled={isLoading} className='sm:w-auto'>
                     Reset
                   </Button>
                 )}
@@ -594,13 +549,8 @@ export function AISuggestions({
 
         {/* ── Error banner ─────────────────────────────────────────────────── */}
         {error && !isLoading && (
-          <div
-            className='flex items-start gap-3 p-4 rounded-lg border mb-6'
-            style={{
-              borderColor: 'color-mix(in srgb, #ef4444 30%, transparent)',
-              backgroundColor: 'color-mix(in srgb, #ef4444 8%, transparent)',
-            }}
-          >
+          <div className='flex items-start gap-3 p-4 rounded-lg border mb-6'
+            style={{ borderColor: 'color-mix(in srgb, #ef4444 30%, transparent)', backgroundColor: 'color-mix(in srgb, #ef4444 8%, transparent)' }}>
             <AlertCircle className='w-5 h-5 shrink-0 mt-0.5 text-red-500' />
             <p className='text-sm text-red-600'>{error}</p>
           </div>
@@ -611,45 +561,20 @@ export function AISuggestions({
 
         {/* ── AI is asking for more info ───────────────────────────────────── */}
         {!isLoading && hasQuestions && (
-          <div
-            className='flex items-start gap-3 p-5 rounded-lg border mb-6'
-            style={{
-              borderColor: 'color-mix(in srgb, var(--golden-amber) 40%, transparent)',
-              backgroundColor: 'color-mix(in srgb, var(--golden-amber) 10%, transparent)',
-            }}
-          >
-            <HelpCircle
-              className='w-5 h-5 shrink-0 mt-0.5'
-              style={{ color: 'var(--golden-amber)' }}
-            />
+          <div className='flex items-start gap-3 p-5 rounded-lg border mb-6'
+            style={{ borderColor: 'color-mix(in srgb, var(--golden-amber) 40%, transparent)', backgroundColor: 'color-mix(in srgb, var(--golden-amber) 10%, transparent)' }}>
+            <HelpCircle className='w-5 h-5 shrink-0 mt-0.5' style={{ color: 'var(--golden-amber)' }} />
             <div>
-              <p
-                className='text-sm font-semibold mb-3'
-                style={{ color: 'var(--espresso)' }}
-              >
-                {result!.message}
-              </p>
+              <p className='text-sm font-semibold mb-3' style={{ color: 'var(--espresso)' }}>{result!.message}</p>
               <ol className='space-y-1.5'>
                 {result!.questions.map((q, i) => (
-                  <li
-                    key={i}
-                    className='text-sm flex items-start gap-2'
-                    style={{ color: 'var(--charcoal)' }}
-                  >
-                    <span
-                      className='font-bold shrink-0 tabular-nums'
-                      style={{ color: 'var(--golden-amber)' }}
-                    >
-                      {i + 1}.
-                    </span>
+                  <li key={i} className='text-sm flex items-start gap-2' style={{ color: 'var(--charcoal)' }}>
+                    <span className='font-bold shrink-0 tabular-nums' style={{ color: 'var(--golden-amber)' }}>{i + 1}.</span>
                     {q}
                   </li>
                 ))}
               </ol>
-              <p
-                className='text-xs mt-3'
-                style={{ color: 'var(--charcoal)', opacity: 0.5 }}
-              >
+              <p className='text-xs mt-3' style={{ color: 'var(--charcoal)', opacity: 0.5 }}>
                 Fill in the form above and click "Get AI Suggestions" again.
               </p>
             </div>
@@ -662,44 +587,38 @@ export function AISuggestions({
             {/* Results bar */}
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5'>
               <div>
-                <p className='text-sm font-medium' style={{ color: 'var(--espresso)' }}>
-                  {result!.message}
-                </p>
+                <div className='flex items-center gap-2 mb-0.5'>
+                  <p className='text-sm font-medium' style={{ color: 'var(--espresso)' }}>{result!.message}</p>
+                  <SourceBadge source={result!.recommendationSource} />
+                </div>
                 {result!.estimatedTotalCost > 0 && (
-                  <p
-                    className='text-xs mt-0.5'
-                    style={{ color: 'var(--charcoal)', opacity: 0.55 }}
-                  >
-                    Estimated total:{' '}
-                    <span className='font-semibold'>
-                      ₦{result!.estimatedTotalCost.toLocaleString()}
-                    </span>
+                  <p className='text-xs mt-0.5' style={{ color: 'var(--charcoal)', opacity: 0.55 }}>
+                    Estimated total from first combo:{' '}
+                    <span className='font-semibold'>₦{result!.estimatedTotalCost.toLocaleString()}</span>
                   </p>
                 )}
               </div>
               <div className='flex gap-2 shrink-0'>
-                <Button
-                  size='sm'
-                  onClick={handleAddAll}
-                  style={{
-                    backgroundColor: 'var(--espresso)',
-                    color: 'var(--warm-white)',
-                  }}
-                >
-                  <ShoppingCart className='w-4 h-4 mr-1.5' />
-                  Add All to Cart
+                <Button size='sm' onClick={handleAddAll}
+                  style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}>
+                  <ShoppingCart className='w-4 h-4 mr-1.5' />Add All to Cart
                 </Button>
                 <Button size='sm' variant='outline' onClick={onGoToCart}>
-                  View Cart
-                  <ChevronRight className='w-4 h-4 ml-1' />
+                  View Cart<ChevronRight className='w-4 h-4 ml-1' />
                 </Button>
               </div>
             </div>
 
-            {/* Cards grid — 1 col mobile, 2 tablet, 3 desktop */}
+            {/* Combo cards grid */}
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-              {result!.suggestions.map((item) => (
-                <SuggestionCard key={item.menuItemId} item={item} onAddToCart={onAddToCart} />
+              {result!.suggestions.map((combo, i) => (
+                <ComboCard
+                  key={`${combo.comboName}-${i}`}
+                  combo={combo}
+                  source={result!.recommendationSource}
+                  onAddCombo={handleAddCombo}
+                  onAddItem={onAddToCart}
+                />
               ))}
             </div>
           </div>

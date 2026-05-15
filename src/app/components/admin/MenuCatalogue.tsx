@@ -22,12 +22,6 @@ import {
   getCategoriesFull,
   type MenuItem,
 } from "@/services/api";
-import { isNetworkError } from "@/utils/demoData";
-
-const DEMO_MENU_ITEMS: MenuItem[] = [
-  { id: '1', name: 'Jollof Rice with Chicken', description: 'Spicy Nigerian jollof rice served with grilled chicken', price: 3500, category: 'Mains', available: true, isActive: true },
-  { id: '2', name: 'Fried Rice Combo', description: 'Delicious fried rice with beef and plantain', price: 3200, category: 'Mains', available: true, isActive: true },
-];
 
 function ImageUploadZone({ onFileChange }: { onFileChange: (file: File) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,13 +95,9 @@ export function MenuCatalogue() {
       ]);
       setItems(data);
       setCategories(cats.filter(c => c.active));
-    } catch (err: any) {
-      if (isNetworkError(err)) {
-        setItems(DEMO_MENU_ITEMS);
-      } else {
-        setError("Failed to load menu items");
-        toast.error("Failed to load menu items");
-      }
+    } catch {
+      setError("Failed to load menu items");
+      toast.error("Failed to load menu items");
     } finally {
       setIsLoading(false);
     }
@@ -142,13 +132,12 @@ export function MenuCatalogue() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) { toast.error("Item name is required"); return; }
-    if (!formData.categoryId) { toast.error("Please select a category"); return; }
     setIsSaving(true);
     try {
       if (editingItem) {
         let updated = await updateMenuItem(editingItem.id, {
           name: formData.name, description: formData.description,
-          categoryId: formData.categoryId, price: formData.price,
+          categoryId: formData.categoryId || undefined, price: formData.price,
         });
         if (imageFile) {
           updated = await uploadMenuItemImage(editingItem.id, imageFile);
@@ -158,7 +147,7 @@ export function MenuCatalogue() {
       } else {
         let created = await createMenuItem({
           name: formData.name, description: formData.description,
-          categoryId: formData.categoryId, price: formData.price,
+          categoryId: formData.categoryId || undefined, price: formData.price,
         });
         if (imageFile) {
           created = await uploadMenuItemImage(created.id, imageFile);
@@ -369,7 +358,7 @@ export function MenuCatalogue() {
         </Card>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent style={{ backgroundColor: 'var(--warm-white)' }} className="max-w-2xl">
+          <DialogContent style={{ backgroundColor: 'var(--warm-white)' }} className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle style={{ color: 'var(--espresso)' }}>
                 {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
@@ -409,7 +398,7 @@ export function MenuCatalogue() {
                     id="price"
                     type="number"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                     placeholder="2500"
                     className="border-[var(--espresso)]/20"
                     style={{ backgroundColor: 'var(--white)' }}
