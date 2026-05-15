@@ -158,10 +158,12 @@ function VerifyEmailPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
   const params = new URLSearchParams(location.search);
   const token = params.get('token') ?? undefined;
   const email = params.get('email') ?? undefined;
+  // Only redirect away if there's no token — if a token is present the user must complete
+  // verification even if they're already signed in (e.g. opened the link on a logged-in device).
+  if (isAuthenticated && !token) return <Navigate to={getRoleHome(user?.role)} replace />;
   return <VerifyEmail token={token} email={email} onNavigateToLogin={() => navigate('/login')} />;
 }
 
@@ -277,6 +279,13 @@ function CustomerLayout() {
     }
   };
 
+  const handleChangeBranch = (branch: ApiBranch) => {
+    if (branch.id === selectedBranch?.id) return;
+    setSelectedBranch(branch);
+    toast.success(`Switched to ${branch.name}`);
+    if (currentScreen !== 'menu') navigate('/menu');
+  };
+
   const handleAddToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
     const existing = cart.find(c => c.id === item.id);
     if (existing) {
@@ -381,6 +390,7 @@ function CustomerLayout() {
             branchAddress={selectedBranch.address}
             onPlaceOrder={handlePlaceOrder}
             onGoBack={() => navigate('/cart')}
+            onChangeBranch={() => navigate('/branches')}
           />
         );
       case 'order-confirmation':
@@ -436,6 +446,8 @@ function CustomerLayout() {
           userName={user?.name}
           userId={user?.id}
           selectedBranch={selectedBranch.name}
+          selectedBranchId={selectedBranch.id}
+          onChangeBranch={handleChangeBranch}
           onLogout={logout}
         />
       )}

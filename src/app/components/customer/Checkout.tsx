@@ -27,6 +27,7 @@ interface CheckoutProps {
   branchAddress?: string;
   onPlaceOrder: (formData: OrderDetails, order: Order) => void;
   onGoBack: () => void;
+  onChangeBranch?: () => void;
 }
 
 export interface OrderDetails {
@@ -42,7 +43,7 @@ export interface OrderDetails {
   orderType: 'delivery' | 'dine-in' | 'pickup';
 }
 
-export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrder, onGoBack }: CheckoutProps) {
+export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrder, onGoBack, onChangeBranch }: CheckoutProps) {
   const { user } = useAuth();
 
   const [orderType, setOrderType] = useState<'delivery' | 'dine-in' | 'pickup'>('delivery');
@@ -272,17 +273,25 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
                       onChange={setDeliveryAddress}
                       placeholder="Search for your delivery address…"
                     />
-                    {deliveryAddress && (
-                      <div
-                        className="p-3 rounded-md"
-                        style={{ backgroundColor: "rgba(240,165,0,0.08)" }}
-                      >
-                        <p className="text-sm" style={{ color: "var(--espresso)" }}>
-                          Delivering from{" "}
-                          <span style={{ fontWeight: 600 }}>{branchName}</span>
-                        </p>
-                      </div>
-                    )}
+                    <div
+                      className="flex items-center justify-between p-3 rounded-md"
+                      style={{ backgroundColor: "rgba(240,165,0,0.08)" }}
+                    >
+                      <p className="text-sm" style={{ color: "var(--espresso)" }}>
+                        Delivering from{" "}
+                        <span style={{ fontWeight: 600 }}>{branchName}</span>
+                      </p>
+                      {onChangeBranch && (
+                        <button
+                          type="button"
+                          onClick={onChangeBranch}
+                          className="text-xs underline ml-3 flex-shrink-0"
+                          style={{ color: "var(--golden-amber)" }}
+                        >
+                          Change
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={deliveryAddress}
@@ -312,12 +321,22 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div
-                      className="p-3 rounded-md"
+                      className="flex items-center justify-between p-3 rounded-md"
                       style={{ backgroundColor: "rgba(240,165,0,0.08)" }}
                     >
                       <p className="text-sm" style={{ color: "var(--espresso)", fontWeight: 600 }}>
                         You're picking up at {branchName}!
                       </p>
+                      {onChangeBranch && (
+                        <button
+                          type="button"
+                          onClick={onChangeBranch}
+                          className="text-xs underline ml-3 flex-shrink-0"
+                          style={{ color: "var(--golden-amber)" }}
+                        >
+                          Change branch
+                        </button>
+                      )}
                     </div>
                     {/* Google Maps embed — requires VITE_GOOGLE_MAPS_API_KEY env var */}
                     <iframe

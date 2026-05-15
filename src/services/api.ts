@@ -34,13 +34,17 @@ apiClient.interceptors.response.use(
           };
           return apiClient(originalRequest);
         } catch {
-          localStorage.clear();
-          window.location.href = '/login';
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
+          localStorage.removeItem('foodchain_user');
+          window.dispatchEvent(new Event('foodchain:unauthorized'));
           return Promise.reject(error);
         }
       }
-      localStorage.clear();
-      window.location.href = '/login';
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem('foodchain_user');
+      window.dispatchEvent(new Event('foodchain:unauthorized'));
     }
     return Promise.reject(error);
   }
