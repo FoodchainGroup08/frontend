@@ -15,6 +15,7 @@ interface NotificationPanelProps {
   unreadCount: number;
   onResetUnread: () => void;
   onDecrementUnread: () => void;
+  variant?: 'dropdown' | 'sheet';
 }
 
 const STATUS_DOT: Record<string, string> = {
@@ -33,6 +34,7 @@ export function NotificationPanel({
   unreadCount,
   onResetUnread,
   onDecrementUnread,
+  variant = 'dropdown',
 }: NotificationPanelProps) {
   const [items, setItems] = useState<AdminNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,15 +72,8 @@ export function NotificationPanel({
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      className="absolute right-0 top-full mt-2 w-96 rounded-lg shadow-xl z-50 flex flex-col"
-      style={{
-        backgroundColor: 'var(--white)',
-        border: '1px solid rgba(59,35,20,0.15)',
-        maxHeight: '480px',
-      }}
-    >
+  const inner = (
+    <>
       <div
         className="flex items-center justify-between px-4 py-3 flex-shrink-0"
         style={{ borderBottom: '1px solid rgba(59,35,20,0.1)' }}
@@ -153,6 +148,23 @@ export function NotificationPanel({
           ))
         )}
       </div>
+    </>
+  );
+
+  if (variant === 'sheet') {
+    return <div className="flex flex-col flex-1 overflow-hidden">{inner}</div>;
+  }
+
+  return (
+    <div
+      className="absolute right-0 top-full mt-2 w-96 rounded-lg shadow-xl z-50 flex flex-col"
+      style={{
+        backgroundColor: 'var(--white)',
+        border: '1px solid rgba(59,35,20,0.15)',
+        maxHeight: '480px',
+      }}
+    >
+      {inner}
     </div>
   );
 }

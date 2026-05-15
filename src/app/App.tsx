@@ -450,7 +450,7 @@ function CustomerLayout() {
           onLogout={logout}
         />
       )}
-      {renderScreen()}
+      <div className="pb-16 sm:pb-0">{renderScreen()}</div>
       <OrderDetailModal
         order={selectedOrderDetail}
         isOpen={isOrderDetailOpen}
