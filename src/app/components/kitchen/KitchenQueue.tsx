@@ -122,6 +122,10 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       setOrders(prev => prev.map(o =>
         o.id === data.orderId ? { ...o, isUrgent: true } : o
       ));
+      toast.warning(
+        data.message ?? 'Order overdue',
+        { description: `Order has been waiting over ${data.minutesWaiting ?? 60} minutes`, duration: 8000 }
+      );
       return;
     }
     const msg = data as WsOrderUpdate;
@@ -210,7 +214,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
 
   const renderOrderCard = (order: KitchenOrder) => {
     const elapsedMinutes = getElapsedTime(order.receivedAt);
-    const isOverdue = elapsedMinutes > 15;
+    const isOverdue = elapsedMinutes > 60;
     const statusColors = STATUS_COLORS[order.status as 'received' | 'preparing' | 'ready']
       ?? STATUS_COLORS.received;
 
