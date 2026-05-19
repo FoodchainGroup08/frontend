@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Menu as MenuIcon } from "lucide-react";
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
@@ -474,7 +475,7 @@ function CustomerLayout() {
 
 function KitchenLayout() {
   const { user, logout } = useAuth();
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedKitchenOrder, setSelectedKitchenOrder] = useState<KitchenOrder | null>(null);
   const [isKitchenOrderDetailOpen, setIsKitchenOrderDetailOpen] = useState(false);
 
@@ -493,15 +494,26 @@ function KitchenLayout() {
         userName={user?.name ?? ''}
         branchName=""
         onLogout={logout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="flex-1 overflow-hidden">
-        <KitchenQueue
-          onOrderClick={(order) => {
-            setSelectedKitchenOrder(order);
-            setIsKitchenOrderDetailOpen(true);
-          }}
-          onStatusChange={handleKitchenStatusChange}
-        />
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--charcoal)', borderColor: 'var(--espresso)' }}>
+          <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ color: 'var(--warm-white)' }}>
+            <MenuIcon className="w-6 h-6" />
+          </button>
+          <span className="font-semibold" style={{ color: 'var(--warm-white)' }}>Kitchen Queue</span>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <KitchenQueue
+            onOrderClick={(order) => {
+              setSelectedKitchenOrder(order);
+              setIsKitchenOrderDetailOpen(true);
+            }}
+            onStatusChange={handleKitchenStatusChange}
+          />
+        </div>
       </div>
       <KitchenOrderDetail
         order={selectedKitchenOrder}
@@ -527,6 +539,7 @@ function ManagerLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const pathToScreen: Record<string, string> = {
     '/manager': 'dashboard',
@@ -537,24 +550,43 @@ function ManagerLayout() {
   };
   const currentScreen = pathToScreen[location.pathname] ?? 'dashboard';
 
+  const screenLabels: Record<string, string> = {
+    'dashboard': 'Dashboard',
+    'live-orders': 'Live Orders',
+    'daily-sales': 'Daily Sales',
+    'popular-items': 'Popular Items',
+    'history': 'History',
+  };
+
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
       <ManagerSidebar
         currentScreen={currentScreen}
         onNavigate={s => navigate(managerScreenPaths[s] ?? '/manager')}
         userName={user?.name ?? ''}
         branchName=""
         onLogout={logout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="flex-1 overflow-hidden">
-        <Routes>
-          <Route index element={<ManagerDashboard />} />
-          <Route path="live-orders" element={<LiveOrders />} />
-          <Route path="daily-sales" element={<DailySales />} />
-          <Route path="popular-items" element={<PopularItems />} />
-          <Route path="history" element={<ManagerHistory />} />
-          <Route path="*" element={<Navigate to="/manager" replace />} />
-        </Routes>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--espresso)', borderColor: 'rgba(250,247,242,0.1)' }}>
+          <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ color: 'var(--warm-white)' }}>
+            <MenuIcon className="w-6 h-6" />
+          </button>
+          <span className="font-semibold" style={{ color: 'var(--warm-white)' }}>{screenLabels[currentScreen] ?? 'Manager'}</span>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <Routes>
+            <Route index element={<ManagerDashboard />} />
+            <Route path="live-orders" element={<LiveOrders />} />
+            <Route path="daily-sales" element={<DailySales />} />
+            <Route path="popular-items" element={<PopularItems />} />
+            <Route path="history" element={<ManagerHistory />} />
+            <Route path="*" element={<Navigate to="/manager" replace />} />
+          </Routes>
+        </div>
       </div>
     </div>
   );
@@ -574,6 +606,7 @@ function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const pathToScreen: Record<string, string> = {
     '/admin': 'analytics',
@@ -584,23 +617,42 @@ function AdminLayout() {
   };
   const currentScreen = pathToScreen[location.pathname] ?? 'analytics';
 
+  const screenLabels: Record<string, string> = {
+    'analytics': 'Analytics',
+    'branches': 'Branches',
+    'menu-catalogue': 'Menu Catalogue',
+    'users': 'Users',
+    'reports': 'Reports',
+  };
+
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen" style={{ backgroundColor: 'var(--warm-white)' }}>
       <AdminSidebar
         currentScreen={currentScreen}
         onNavigate={s => navigate(adminScreenPaths[s] ?? '/admin')}
         userName={user?.name ?? ''}
         onLogout={logout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="flex-1 overflow-hidden">
-        <Routes>
-          <Route index element={<Analytics />} />
-          <Route path="branches" element={<BranchManagement />} />
-          <Route path="menu-catalogue" element={<MenuCatalogue />} />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="*" element={<Navigate to="/admin" replace />} />
-        </Routes>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--espresso)', borderColor: 'rgba(250,247,242,0.1)' }}>
+          <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ color: 'var(--warm-white)' }}>
+            <MenuIcon className="w-6 h-6" />
+          </button>
+          <span className="font-semibold" style={{ color: 'var(--warm-white)' }}>{screenLabels[currentScreen] ?? 'Admin'}</span>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <Routes>
+            <Route index element={<Analytics />} />
+            <Route path="branches" element={<BranchManagement />} />
+            <Route path="menu-catalogue" element={<MenuCatalogue />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="*" element={<Navigate to="/admin" replace />} />
+          </Routes>
+        </div>
       </div>
     </div>
   );
