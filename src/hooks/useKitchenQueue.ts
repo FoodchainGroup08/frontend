@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
+const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://54.235.78.18:8080';
 
 export function useKitchenQueue(branchId: string, onMessage: (data: unknown) => void) {
   const [isConnected, setIsConnected] = useState(false);

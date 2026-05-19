@@ -353,6 +353,8 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     );
   }
 
+
+  
   if (error) {
     return (
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>

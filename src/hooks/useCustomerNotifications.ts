@@ -3,7 +3,7 @@ import { Client } from '@stomp/stompjs';
 import { toast } from 'sonner';
 import { getUnreadNotificationCount } from '@/services/api';
 
-const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
+const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://54.235.78.18:8080';
 
 export interface WsNotification {
   type: string;
