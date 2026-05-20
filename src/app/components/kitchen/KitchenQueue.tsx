@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef } from "react";
-import { Clock, ChevronRight, Flame, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
-import { toast } from "sonner";
-import { getKitchenQueue, acceptKitchenOrder, readyKitchenOrder, pickupKitchenOrder, serveKitchenOrder, type KitchenOrder, type WsOrderUpdate } from "@/services/api";
-import { useKitchenQueue } from "@/hooks/useKitchenQueue";
 import { useAuth } from "@/context/AuthContext";
+import { useKitchenQueue } from "@/hooks/useKitchenQueue";
+import { acceptKitchenOrder, getKitchenQueue, pickupKitchenOrder, readyKitchenOrder, serveKitchenOrder, type KitchenOrder, type WsOrderUpdate } from "@/services/api";
 import { playKitchenAlert } from "@/utils/kitchenAlert";
 import { formatOrderReference } from "@/utils/orderDisplay";
+import { ChevronRight, Clock, Flame, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader } from "../ui/card";
+import { Skeleton } from "../ui/skeleton";
 
 interface KitchenQueueProps {
   onOrderClick: (order: KitchenOrder) => void;
@@ -28,7 +28,7 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 ];
 
 const STATUS_COLORS: Record<'received' | 'preparing' | 'ready', { bg: string; text: string }> = {
-  received: { bg: 'var(--espresso)', text: 'var(--warm-white)' },
+  received: { bg: 'var(--brown)', text: 'var(--warm-white)' },
   preparing: { bg: 'var(--golden-amber)', text: 'var(--charcoal)' },
   ready:     { bg: 'var(--sage-green)', text: 'var(--white)' },
 };
@@ -231,21 +231,21 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <p className="text-sm mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+              <p className="text-sm mb-1" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                 {formatOrderReference(order.id)}
               </p>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge
                   className="border-0 text-xs"
                   style={{
-                    backgroundColor: order.orderType === 'dine-in' ? 'var(--sage-green)' : order.orderType === 'delivery' ? 'var(--golden-amber)' : 'var(--espresso)',
+                    backgroundColor: order.orderType === 'dine-in' ? 'var(--sage-green)' : order.orderType === 'delivery' ? 'var(--golden-amber)' : 'var(--brown)',
                     color: 'var(--white)'
                   }}
                 >
                   {order.orderType === 'dine-in' ? 'Dine-In' : order.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
                 </Badge>
                 {order.tableNumber && (
-                  <Badge className="border-0 text-xs" style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}>
+                  <Badge className="border-0 text-xs" style={{ backgroundColor: 'var(--brown)', color: 'var(--warm-white)' }}>
                     Table {order.tableNumber}
                   </Badge>
                 )}
@@ -257,8 +257,8 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
             <div className="text-right">
               <div className={`flex items-center gap-1 text-sm ${isOverdue || order.isUrgent ? 'animate-pulse' : ''}`}>
                 {(isOverdue || order.isUrgent) && <Flame className="w-4 h-4" style={{ color: 'var(--burnt-orange)' }} />}
-                <Clock className="w-4 h-4" style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--espresso)' }} />
-                <span style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--espresso)', fontWeight: 600 }}>
+                <Clock className="w-4 h-4" style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)' }} />
+                <span style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)', fontWeight: 600 }}>
                   {elapsedMinutes}m
                 </span>
               </div>
@@ -270,13 +270,13 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
             {order.items.slice(0, 2).map((item) => (
               <div key={item.id} className="flex items-center gap-2 text-sm">
                 <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
-                <span style={{ color: 'var(--espresso)' }}>
+                <span style={{ color: 'var(--brown)' }}>
                   {item.quantity}× {item.name}
                 </span>
               </div>
             ))}
             {order.items.length > 2 && (
-              <p className="text-xs pl-5" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p className="text-xs pl-5" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 +{order.items.length - 2} more items
               </p>
             )}
@@ -314,7 +314,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
               className="w-full transition-all hover:opacity-90 gap-2"
               size="sm"
               disabled={updatingOrders.has(order.id)}
-              style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}
+              style={{ backgroundColor: 'var(--brown)', color: 'var(--warm-white)' }}
             >
               {updatingOrders.has(order.id) && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Served
@@ -360,7 +360,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
           <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
-          <Button onClick={fetchQueue} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
+          <Button onClick={fetchQueue} variant="outline" className="border-[var(--brown)]/20" style={{ color: 'var(--brown)' }}>
             Retry
           </Button>
         </div>
@@ -372,18 +372,18 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     return (
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8">
-          <h1 className="text-3xl mb-8" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+          <h1 className="text-3xl mb-8" style={{ color: 'var(--brown)', fontWeight: 600 }}>
             Kitchen Queue
           </h1>
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardContent className="text-center py-16">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: 'var(--golden-amber)', opacity: 0.1 }}>
                 <Clock className="w-10 h-10" style={{ color: 'var(--golden-amber)' }} />
               </div>
-              <h3 className="text-xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+              <h3 className="text-xl mb-2" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                 No Orders in Queue
               </h3>
-              <p style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 New orders will appear here
               </p>
             </CardContent>
@@ -398,10 +398,10 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-1" style={{ color: 'var(--brown)', fontWeight: 600 }}>
               Kitchen Queue
             </h1>
-            <p style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+            <p style={{ color: 'var(--brown)', opacity: 0.7 }}>
               {orders.length} active {orders.length === 1 ? 'order' : 'orders'}
             </p>
           </div>
@@ -412,9 +412,9 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
               onChange={(e) => handleFilterChange(e.target.value as StatusFilter)}
               className="rounded-md px-3 py-2 text-sm border outline-none cursor-pointer"
               style={{
-                borderColor: 'color-mix(in srgb, var(--espresso) 20%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--brown) 20%, transparent)',
                 backgroundColor: 'var(--white)',
-                color: 'var(--espresso)',
+                color: 'var(--brown)',
               }}
             >
               {STATUS_OPTIONS.map(opt => (
@@ -427,9 +427,9 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
         </div>
 
         {filtered.length === 0 ? (
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardContent className="text-center py-12">
-              <p style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 No {statusFilter === 'all' ? '' : STATUS_OPTIONS.find(o => o.value === statusFilter)?.label.toLowerCase() + ' '}orders right now
               </p>
             </CardContent>
@@ -447,13 +447,13 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
                   size="sm"
                   onClick={() => fetchQueue(currentPage - 1)}
                   disabled={currentPage === 0}
-                  className="gap-1 border-[var(--espresso)]/20"
-                  style={{ color: 'var(--espresso)' }}
+                  className="gap-1 border-[var(--brown)]/20"
+                  style={{ color: 'var(--brown)' }}
                 >
                   <ChevronRight className="w-4 h-4 rotate-180" />
                   Prev
                 </Button>
-                <span className="text-sm px-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                <span className="text-sm px-2" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                   {currentPage + 1} / {totalPages}
                 </span>
                 <Button
@@ -461,8 +461,8 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
                   size="sm"
                   onClick={() => fetchQueue(currentPage + 1)}
                   disabled={currentPage >= totalPages - 1}
-                  className="gap-1 border-[var(--espresso)]/20"
-                  style={{ color: 'var(--espresso)' }}
+                  className="gap-1 border-[var(--brown)]/20"
+                  style={{ color: 'var(--brown)' }}
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />

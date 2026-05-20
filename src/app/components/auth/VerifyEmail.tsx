@@ -1,10 +1,10 @@
+import { getVerifyEmail, postResendVerification } from '@/services/api';
+import { Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from "react-router";
-import { Mail } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
-import { toast } from 'sonner';
-import { getVerifyEmail, postResendVerification } from '@/services/api';
 
 interface VerifyEmailProps {
   token?: string;
@@ -58,13 +58,13 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
     <div className="mb-8 text-center">
       <Link to="/" className="inline-flex items-center gap-2 mb-2">
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="40" height="40" rx="8" fill="var(--espresso)" />
+          <rect width="40" height="40" rx="8" fill="var(--brown)" />
           <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--golden-amber)" />
           <circle cx="20" cy="20" r="4" fill="var(--warm-white)" />
         </svg>
-        <h1 className="text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>FoodChain</h1>
+        <h1 className="text-3xl" style={{ color: 'var(--brown)', fontWeight: 600 }}>FoodChain</h1>
       </Link>
-      <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+      <p className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
         Multi-branch Restaurant Management
       </p>
     </div>
@@ -79,8 +79,8 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
           {/* Verifying */}
           {status === 'verifying' && (
             <CardHeader className="space-y-1 text-center">
-              <CardTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>Verifying…</CardTitle>
-              <CardDescription style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+              <CardTitle className="text-2xl" style={{ color: 'var(--brown)' }}>Verifying…</CardTitle>
+              <CardDescription style={{ color: 'var(--brown)', opacity: 0.7 }}>
                 Please wait while we verify your email address.
               </CardDescription>
             </CardHeader>
@@ -97,13 +97,13 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
                     </svg>
                   </div>
                 </div>
-                <CardTitle className="text-3xl" style={{ color: 'var(--espresso)' }}>Account verified!</CardTitle>
-                <CardDescription className="text-base pt-1" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+                <CardTitle className="text-3xl" style={{ color: 'var(--brown)' }}>Account verified!</CardTitle>
+                <CardDescription className="text-base pt-1" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                   Your email has been confirmed and your account is now active.
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center pb-2">
-                <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
+                <p className="text-sm" style={{ color: 'var(--brown)', opacity: 0.5 }}>
                   Redirecting to sign in{countdown > 0 ? ` in ${countdown}…` : '…'}
                 </p>
               </CardContent>
@@ -119,7 +119,7 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
           {status === 'error' && (
             <>
               <CardHeader className="space-y-1 text-center">
-                <CardTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>Verification failed</CardTitle>
+                <CardTitle className="text-2xl" style={{ color: 'var(--brown)' }}>Verification failed</CardTitle>
                 <CardDescription style={{ color: 'var(--burnt-orange)' }}>
                   {errorMsg}
                 </CardDescription>
@@ -141,15 +141,15 @@ export function VerifyEmail({ token, email, onNavigateToLogin }: VerifyEmailProp
                     <Mail className="w-8 h-8" style={{ color: 'var(--golden-amber)' }} />
                   </div>
                 </div>
-                <CardTitle className="text-2xl text-center" style={{ color: 'var(--espresso)' }}>Check your inbox</CardTitle>
-                <CardDescription className="text-center" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+                <CardTitle className="text-2xl text-center" style={{ color: 'var(--brown)' }}>Check your inbox</CardTitle>
+                <CardDescription className="text-center" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                   We sent a verification link to{' '}
                   {email && <span style={{ fontWeight: 600 }}>{email}</span>}
                   {!email && 'your email address'}. Tap the link to activate your account.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-center" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                <p className="text-sm text-center" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                   Didn't receive it? Check your spam folder or contact support.
                 </p>
               </CardContent>

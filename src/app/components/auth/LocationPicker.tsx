@@ -1,15 +1,14 @@
-import { useCallback, useState, useEffect, useRef } from 'react';
-import { Link } from "react-router";
-import { MapPin, Navigation, Loader2, X, CheckCircle } from 'lucide-react';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
 import {
-  searchPlaces,
-  reverseGeocode,
-  isGoogleMapsAvailable,
-  saveDeliveryLocation,
-  type PlaceSuggestion,
+    isGoogleMapsAvailable,
+    reverseGeocode,
+    saveDeliveryLocation,
+    searchPlaces,
+    type PlaceSuggestion,
 } from '@/services/locationService';
+import { CheckCircle, Loader2, MapPin, Navigation, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 interface LocationPickerProps {
   value: string;
@@ -183,7 +182,7 @@ export function LocationPicker({
                 className="w-4 h-4 mt-0.5 animate-spin flex-shrink-0"
                 style={{ color: 'var(--golden-amber)' }}
               />
-              <p className="text-sm" style={{ color: 'var(--espresso)' }}>
+              <p className="text-sm" style={{ color: 'var(--brown)' }}>
                 Detecting your location…
               </p>
             </>
@@ -196,13 +195,13 @@ export function LocationPicker({
               <div className="flex-1 min-w-0">
                 <p
                   className="text-sm mb-0.5"
-                  style={{ color: 'var(--espresso)', fontWeight: 600 }}
+                  style={{ color: 'var(--brown)', fontWeight: 600 }}
                 >
                   We detected your location
                 </p>
                 <p
                   className="text-sm mb-3 break-words"
-                  style={{ color: 'var(--espresso)', opacity: 0.75 }}
+                  style={{ color: 'var(--brown)', opacity: 0.75 }}
                 >
                   {detectedAddress}
                 </p>
@@ -225,8 +224,8 @@ export function LocationPicker({
                     size="sm"
                     variant="outline"
                     onClick={handleEnterManually}
-                    className="h-7 text-xs px-3 border-[var(--espresso)]/20"
-                    style={{ color: 'var(--espresso)' }}
+                    className="h-7 text-xs px-3 border-[var(--brown)]/20"
+                    style={{ color: 'var(--brown)' }}
                   >
                     Enter manually
                   </Button>
@@ -236,7 +235,7 @@ export function LocationPicker({
                 type="button"
                 onClick={handleEnterManually}
                 className="flex-shrink-0 hover:opacity-60 transition-opacity"
-                style={{ color: 'var(--espresso)', opacity: 0.35 }}
+                style={{ color: 'var(--brown)', opacity: 0.35 }}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -250,7 +249,7 @@ export function LocationPicker({
         <div className="relative">
           <MapPin
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 pointer-events-none"
-            style={{ color: 'var(--espresso)', opacity: 0.45 }}
+            style={{ color: 'var(--brown)', opacity: 0.45 }}
           />
           <Input
             ref={inputRef}
@@ -266,21 +265,21 @@ export function LocationPicker({
             }}
             placeholder={placeholder}
             autoComplete="off"
-            className="pl-10 pr-10 border-[var(--espresso)]/20"
+            className="pl-10 pr-10 border-[var(--brown)]/20"
             style={{ backgroundColor: 'var(--white)' }}
           />
           {/* Spinner or clear button on right */}
           {isFetchingSuggestions ? (
             <Loader2
               className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin pointer-events-none"
-              style={{ color: 'var(--espresso)', opacity: 0.4 }}
+              style={{ color: 'var(--brown)', opacity: 0.4 }}
             />
           ) : query ? (
             <button
               type="button"
               onClick={handleClear}
               className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-60 transition-opacity"
-              style={{ color: 'var(--espresso)', opacity: 0.35 }}
+              style={{ color: 'var(--brown)', opacity: 0.35 }}
             >
               <X className="w-4 h-4" />
             </button>
@@ -293,8 +292,8 @@ export function LocationPicker({
           variant="outline"
           onClick={detectCurrentLocation}
           disabled={isDetecting}
-          className="mt-2 h-9 w-full gap-2 border-[var(--espresso)]/20"
-          style={{ color: 'var(--espresso)' }}
+          className="mt-2 h-9 w-full gap-2 border-[var(--brown)]/20"
+          style={{ color: 'var(--brown)' }}
         >
           {isDetecting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -345,14 +344,14 @@ export function LocationPicker({
                 <div className="min-w-0">
                   <p
                     className="text-sm truncate"
-                    style={{ color: 'var(--espresso)', fontWeight: 500 }}
+                    style={{ color: 'var(--brown)', fontWeight: 500 }}
                   >
                     {s.mainText}
                   </p>
                   {s.secondaryText && (
                     <p
                       className="text-xs truncate"
-                      style={{ color: 'var(--espresso)', opacity: 0.55 }}
+                      style={{ color: 'var(--brown)', opacity: 0.55 }}
                     >
                       {s.secondaryText}
                     </p>
@@ -368,7 +367,7 @@ export function LocationPicker({
       {isDemoMode && !isDetecting && (
         <p
           className="text-xs flex items-center gap-1"
-          style={{ color: 'var(--espresso)', opacity: 0.5 }}
+          style={{ color: 'var(--brown)', opacity: 0.5 }}
         >
           <MapPin className="w-3 h-3" />
           Showing sample Lagos locations (demo mode — Google Maps not configured)

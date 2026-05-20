@@ -1,19 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
-import { Calendar as CalendarIcon, DollarSign, ShoppingCart } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
-import { Calendar } from "../ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { toast } from "sonner";
 import { getDailySales, type HourlySales } from "@/services/api";
+import { Calendar as CalendarIcon, DollarSign, ShoppingCart } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { toast } from "sonner";
+import { Button } from "../ui/button";
+import { Calendar } from "../ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Skeleton } from "../ui/skeleton";
 
 function DatePicker({ date, onChange }: { date: Date; onChange: (d: Date) => void }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="border-[var(--espresso)]/20 gap-2" style={{ color: 'var(--espresso)' }}>
+        <Button variant="outline" className="border-[var(--brown)]/20 gap-2" style={{ color: 'var(--brown)' }}>
           <CalendarIcon className="w-4 h-4" />
           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </Button>
@@ -99,7 +99,7 @@ export function DailySales() {
       <div className="h-screen overflow-auto" style={{ backgroundColor: 'var(--warm-white)' }}>
         <div className="p-6 sm:p-8 text-center">
           <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
-          <Button onClick={() => fetchData(selectedDate)} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
+          <Button onClick={() => fetchData(selectedDate)} variant="outline" className="border-[var(--brown)]/20" style={{ color: 'var(--brown)' }}>
             Retry
           </Button>
         </div>
@@ -112,10 +112,10 @@ export function DailySales() {
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--brown)', fontWeight: 600 }}>
               Daily Sales
             </h1>
-            <p style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+            <p style={{ color: 'var(--brown)', opacity: 0.7 }}>
               Hourly breakdown of sales performance
             </p>
           </div>
@@ -124,9 +124,9 @@ export function DailySales() {
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                 Total Revenue
               </CardTitle>
               <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--sage-green)', opacity: 0.1 }}>
@@ -134,18 +134,18 @@ export function DailySales() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+              <div className="text-3xl" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                 ₦{totalRevenue.toLocaleString()}
               </div>
-              <p className="text-sm mt-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p className="text-sm mt-1" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 For {selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                 Total Orders
               </CardTitle>
               <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--golden-amber)', opacity: 0.1 }}>
@@ -153,41 +153,41 @@ export function DailySales() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+              <div className="text-3xl" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                 {totalOrders}
               </div>
-              <p className="text-sm mt-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p className="text-sm mt-1" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 Average: ₦{totalOrders > 0 ? Math.round(totalRevenue / totalOrders).toLocaleString() : 0} per order
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+        <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
-            <CardTitle style={{ color: 'var(--espresso)' }}>Hourly Revenue</CardTitle>
+            <CardTitle style={{ color: 'var(--brown)' }}>Hourly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--espresso)" opacity={0.1} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--brown)" opacity={0.1} />
                   <XAxis
                     dataKey="hour"
-                    stroke="var(--espresso)"
-                    style={{ fontSize: '12px', fill: 'var(--espresso)' }}
+                    stroke="var(--brown)"
+                    style={{ fontSize: '12px', fill: 'var(--brown)' }}
                   />
                   <YAxis
-                    stroke="var(--espresso)"
-                    style={{ fontSize: '12px', fill: 'var(--espresso)' }}
+                    stroke="var(--brown)"
+                    style={{ fontSize: '12px', fill: 'var(--brown)' }}
                     tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'var(--warm-white)',
-                      border: '1px solid var(--espresso)',
+                      border: '1px solid var(--brown)',
                       borderRadius: '8px',
-                      color: 'var(--espresso)'
+                      color: 'var(--brown)'
                     }}
                     formatter={(value: number, name: string) => {
                       if (name === 'revenue') return [`₦${value.toLocaleString()}`, 'Revenue'];
@@ -203,48 +203,48 @@ export function DailySales() {
         </Card>
 
         <div className="mt-6 grid gap-6 grid-cols-1 md:grid-cols-2">
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle style={{ color: 'var(--espresso)' }}>Peak Hours</CardTitle>
+              <CardTitle style={{ color: 'var(--brown)' }}>Peak Hours</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--espresso)' }}>Highest Revenue</span>
+                <span style={{ color: 'var(--brown)' }}>Highest Revenue</span>
                 <span style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                   {peakRevenue ? `${peakRevenue.hour} - ₦${peakRevenue.revenue.toLocaleString()}` : '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--espresso)' }}>Most Orders</span>
+                <span style={{ color: 'var(--brown)' }}>Most Orders</span>
                 <span style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                   {peakOrders ? `${peakOrders.hour} - ${peakOrders.orders} orders` : '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--espresso)' }}>Lowest Activity</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600, opacity: 0.6 }}>
+                <span style={{ color: 'var(--brown)' }}>Lowest Activity</span>
+                <span style={{ color: 'var(--brown)', fontWeight: 600, opacity: 0.6 }}>
                   {lowestActivity ? `${lowestActivity.hour} - ₦${lowestActivity.revenue.toLocaleString()}` : '—'}
                 </span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle style={{ color: 'var(--espresso)' }}>Order Distribution</CardTitle>
+              <CardTitle style={{ color: 'var(--brown)' }}>Order Distribution</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--espresso)' }}>Morning ({morningLabel})</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>{morningOrders} orders ({distPercent(morningOrders)}%)</span>
+                <span style={{ color: 'var(--brown)' }}>Morning ({morningLabel})</span>
+                <span style={{ color: 'var(--brown)', fontWeight: 600 }}>{morningOrders} orders ({distPercent(morningOrders)}%)</span>
               </div>
               <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--espresso)' }}>Afternoon ({afternoonLabel})</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>{afternoonOrders} orders ({distPercent(afternoonOrders)}%)</span>
+                <span style={{ color: 'var(--brown)' }}>Afternoon ({afternoonLabel})</span>
+                <span style={{ color: 'var(--brown)', fontWeight: 600 }}>{afternoonOrders} orders ({distPercent(afternoonOrders)}%)</span>
               </div>
               <div className="flex items-center justify-between">
-                <span style={{ color: 'var(--espresso)' }}>Evening ({eveningLabel})</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>{eveningOrders} orders ({distPercent(eveningOrders)}%)</span>
+                <span style={{ color: 'var(--brown)' }}>Evening ({eveningLabel})</span>
+                <span style={{ color: 'var(--brown)', fontWeight: 600 }}>{eveningOrders} orders ({distPercent(eveningOrders)}%)</span>
               </div>
             </CardContent>
           </Card>

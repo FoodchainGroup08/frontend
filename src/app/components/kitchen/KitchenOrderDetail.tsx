@@ -1,15 +1,15 @@
-import { Clock, ChevronRight, Flame, AlertCircle } from "lucide-react";
+import { formatOrderReference } from "@/utils/orderDisplay";
+import { AlertCircle, Clock, Flame } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
-import { useEffect, useState } from "react";
-import { formatOrderReference } from "@/utils/orderDisplay";
 
 interface KitchenOrderDetail {
   id: string;
@@ -51,32 +51,32 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg w-full max-h-[88vh] flex flex-col overflow-hidden p-0" style={{ backgroundColor: 'var(--white)', border: '2px solid var(--espresso)' }}>
+      <DialogContent className="max-w-lg w-full max-h-[88vh] flex flex-col overflow-hidden p-0" style={{ backgroundColor: 'var(--white)', border: '2px solid var(--brown)' }}>
         <DialogHeader className="px-5 pt-5 pb-3 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-xl mb-2" style={{ color: 'var(--espresso)' }}>
+              <DialogTitle className="text-xl mb-2" style={{ color: 'var(--brown)' }}>
                 Order {formatOrderReference(order.id)}
               </DialogTitle>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge
                   className="border-0"
                   style={{
-                    backgroundColor: order.orderType === 'dine-in' ? 'var(--sage-green)' : order.orderType === 'delivery' ? 'var(--golden-amber)' : 'var(--espresso)',
+                    backgroundColor: order.orderType === 'dine-in' ? 'var(--sage-green)' : order.orderType === 'delivery' ? 'var(--golden-amber)' : 'var(--brown)',
                     color: 'var(--white)'
                   }}
                 >
                   {order.orderType === 'dine-in' ? 'Dine-In' : order.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
                 </Badge>
                 {order.tableNumber && (
-                  <Badge className="border-0" style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}>
+                  <Badge className="border-0" style={{ backgroundColor: 'var(--brown)', color: 'var(--warm-white)' }}>
                     Table {order.tableNumber}
                   </Badge>
                 )}
                 <Badge
                   className="border-0"
                   style={{
-                    backgroundColor: order.status === 'ready' ? 'var(--sage-green)' : order.status === 'preparing' ? 'var(--golden-amber)' : 'var(--espresso)',
+                    backgroundColor: order.status === 'ready' ? 'var(--sage-green)' : order.status === 'preparing' ? 'var(--golden-amber)' : 'var(--brown)',
                     color: 'var(--white)'
                   }}
                 >
@@ -87,12 +87,12 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
             <div className="text-right">
               <div className={`flex items-center gap-2 text-xl ${isOverdue || order.isUrgent ? 'animate-pulse' : ''}`}>
                 {(isOverdue || order.isUrgent) && <Flame className="w-6 h-6" style={{ color: 'var(--burnt-orange)' }} />}
-                <Clock className="w-6 h-6" style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--espresso)' }} />
-                <span style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--espresso)', fontWeight: 600 }}>
+                <Clock className="w-6 h-6" style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)' }} />
+                <span style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)', fontWeight: 600 }}>
                   {elapsedMinutes}:{elapsedSeconds.toString().padStart(2, '0')}
                 </span>
               </div>
-              <p className="text-xs mt-1" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p className="text-xs mt-1" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 Elapsed Time
               </p>
             </div>
@@ -115,7 +115,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
           )}
 
           <div>
-            <h3 className="text-base mb-3" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+            <h3 className="text-base mb-3" style={{ color: 'var(--brown)', fontWeight: 600 }}>
               Order Items
             </h3>
             <div className="space-y-3">
@@ -130,12 +130,12 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                       <span style={{ color: 'var(--charcoal)', fontWeight: 600 }}>{item.quantity}</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-lg mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                      <p className="text-lg mb-1" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                         {item.name}
                       </p>
                       {item.specialInstructions && (
                         <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'var(--golden-amber)', opacity: 0.2 }}>
-                          <p className="text-sm flex items-center gap-2" style={{ color: 'var(--espresso)' }}>
+                          <p className="text-sm flex items-center gap-2" style={{ color: 'var(--brown)' }}>
                             <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
                             <span style={{ fontWeight: 600 }}>Note:</span> {item.specialInstructions}
                           </p>
@@ -148,32 +148,32 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
             </div>
           </div>
 
-          <Separator style={{ backgroundColor: 'var(--espresso)' }} />
+          <Separator style={{ backgroundColor: 'var(--brown)' }} />
 
           <div>
-            <h3 className="text-lg mb-3" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+            <h3 className="text-lg mb-3" style={{ color: 'var(--brown)', fontWeight: 600 }}>
               Order Details
             </h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Order ID</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>{formatOrderReference(order.id)}</span>
+                <span style={{ color: 'var(--brown)', opacity: 0.7 }}>Order ID</span>
+                <span style={{ color: 'var(--brown)', fontWeight: 600 }}>{formatOrderReference(order.id)}</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Received At</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                <span style={{ color: 'var(--brown)', opacity: 0.7 }}>Received At</span>
+                <span style={{ color: 'var(--brown)', fontWeight: 600 }}>
                   {new Date(order.receivedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
               {order.customerName && (
                 <div className="flex justify-between">
-                  <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Customer</span>
-                  <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>{order.customerName}</span>
+                  <span style={{ color: 'var(--brown)', opacity: 0.7 }}>Customer</span>
+                  <span style={{ color: 'var(--brown)', fontWeight: 600 }}>{order.customerName}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span style={{ color: 'var(--espresso)', opacity: 0.7 }}>Total Items</span>
-                <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                <span style={{ color: 'var(--brown)', opacity: 0.7 }}>Total Items</span>
+                <span style={{ color: 'var(--brown)', fontWeight: 600 }}>
                   {order.items.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               </div>
@@ -181,7 +181,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
           </div>
         </div>
 
-        <div className="flex gap-3 px-5 py-4 flex-shrink-0 border-t" style={{ borderColor: 'var(--espresso)', borderOpacity: 0.1 }}>
+        <div className="flex gap-3 px-5 py-4 flex-shrink-0 border-t" style={{ borderColor: 'var(--brown)', borderOpacity: 0.1 }}>
           {order.status === 'received' && (
             <>
               <Button
@@ -198,7 +198,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                 onClick={onClose}
                 variant="outline"
                 className="border-2"
-                style={{ borderColor: 'var(--espresso)', color: 'var(--warm-white)' }}
+                style={{ borderColor: 'var(--brown)', color: 'var(--warm-white)' }}
               >
                 Close
               </Button>
@@ -221,7 +221,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                 onClick={onClose}
                 variant="outline"
                 className="border-2"
-                style={{ borderColor: 'var(--espresso)', color: 'var(--espresso)' }}
+                style={{ borderColor: 'var(--brown)', color: 'var(--brown)' }}
               >
                 Close
               </Button>
@@ -232,7 +232,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
             <Button
               onClick={onClose}
               className="w-full"
-              style={{ backgroundColor: 'var(--espresso)', color: 'var(--white)' }}
+              style={{ backgroundColor: 'var(--brown)', color: 'var(--white)' }}
             >
               Close
             </Button>

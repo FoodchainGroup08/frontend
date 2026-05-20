@@ -1,20 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
-import { Award, TrendingUp, Calendar as CalendarIcon } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { getPopularItems, type PopularItem } from "@/services/api";
+import { Award, Calendar as CalendarIcon, TrendingUp } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { toast } from "sonner";
-import { getPopularItems, type PopularItem } from "@/services/api";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Skeleton } from "../ui/skeleton";
 
 function DatePicker({ date, onChange }: { date: Date | null; onChange: (d: Date | null) => void }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="border-[var(--espresso)]/20 gap-2" style={{ color: 'var(--espresso)' }}>
+        <Button variant="outline" className="border-[var(--brown)]/20 gap-2" style={{ color: 'var(--brown)' }}>
           <CalendarIcon className="w-4 h-4" />
           {date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today'}
         </Button>
@@ -99,7 +99,7 @@ export function PopularItems() {
           </div>
           <div className="text-center">
             <p className="mb-4" style={{ color: 'var(--burnt-orange)' }}>{error}</p>
-            <Button onClick={() => fetchItems(selectedDate)} variant="outline" className="border-[var(--espresso)]/20" style={{ color: 'var(--espresso)' }}>
+            <Button onClick={() => fetchItems(selectedDate)} variant="outline" className="border-[var(--brown)]/20" style={{ color: 'var(--brown)' }}>
               Retry
             </Button>
           </div>
@@ -113,10 +113,10 @@ export function PopularItems() {
       <div className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl mb-2" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+            <h1 className="text-3xl mb-2" style={{ color: 'var(--brown)', fontWeight: 600 }}>
               Popular Items
             </h1>
-            <p style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+            <p style={{ color: 'var(--brown)', opacity: 0.7 }}>
               Top-selling items {selectedDate
                 ? `for ${selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
                 : 'today'}
@@ -125,33 +125,33 @@ export function PopularItems() {
           <DatePicker date={selectedDate} onChange={handleDateChange} />
         </div>
 
-        <Card className="border-[var(--espresso)]/10 mb-8" style={{ backgroundColor: 'var(--white)' }}>
+        <Card className="border-[var(--brown)]/10 mb-8" style={{ backgroundColor: 'var(--white)' }}>
           <CardHeader>
-            <CardTitle style={{ color: 'var(--espresso)' }}>Top Items by Quantity</CardTitle>
+            <CardTitle style={{ color: 'var(--brown)' }}>Top Items by Quantity</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical" margin={{ left: 100 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--espresso)" opacity={0.1} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--brown)" opacity={0.1} />
                   <XAxis
                     type="number"
-                    stroke="var(--espresso)"
-                    style={{ fontSize: '12px', fill: 'var(--espresso)' }}
+                    stroke="var(--brown)"
+                    style={{ fontSize: '12px', fill: 'var(--brown)' }}
                   />
                   <YAxis
                     type="category"
                     dataKey="name"
-                    stroke="var(--espresso)"
-                    style={{ fontSize: '12px', fill: 'var(--espresso)' }}
+                    stroke="var(--brown)"
+                    style={{ fontSize: '12px', fill: 'var(--brown)' }}
                     width={90}
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'var(--warm-white)',
-                      border: '1px solid var(--espresso)',
+                      border: '1px solid var(--brown)',
                       borderRadius: '8px',
-                      color: 'var(--espresso)'
+                      color: 'var(--brown)'
                     }}
                     formatter={(value: number) => [value, 'Quantity Sold']}
                   />
@@ -164,13 +164,13 @@ export function PopularItems() {
 
         <div className="grid gap-4">
           {sortedByQuantity.map((item, index) => (
-            <Card key={item.id} className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+            <Card key={item.id} className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
                   <div
                     className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{
-                      backgroundColor: index === 0 ? 'var(--golden-amber)' : index === 1 ? 'var(--sage-green)' : index === 2 ? 'var(--espresso)' : 'var(--espresso)',
+                      backgroundColor: index === 0 ? 'var(--golden-amber)' : index === 1 ? 'var(--sage-green)' : index === 2 ? 'var(--brown)' : 'var(--brown)',
                       opacity: index > 2 ? 0.5 : 1
                     }}
                   >
@@ -181,7 +181,7 @@ export function PopularItems() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg truncate" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                      <h3 className="text-lg truncate" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                         {item.name}
                       </h3>
                       {index === 0 && (
@@ -189,7 +189,7 @@ export function PopularItems() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className="border-0 text-xs" style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)', opacity: 0.7 }}>
+                      <Badge className="border-0 text-xs" style={{ backgroundColor: 'var(--brown)', color: 'var(--warm-white)', opacity: 0.7 }}>
                         {item.category}
                       </Badge>
                       {item.trend !== 0 && (
@@ -207,16 +207,16 @@ export function PopularItems() {
                     <p className="text-2xl mb-1" style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                       {item.quantitySold}
                     </p>
-                    <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                    <p className="text-sm" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                       sold
                     </p>
                   </div>
 
                   <div className="text-right hidden sm:block">
-                    <p className="text-lg mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                    <p className="text-lg mb-1" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                       ₦{item.revenue.toLocaleString()}
                     </p>
-                    <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                    <p className="text-sm" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                       revenue
                     </p>
                   </div>
@@ -224,10 +224,10 @@ export function PopularItems() {
 
                 <div className="mt-4 sm:hidden">
                   <div className="flex items-center justify-between p-3 rounded-md" style={{ backgroundColor: 'var(--warm-white)' }}>
-                    <span className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+                    <span className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                       Revenue
                     </span>
-                    <span style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+                    <span style={{ color: 'var(--brown)', fontWeight: 600 }}>
                       ₦{item.revenue.toLocaleString()}
                     </span>
                   </div>
@@ -238,9 +238,9 @@ export function PopularItems() {
         </div>
 
         <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-3">
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                 Best Seller
               </CardTitle>
             </CardHeader>
@@ -248,15 +248,15 @@ export function PopularItems() {
               <p className="text-xl mb-1" style={{ color: 'var(--golden-amber)', fontWeight: 600 }}>
                 {sortedByQuantity[0]?.name ?? '—'}
               </p>
-              <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p className="text-sm" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 {sortedByQuantity[0]?.quantitySold ?? 0} units sold
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                 Highest Revenue Item
               </CardTitle>
             </CardHeader>
@@ -264,20 +264,20 @@ export function PopularItems() {
               <p className="text-xl mb-1" style={{ color: 'var(--sage-green)', fontWeight: 600 }}>
                 {[...items].sort((a, b) => b.revenue - a.revenue)[0]?.name ?? '—'}
               </p>
-              <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+              <p className="text-sm" style={{ color: 'var(--brown)', opacity: 0.6 }}>
                 ₦{([...items].sort((a, b) => b.revenue - a.revenue)[0]?.revenue ?? 0).toLocaleString()}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+          <Card className="border-[var(--brown)]/10" style={{ backgroundColor: 'var(--white)' }}>
             <CardHeader>
-              <CardTitle className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+              <CardTitle className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                 Fastest Growing
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xl mb-1" style={{ color: 'var(--espresso)', fontWeight: 600 }}>
+              <p className="text-xl mb-1" style={{ color: 'var(--brown)', fontWeight: 600 }}>
                 {[...items].sort((a, b) => b.trend - a.trend)[0]?.name ?? '—'}
               </p>
               <p className="text-sm flex items-center gap-1" style={{ color: 'var(--sage-green)' }}>

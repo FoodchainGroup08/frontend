@@ -1,12 +1,12 @@
+import { postResetPassword } from '@/services/api';
+import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from "react-router";
-import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
-import { toast } from 'sonner';
-import { postResetPassword } from '@/services/api';
 
 interface ResetPasswordProps {
   token: string;
@@ -64,13 +64,13 @@ export function ResetPassword({ token, onNavigateToLogin }: ResetPasswordProps) 
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-2">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="40" height="40" rx="8" fill="var(--espresso)" />
+              <rect width="40" height="40" rx="8" fill="var(--brown)" />
               <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--golden-amber)" />
               <circle cx="20" cy="20" r="4" fill="var(--warm-white)" />
             </svg>
-            <h1 className="text-3xl" style={{ color: 'var(--espresso)', fontWeight: 600 }}>FoodChain</h1>
+            <h1 className="text-3xl" style={{ color: 'var(--brown)', fontWeight: 600 }}>FoodChain</h1>
           </Link>
-          <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+          <p className="text-sm" style={{ color: 'var(--brown)', opacity: 0.7 }}>
             Multi-branch Restaurant Management
           </p>
         </div>
@@ -79,10 +79,10 @@ export function ResetPassword({ token, onNavigateToLogin }: ResetPasswordProps) 
           {success ? (
             <>
               <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl text-center" style={{ color: 'var(--espresso)' }}>
+                <CardTitle className="text-2xl text-center" style={{ color: 'var(--brown)' }}>
                   Password updated
                 </CardTitle>
-                <CardDescription className="text-center" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+                <CardDescription className="text-center" style={{ color: 'var(--brown)', opacity: 0.7 }}>
                   Your password has been reset successfully.
                 </CardDescription>
               </CardHeader>
@@ -99,10 +99,10 @@ export function ResetPassword({ token, onNavigateToLogin }: ResetPasswordProps) 
           ) : (
             <>
               <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl" style={{ color: 'var(--espresso)' }}>
+                <CardTitle className="text-2xl" style={{ color: 'var(--brown)' }}>
                   Reset Password
                 </CardTitle>
-                <CardDescription style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+                <CardDescription style={{ color: 'var(--brown)', opacity: 0.7 }}>
                   Enter a new password for your account
                 </CardDescription>
               </CardHeader>
@@ -118,7 +118,7 @@ export function ResetPassword({ token, onNavigateToLogin }: ResetPasswordProps) 
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" style={{ color: 'var(--espresso)' }}>New Password</Label>
+                    <Label htmlFor="password" style={{ color: 'var(--brown)' }}>New Password</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -127,25 +127,25 @@ export function ResetPassword({ token, onNavigateToLogin }: ResetPasswordProps) 
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         required
-                        className="border-[var(--espresso)]/20 pr-10"
+                        className="border-[var(--brown)]/20 pr-10"
                         style={{ backgroundColor: 'var(--white)' }}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2"
-                        style={{ color: 'var(--espresso)', opacity: 0.5 }}
+                        style={{ color: 'var(--brown)', opacity: 0.5 }}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.55 }}>
+                    <p className="text-xs" style={{ color: 'var(--brown)', opacity: 0.55 }}>
                       Min. 8 chars · uppercase · lowercase · digit · special (@#$!%*?&amp;-_+=)
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" style={{ color: 'var(--espresso)' }}>Confirm Password</Label>
+                    <Label htmlFor="confirmPassword" style={{ color: 'var(--brown)' }}>Confirm Password</Label>
                     <div className="relative">
                       <Input
                         id="confirmPassword"
@@ -154,14 +154,14 @@ export function ResetPassword({ token, onNavigateToLogin }: ResetPasswordProps) 
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
                         required
-                        className="border-[var(--espresso)]/20 pr-10"
+                        className="border-[var(--brown)]/20 pr-10"
                         style={{ backgroundColor: 'var(--white)' }}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2"
-                        style={{ color: 'var(--espresso)', opacity: 0.5 }}
+                        style={{ color: 'var(--brown)', opacity: 0.5 }}
                       >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>

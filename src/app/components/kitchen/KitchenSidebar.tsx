@@ -40,13 +40,13 @@ export function KitchenSidebar({
       {/* Sidebar — fixed drawer on mobile, static on desktop */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col border-r transition-transform duration-300 md:static md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ backgroundColor: 'var(--charcoal)', borderColor: 'var(--espresso)' }}
+        style={{ backgroundColor: 'var(--charcoal)', borderColor: 'var(--brown)' }}
       >
-        <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--espresso)' }}>
+        <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--brown)' }}>
           <Link to="/" className="flex items-center gap-3">
             <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect width="40" height="40" rx="8" fill="var(--golden-amber)"/>
-              <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--espresso)"/>
+              <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--brown)"/>
               <circle cx="20" cy="20" r="4" fill="var(--warm-white)"/>
             </svg>
             <div>
@@ -85,9 +85,9 @@ export function KitchenSidebar({
           })}
         </nav>
 
-        <div className="p-4 border-t" style={{ borderColor: 'var(--espresso)' }}>
+        <div className="p-4 border-t" style={{ borderColor: 'var(--brown)' }}>
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--espresso)' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--brown)' }}>
               <User className="w-4 h-4" style={{ color: 'var(--golden-amber)' }} />
             </div>
             <div className="flex-1 min-w-0">
@@ -98,7 +98,7 @@ export function KitchenSidebar({
           <button
             onClick={onLogout}
             className="w-full px-4 py-2 rounded-md text-sm transition-colors hover:opacity-80"
-            style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}
+            style={{ backgroundColor: 'var(--brown)', color: 'var(--warm-white)' }}
           >
             Logout
           </button>

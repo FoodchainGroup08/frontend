@@ -1,46 +1,45 @@
-import { useEffect, useRef, useState } from "react";
-import { Menu as MenuIcon } from "lucide-react";
-import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { type Branch as ApiBranch, type Order as ApiOrder, type KitchenOrder, type UserRole } from "@/services/api";
-import { type OrderDetails } from "./components/customer/Checkout";
-import { Login } from "./components/auth/Login";
-import { Register } from "./components/auth/Register";
-import { ForgotPassword } from "./components/auth/ForgotPassword";
-import { ResetPassword } from "./components/auth/ResetPassword";
-import { VerifyEmail } from "./components/auth/VerifyEmail";
-import { SetupLocation } from "./components/auth/SetupLocation";
-import { CustomerNavbar } from "./components/customer/CustomerNavbar";
-import { BranchSelector } from "./components/customer/BranchSelector";
-import { Menu } from "./components/customer/Menu";
-import { Cart } from "./components/customer/Cart";
-import { Checkout } from "./components/customer/Checkout";
-import { OrderConfirmation } from "./components/customer/OrderConfirmation";
-import { ActiveOrdersList } from "./components/customer/ActiveOrdersList";
-import { OrderTracker } from "./components/customer/OrderTracker";
-import { OrderHistory } from "./components/customer/OrderHistory";
-import { OrderDetailModal } from "./components/customer/OrderDetailModal";
-import { CustomerProfile } from "./components/customer/CustomerProfile";
-import { AISuggestions } from "./components/customer/AISuggestions";
-import { AIFoodAssistantModal } from "./components/customer/AIFoodAssistantModal";
-import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
-import { KitchenQueue } from "./components/kitchen/KitchenQueue";
-import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
-import { ManagerSidebar } from "./components/manager/ManagerSidebar";
-import { ManagerDashboard } from "./components/manager/ManagerDashboard";
-import { LiveOrders } from "./components/manager/LiveOrders";
-import { DailySales } from "./components/manager/DailySales";
-import { PopularItems } from "./components/manager/PopularItems";
-import { ManagerHistory } from "./components/manager/ManagerHistory";
+import { Menu as MenuIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router";
+import { toast } from "sonner";
 import { AdminSidebar } from "./components/admin/AdminSidebar";
 import { Analytics } from "./components/admin/Analytics";
 import { BranchManagement } from "./components/admin/BranchManagement";
 import { MenuCatalogue } from "./components/admin/MenuCatalogue";
-import { UserManagement } from "./components/admin/UserManagement";
 import { Reports } from "./components/admin/Reports";
+import { UserManagement } from "./components/admin/UserManagement";
+import { ForgotPassword } from "./components/auth/ForgotPassword";
+import { Login } from "./components/auth/Login";
+import { Register } from "./components/auth/Register";
+import { ResetPassword } from "./components/auth/ResetPassword";
+import { SetupLocation } from "./components/auth/SetupLocation";
+import { VerifyEmail } from "./components/auth/VerifyEmail";
+import { ActiveOrdersList } from "./components/customer/ActiveOrdersList";
+import { AIFoodAssistantModal } from "./components/customer/AIFoodAssistantModal";
+import { AISuggestions } from "./components/customer/AISuggestions";
+import { BranchSelector } from "./components/customer/BranchSelector";
+import { Cart } from "./components/customer/Cart";
+import { Checkout, type OrderDetails } from "./components/customer/Checkout";
+import { CustomerNavbar } from "./components/customer/CustomerNavbar";
+import { CustomerProfile } from "./components/customer/CustomerProfile";
+import { Menu } from "./components/customer/Menu";
+import { OrderConfirmation } from "./components/customer/OrderConfirmation";
+import { OrderDetailModal } from "./components/customer/OrderDetailModal";
+import { OrderHistory } from "./components/customer/OrderHistory";
+import { OrderTracker } from "./components/customer/OrderTracker";
+import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
+import { KitchenQueue } from "./components/kitchen/KitchenQueue";
+import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
 import { LandingPage } from "./components/landing/LandingPage";
+import { DailySales } from "./components/manager/DailySales";
+import { LiveOrders } from "./components/manager/LiveOrders";
+import { ManagerDashboard } from "./components/manager/ManagerDashboard";
+import { ManagerHistory } from "./components/manager/ManagerHistory";
+import { ManagerSidebar } from "./components/manager/ManagerSidebar";
+import { PopularItems } from "./components/manager/PopularItems";
 import { Toaster } from "./components/ui/sonner";
-import { toast } from "sonner";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -499,7 +498,7 @@ function KitchenLayout() {
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--charcoal)', borderColor: 'var(--espresso)' }}>
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--charcoal)', borderColor: 'var(--brown)' }}>
           <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ color: 'var(--warm-white)' }}>
             <MenuIcon className="w-6 h-6" />
           </button>
@@ -571,7 +570,7 @@ function ManagerLayout() {
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--espresso)', borderColor: 'rgba(250,247,242,0.1)' }}>
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--brown)', borderColor: 'rgba(250,247,242,0.1)' }}>
           <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ color: 'var(--warm-white)' }}>
             <MenuIcon className="w-6 h-6" />
           </button>
@@ -637,7 +636,7 @@ function AdminLayout() {
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--espresso)', borderColor: 'rgba(250,247,242,0.1)' }}>
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ backgroundColor: 'var(--brown)', borderColor: 'rgba(250,247,242,0.1)' }}>
           <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ color: 'var(--warm-white)' }}>
             <MenuIcon className="w-6 h-6" />
           </button>
