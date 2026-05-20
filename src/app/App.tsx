@@ -29,6 +29,7 @@ import { OrderConfirmation } from "./components/customer/OrderConfirmation";
 import { OrderDetailModal } from "./components/customer/OrderDetailModal";
 import { OrderHistory } from "./components/customer/OrderHistory";
 import { OrderTracker } from "./components/customer/OrderTracker";
+import { KitchenCompletedOrders } from "./components/kitchen/KitchenCompletedOrders";
 import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
 import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
@@ -472,9 +473,17 @@ function CustomerLayout() {
 
 // ─── Kitchen Layout ───────────────────────────────────────────────────────────
 
+type KitchenScreen = 'queue' | 'completed';
+
+const kitchenScreenLabels: Record<KitchenScreen, string> = {
+  queue: 'Kitchen Queue',
+  completed: 'Completed Orders',
+};
+
 function KitchenLayout() {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [kitchenScreen, setKitchenScreen] = useState<KitchenScreen>('queue');
   const [selectedKitchenOrder, setSelectedKitchenOrder] = useState<KitchenOrder | null>(null);
   const [isKitchenOrderDetailOpen, setIsKitchenOrderDetailOpen] = useState(false);
 
@@ -488,8 +497,8 @@ function KitchenLayout() {
   return (
     <div className="flex h-screen" style={{ backgroundColor: '#1E1E1E' }}>
       <KitchenSidebar
-        currentScreen="queue"
-        onNavigate={() => {}}
+        currentScreen={kitchenScreen}
+        onNavigate={(screen) => setKitchenScreen(screen as KitchenScreen)}
         userName={user?.name ?? ''}
         branchName=""
         onLogout={logout}
@@ -502,16 +511,20 @@ function KitchenLayout() {
           <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ color: 'var(--warm-white)' }}>
             <MenuIcon className="w-6 h-6" />
           </button>
-          <span className="font-semibold" style={{ color: 'var(--warm-white)' }}>Kitchen Queue</span>
+          <span className="font-semibold" style={{ color: 'var(--warm-white)' }}>{kitchenScreenLabels[kitchenScreen]}</span>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <KitchenQueue
-            onOrderClick={(order) => {
-              setSelectedKitchenOrder(order);
-              setIsKitchenOrderDetailOpen(true);
-            }}
-            onStatusChange={handleKitchenStatusChange}
-          />
+          {kitchenScreen === 'queue' ? (
+            <KitchenQueue
+              onOrderClick={(order) => {
+                setSelectedKitchenOrder(order);
+                setIsKitchenOrderDetailOpen(true);
+              }}
+              onStatusChange={handleKitchenStatusChange}
+            />
+          ) : (
+            <KitchenCompletedOrders />
+          )}
         </div>
       </div>
       <KitchenOrderDetail

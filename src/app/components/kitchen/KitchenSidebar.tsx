@@ -1,4 +1,4 @@
-import { ClipboardList, User, X } from "lucide-react";
+import { CheckCircle2, ClipboardList, User, X } from "lucide-react";
 import { Link } from "react-router";
 
 interface KitchenSidebarProps {
@@ -21,7 +21,8 @@ export function KitchenSidebar({
   onClose = () => {},
 }: KitchenSidebarProps) {
   const navItems = [
-    { id: 'queue', label: 'Kitchen Queue', icon: ClipboardList }
+    { id: 'queue', label: 'Kitchen Queue', icon: ClipboardList },
+    { id: 'completed', label: 'Completed Orders', icon: CheckCircle2 },
   ];
 
   const handleNavigate = (screen: string) => {

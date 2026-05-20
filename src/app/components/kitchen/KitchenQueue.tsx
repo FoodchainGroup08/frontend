@@ -1,8 +1,10 @@
 import { useAuth } from "@/context/AuthContext";
 import { useKitchenQueue } from "@/hooks/useKitchenQueue";
+import { useTimerTick } from "@/hooks/useTimerTick";
 import { acceptKitchenOrder, getKitchenQueue, pickupKitchenOrder, readyKitchenOrder, serveKitchenOrder, type KitchenOrder, type WsOrderUpdate } from "@/services/api";
 import { playKitchenAlert } from "@/utils/kitchenAlert";
 import { formatOrderReference } from "@/utils/orderDisplay";
+import { computeOrderCountdown } from "@/utils/orderTimer";
 import { ChevronRight, Clock, Flame, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -55,15 +57,11 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   const [isLoading, setIsLoading] = useState(true);
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
-  const [currentTime, setCurrentTime] = useState(Date.now());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const QUEUE_SIZE = 10; // orders per status group per request
 
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(Date.now()), 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useTimerTick();
 
   const applyQueuePage = (data: Awaited<ReturnType<typeof getKitchenQueue>>) => {
     const serverOrders = [
@@ -195,10 +193,6 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     }
   };
 
-  const getElapsedTime = (receivedAt: string) => {
-    return Math.floor((currentTime - new Date(receivedAt).getTime()) / 60000);
-  };
-
   const statusCounts: Record<StatusFilter, number> = {
     all: serverTotals.received + serverTotals.preparing + serverTotals.ready,
     received: serverTotals.received,
@@ -213,8 +207,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   };
 
   const renderOrderCard = (order: KitchenOrder) => {
-    const elapsedMinutes = getElapsedTime(order.receivedAt);
-    const isOverdue = elapsedMinutes > 60;
+    const { display, isOverdue } = computeOrderCountdown(order.receivedAt, now);
     const statusColors = STATUS_COLORS[order.status as 'received' | 'preparing' | 'ready']
       ?? STATUS_COLORS.received;
 
@@ -259,7 +252,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
                 {(isOverdue || order.isUrgent) && <Flame className="w-4 h-4" style={{ color: 'var(--burnt-orange)' }} />}
                 <Clock className="w-4 h-4" style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)' }} />
                 <span style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)', fontWeight: 600 }}>
-                  {elapsedMinutes}m
+                  {display}
                 </span>
               </div>
             </div>

@@ -863,6 +863,32 @@ export const pickupKitchenOrder = (orderId: string) =>
 export const serveKitchenOrder = (orderId: string) =>
   apiClient.post(`/kitchen/orders/${orderId}/serve`).then(r => r.data);
 
+export interface CompletedOrdersPage {
+  page: number;
+  size: number;
+  total: number;
+  orders: KitchenOrder[];
+}
+
+export const getCompletedKitchenOrders = (page = 0, size = 20): Promise<CompletedOrdersPage> =>
+  apiClient.get<any>('/kitchen/orders/completed', { params: { page, size } }).then(r => {
+    const d = r.data;
+    const raw: any[] = Array.isArray(d)
+      ? d
+      : Array.isArray(d?.content)
+        ? d.content
+        : Array.isArray(d?.orders)
+          ? d.orders
+          : [];
+    const orders = raw.map(mapKitchenOrder);
+    return {
+      page: d?.page ?? page,
+      size: d?.size ?? size,
+      total: d?.total ?? d?.totalElements ?? orders.length,
+      orders,
+    };
+  });
+
 // ─── MANAGER ──────────────────────────────────────────────────────────────────
 
 export const getManagerDashboard = (date?: string) =>

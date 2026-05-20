@@ -1,6 +1,7 @@
+import { useTimerTick } from "@/hooks/useTimerTick";
 import { formatOrderReference } from "@/utils/orderDisplay";
+import { computeOrderCountdown } from "@/utils/orderTimer";
 import { AlertCircle, Clock, Flame } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import {
@@ -35,19 +36,12 @@ interface KitchenOrderDetailProps {
 }
 
 export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: KitchenOrderDetailProps) {
-  const [currentTime, setCurrentTime] = useState(Date.now());
-
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useTimerTick();
 
   if (!order) return null;
 
-  const elapsedMs = currentTime - new Date(order.receivedAt).getTime();
-  const elapsedMinutes = Math.floor(elapsedMs / 60000);
-  const elapsedSeconds = Math.floor((elapsedMs % 60000) / 1000);
-  const isOverdue = elapsedMinutes > 15;
+  const { display, isOverdue } = computeOrderCountdown(order.receivedAt, now);
+  const isUrgentOrOverdue = isOverdue || !!order.isUrgent;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -85,22 +79,22 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
               </div>
             </div>
             <div className="text-right">
-              <div className={`flex items-center gap-2 text-xl ${isOverdue || order.isUrgent ? 'animate-pulse' : ''}`}>
-                {(isOverdue || order.isUrgent) && <Flame className="w-6 h-6" style={{ color: 'var(--burnt-orange)' }} />}
-                <Clock className="w-6 h-6" style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)' }} />
-                <span style={{ color: isOverdue || order.isUrgent ? 'var(--burnt-orange)' : 'var(--brown)', fontWeight: 600 }}>
-                  {elapsedMinutes}:{elapsedSeconds.toString().padStart(2, '0')}
+              <div className={`flex items-center gap-2 text-xl ${isUrgentOrOverdue ? 'animate-pulse' : ''}`}>
+                {isUrgentOrOverdue && <Flame className="w-6 h-6" style={{ color: 'var(--burnt-orange)' }} />}
+                <Clock className="w-6 h-6" style={{ color: isUrgentOrOverdue ? 'var(--burnt-orange)' : 'var(--brown)' }} />
+                <span style={{ color: isUrgentOrOverdue ? 'var(--burnt-orange)' : 'var(--brown)', fontWeight: 600 }}>
+                  {display}
                 </span>
               </div>
               <p className="text-xs mt-1" style={{ color: 'var(--brown)', opacity: 0.6 }}>
-                Elapsed Time
+                Time Remaining
               </p>
             </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-5 overflow-y-auto flex-1 min-h-0 px-5">
-          {(isOverdue || order.isUrgent) && (
+          {isUrgentOrOverdue && (
             <div className="p-4 rounded-md flex items-start gap-3" style={{ backgroundColor: 'var(--burnt-orange)', opacity: 0.9 }}>
               <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--white)' }} />
               <div>
@@ -108,7 +102,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                   {isOverdue ? 'Order Overdue!' : 'Urgent Order'}
                 </p>
                 <p className="text-sm" style={{ color: 'var(--white)', opacity: 0.9 }}>
-                  {isOverdue ? 'This order has exceeded the 15-minute target.' : 'This order requires immediate attention.'}
+                  {isOverdue ? 'This order has exceeded the 30-minute target.' : 'This order requires immediate attention.'}
                 </p>
               </div>
             </div>
