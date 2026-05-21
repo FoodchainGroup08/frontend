@@ -34,12 +34,16 @@ import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
 import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
 import { LandingPage } from "./components/landing/LandingPage";
+
 import { DailySales } from "./components/manager/DailySales";
 import { LiveOrders } from "./components/manager/LiveOrders";
 import { ManagerDashboard } from "./components/manager/ManagerDashboard";
 import { ManagerHistory } from "./components/manager/ManagerHistory";
 import { ManagerSidebar } from "./components/manager/ManagerSidebar";
 import { PopularItems } from "./components/manager/PopularItems";
+
+import { InstallPage } from "./components/landing/InstallPage";
+
 import { Toaster } from "./components/ui/sonner";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -708,6 +712,9 @@ function AppRoutes() {
             )
           }
         />
+
+        {/* PWA install page — public, no auth */}
+        <Route path="/install" element={<InstallPage />} />
 
         {/* Public auth routes */}
         <Route path="/login" element={<LoginPage />} />

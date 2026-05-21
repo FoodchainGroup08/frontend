@@ -53,6 +53,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
   const [currentPage, setCurrentPage] = useState(0);
   const currentPageRef = useRef(0);
   const prevReceivedTotalRef = useRef<number | null>(null);
+  const newOrderIdsRef = useRef<Set<string>>(new Set());
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
@@ -69,7 +70,10 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       ...data.preparing.orders,
       ...data.ready.orders,
     ].sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
-    setOrders(serverOrders);
+    setOrders(serverOrders.map(o => ({
+      ...o,
+      isNew: o.status === 'received' && newOrderIdsRef.current.has(o.id),
+    })));
     const totals = {
       received: data.received.total,
       preparing: data.preparing.total,
@@ -87,6 +91,8 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     // Ping if new orders arrived since the last fetch (poll-based detection)
     if (prevReceivedTotalRef.current !== null && totals.received > prevReceivedTotalRef.current) {
       playKitchenAlert();
+      // Mark all received orders as new so they get the orange border
+      serverOrders.filter(o => o.status === 'received').forEach(o => newOrderIdsRef.current.add(o.id));
     }
     prevReceivedTotalRef.current = totals.received;
   };
@@ -131,6 +137,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
       const mapped = mapKitchenStatus(msg.newStatus);
       if (mapped === 'received') {
         playKitchenAlert();
+        newOrderIdsRef.current = new Set([...newOrderIdsRef.current, msg.orderId]);
         fetchQueue(currentPageRef.current, true);
       } else if (mapped === 'picked-up' || mapped === 'served') {
         setOrders(prev => prev.filter(o => o.id !== msg.orderId));
@@ -156,8 +163,9 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
         setOrders(prev => prev.filter(o => o.id !== orderId));
         setServerTotals(prev => ({ ...prev, ready: Math.max(0, prev.ready - 1) }));
       } else {
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, isNew: false } : o));
         if (newStatus === 'preparing') {
+          newOrderIdsRef.current.delete(orderId);
           setServerTotals(prev => ({
             ...prev,
             received: Math.max(0, prev.received - 1),
