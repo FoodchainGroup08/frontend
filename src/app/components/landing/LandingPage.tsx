@@ -1,15 +1,15 @@
-import { Button } from '@/app/components/ui/button';
-import {
-  ChevronRight,
-  Clock,
-  MapPin,
-  PackageCheck,
-  ShoppingCart,
-  Sparkles,
-  Star,
-  UtensilsCrossed,
-} from 'lucide-react';
 import { Link } from 'react-router';
+import {
+  Sparkles,
+  MapPin,
+  Star,
+  ChevronRight,
+  UtensilsCrossed,
+  PackageCheck,
+  Clock,
+  ShoppingCart,
+} from 'lucide-react';
+import { Button } from '@/app/components/ui/button';
 
 const MOCK_SUGGESTIONS = [
   {
@@ -66,12 +66,12 @@ export function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           <span
             className="text-xl font-bold tracking-tight select-none"
-            style={{ color: 'var(--brown)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             FoodChain
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild className="font-medium" style={{ color: 'var(--brown)' }}>
+            <Button variant="ghost" asChild className="font-medium" style={{ color: 'var(--espresso)' }}>
               <Link to="/login">Sign In</Link>
             </Button>
             <Button
@@ -89,7 +89,7 @@ export function LandingPage() {
       <section className="relative overflow-hidden py-20 sm:py-28">
         <div
           className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full pointer-events-none opacity-[0.04]"
-          style={{ backgroundColor: 'var(--brown)' }}
+          style={{ backgroundColor: 'var(--espresso)' }}
         />
         <div
           className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full pointer-events-none opacity-[0.06]"
@@ -101,28 +101,28 @@ export function LandingPage() {
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium mb-6"
             style={{
               backgroundColor: 'color-mix(in srgb, var(--golden-amber) 14%, transparent)',
-              color: 'var(--brown)',
+              color: 'var(--espresso)',
             }}
           >
             <Sparkles size={13} />
-            Powered by AI
+            Quick meal discovery
           </div>
 
           <h1
             className="text-4xl sm:text-5xl lg:text-[3.75rem] font-bold leading-tight mb-5"
-            style={{ color: 'var(--brown)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             Not sure what to eat?
             <br />
-            <span style={{ color: 'var(--golden-amber)' }}>Let our AI figure it out.</span>
+            <span style={{ color: 'var(--golden-amber)' }}>We'll help you choose.</span>
           </h1>
 
           <p
             className="text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl mx-auto"
-            style={{ color: 'color-mix(in srgb, var(--brown) 68%, transparent)' }}
+            style={{ color: 'color-mix(in srgb, var(--espresso) 68%, transparent)' }}
           >
-            Tell us how you're feeling and we'll suggest the perfect meal from your nearest branch
-            — no scrolling required.
+            Answer a few quick questions and we'll suggest the perfect meal from your nearest branch
+            — personalised to your taste, no endless scrolling.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -130,9 +130,9 @@ export function LandingPage() {
               size="lg"
               asChild
               className="font-semibold text-white min-w-36"
-              style={{ backgroundColor: 'var(--brown)' }}
+              style={{ backgroundColor: 'var(--espresso)' }}
             >
-              <Link to="/register">Try the AI</Link>
+              <Link to="/register">Help Me Choose</Link>
             </Button>
             <Button
               size="lg"
@@ -140,8 +140,8 @@ export function LandingPage() {
               asChild
               className="font-semibold min-w-36"
               style={{
-                borderColor: 'var(--brown)',
-                color: 'var(--brown)',
+                borderColor: 'var(--espresso)',
+                color: 'var(--espresso)',
               }}
             >
               <Link to="/login">Sign In</Link>
@@ -150,19 +150,19 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── AI Walkthrough ─────────────────────────────────────────────────── */}
+      {/* ── How It Works ───────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2
               className="text-3xl sm:text-4xl font-bold mb-3"
-              style={{ color: 'var(--brown)' }}
+              style={{ color: 'var(--espresso)' }}
             >
               From craving to cart in three steps
             </h2>
             <p
               className="text-base sm:text-lg"
-              style={{ color: 'color-mix(in srgb, var(--brown) 60%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--espresso) 60%, transparent)' }}
             >
               Answer a few quick questions. We handle the rest.
             </p>
@@ -174,7 +174,7 @@ export function LandingPage() {
               className="flex-1 rounded-2xl border p-6"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--brown) 11%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 11%, transparent)',
               }}
             >
               <div className="flex items-center gap-2 mb-5">
@@ -184,12 +184,12 @@ export function LandingPage() {
                 >
                   1
                 </span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--brown)' }}>
+                <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
                   We ask
                 </span>
               </div>
 
-              <p className="text-sm font-semibold mb-3" style={{ color: 'var(--brown)' }}>
+              <p className="text-sm font-semibold mb-3" style={{ color: 'var(--espresso)' }}>
                 How hungry are you?
               </p>
               <div className="grid grid-cols-2 gap-2 mb-5">
@@ -206,8 +206,8 @@ export function LandingPage() {
                               borderColor: 'var(--golden-amber)',
                             }
                           : {
-                              borderColor: 'color-mix(in srgb, var(--brown) 18%, transparent)',
-                              color: 'var(--brown)',
+                              borderColor: 'color-mix(in srgb, var(--espresso) 18%, transparent)',
+                              color: 'var(--espresso)',
                             }
                       }
                     >
@@ -217,7 +217,7 @@ export function LandingPage() {
                 )}
               </div>
 
-              <p className="text-sm font-semibold mb-2.5" style={{ color: 'var(--brown)' }}>
+              <p className="text-sm font-semibold mb-2.5" style={{ color: 'var(--espresso)' }}>
                 What are you in the mood for?
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -229,12 +229,12 @@ export function LandingPage() {
                       i === 1
                         ? {
                             backgroundColor: 'color-mix(in srgb, var(--golden-amber) 14%, transparent)',
-                            color: 'var(--brown)',
+                            color: 'var(--espresso)',
                             borderColor: 'var(--golden-amber)',
                           }
                         : {
-                            borderColor: 'color-mix(in srgb, var(--brown) 16%, transparent)',
-                            color: 'var(--brown)',
+                            borderColor: 'color-mix(in srgb, var(--espresso) 16%, transparent)',
+                            color: 'var(--espresso)',
                           }
                     }
                   >
@@ -248,16 +248,16 @@ export function LandingPage() {
             <div className="hidden md:flex items-center justify-center px-2 shrink-0">
               <ChevronRight
                 size={22}
-                style={{ color: 'color-mix(in srgb, var(--brown) 25%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 25%, transparent)' }}
               />
             </div>
 
-            {/* Step 2 — AI thinks */}
+            {/* Step 2 — We match */}
             <div
               className="flex-1 rounded-2xl border p-6 flex flex-col"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--brown) 11%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 11%, transparent)',
               }}
             >
               <div className="flex items-center gap-2 mb-5">
@@ -267,8 +267,8 @@ export function LandingPage() {
                 >
                   2
                 </span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--brown)' }}>
-                  AI thinks
+                <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
+                  We match
                 </span>
               </div>
               <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
@@ -280,7 +280,7 @@ export function LandingPage() {
                 >
                   <Sparkles size={22} style={{ color: 'var(--golden-amber)' }} />
                 </div>
-                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--brown)' }}>
+                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--espresso)' }}>
                   Finding the perfect meals for you
                 </p>
                 <div className="flex items-center gap-1.5 mb-4">
@@ -299,9 +299,9 @@ export function LandingPage() {
                 </div>
                 <p
                   className="text-xs"
-                  style={{ color: 'color-mix(in srgb, var(--brown) 48%, transparent)' }}
+                  style={{ color: 'color-mix(in srgb, var(--espresso) 48%, transparent)' }}
                 >
-                  Checking your branch's menu against your mood
+                  Checking your branch's menu against your preferences
                 </p>
               </div>
             </div>
@@ -310,7 +310,7 @@ export function LandingPage() {
             <div className="hidden md:flex items-center justify-center px-2 shrink-0">
               <ChevronRight
                 size={22}
-                style={{ color: 'color-mix(in srgb, var(--brown) 25%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 25%, transparent)' }}
               />
             </div>
 
@@ -319,7 +319,7 @@ export function LandingPage() {
               className="flex-1 rounded-2xl border p-6"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--brown) 11%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 11%, transparent)',
               }}
             >
               <div className="flex items-center gap-2 mb-5">
@@ -329,7 +329,7 @@ export function LandingPage() {
                 >
                   3
                 </span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--brown)' }}>
+                <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
                   We suggest
                 </span>
               </div>
@@ -339,14 +339,14 @@ export function LandingPage() {
                     key={item.name}
                     className="flex items-start justify-between gap-3 p-3 rounded-xl border"
                     style={{
-                      borderColor: 'color-mix(in srgb, var(--brown) 9%, transparent)',
+                      borderColor: 'color-mix(in srgb, var(--espresso) 9%, transparent)',
                     }}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
                         <span
                           className="text-sm font-semibold truncate"
-                          style={{ color: 'var(--brown)' }}
+                          style={{ color: 'var(--espresso)' }}
                         >
                           {item.name}
                         </span>
@@ -366,7 +366,7 @@ export function LandingPage() {
                         <span
                           className="text-xs leading-tight"
                           style={{
-                            color: 'color-mix(in srgb, var(--brown) 52%, transparent)',
+                            color: 'color-mix(in srgb, var(--espresso) 52%, transparent)',
                           }}
                         >
                           {item.reason}
@@ -375,7 +375,7 @@ export function LandingPage() {
                     </div>
                     <button
                       className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white"
-                      style={{ backgroundColor: 'var(--brown)' }}
+                      style={{ backgroundColor: 'var(--espresso)' }}
                       tabIndex={-1}
                     >
                       <ShoppingCart size={13} />
@@ -392,7 +392,7 @@ export function LandingPage() {
       <section
         className="py-16 sm:py-24"
         style={{
-          backgroundColor: 'color-mix(in srgb, var(--brown) 3.5%, var(--warm-white))',
+          backgroundColor: 'color-mix(in srgb, var(--espresso) 3.5%, var(--warm-white))',
         }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -401,13 +401,13 @@ export function LandingPage() {
             <div>
               <h2
                 className="text-3xl sm:text-4xl font-bold mb-4 leading-snug"
-                style={{ color: 'var(--brown)' }}
+                style={{ color: 'var(--espresso)' }}
               >
                 We find your nearest branch — or order for a friend
               </h2>
               <p
                 className="text-base sm:text-lg leading-relaxed"
-                style={{ color: 'color-mix(in srgb, var(--brown) 68%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 68%, transparent)' }}
               >
                 FoodChain detects your location and defaults to the closest branch. Ordering for
                 someone in another area? Switch branches in one tap.
@@ -419,13 +419,13 @@ export function LandingPage() {
               className="rounded-2xl border p-5 max-w-sm mx-auto md:mx-0 md:ml-auto w-full"
               style={{
                 backgroundColor: '#fff',
-                borderColor: 'color-mix(in srgb, var(--brown) 10%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--espresso) 10%, transparent)',
                 boxShadow: '0 8px 40px color-mix(in srgb, var(--golden-amber) 18%, transparent)',
               }}
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="font-semibold text-base" style={{ color: 'var(--brown)' }}>
+                  <h3 className="font-semibold text-base" style={{ color: 'var(--espresso)' }}>
                     Victoria Island
                   </h3>
                   <div className="flex items-center gap-1 mt-0.5">
@@ -434,7 +434,7 @@ export function LandingPage() {
                       fill="var(--golden-amber)"
                       stroke="var(--golden-amber)"
                     />
-                    <span className="text-xs font-medium" style={{ color: 'var(--brown)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--espresso)' }}>
                       4.8
                     </span>
                   </div>
@@ -444,14 +444,14 @@ export function LandingPage() {
                     className="text-xs px-2 py-0.5 rounded-full font-medium"
                     style={{
                       backgroundColor: 'color-mix(in srgb, var(--golden-amber) 14%, transparent)',
-                      color: 'var(--brown)',
+                      color: 'var(--espresso)',
                     }}
                   >
                     Fastest delivery
                   </span>
                   <span
                     className="text-xs font-medium"
-                    style={{ color: 'color-mix(in srgb, var(--brown) 48%, transparent)' }}
+                    style={{ color: 'color-mix(in srgb, var(--espresso) 48%, transparent)' }}
                   >
                     1.2 km away
                   </span>
@@ -460,7 +460,7 @@ export function LandingPage() {
 
               <div
                 className="flex items-center gap-1.5 text-xs mb-1.5"
-                style={{ color: 'color-mix(in srgb, var(--brown) 58%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--espresso) 58%, transparent)' }}
               >
                 <MapPin size={11} />
                 14 Adeola Odeku St, Victoria Island
@@ -476,7 +476,7 @@ export function LandingPage() {
 
               <button
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
-                style={{ backgroundColor: 'var(--brown)' }}
+                style={{ backgroundColor: 'var(--espresso)' }}
                 tabIndex={-1}
               >
                 Order from here
@@ -491,7 +491,7 @@ export function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <h2
             className="text-3xl sm:text-4xl font-bold text-center mb-12"
-            style={{ color: 'var(--brown)' }}
+            style={{ color: 'var(--espresso)' }}
           >
             Everything else you need
           </h2>
@@ -502,7 +502,7 @@ export function LandingPage() {
                 className="rounded-2xl border p-6"
                 style={{
                   backgroundColor: '#fff',
-                  borderColor: 'color-mix(in srgb, var(--brown) 10%, transparent)',
+                  borderColor: 'color-mix(in srgb, var(--espresso) 10%, transparent)',
                 }}
               >
                 <div
@@ -516,13 +516,13 @@ export function LandingPage() {
                 </div>
                 <h3
                   className="font-semibold text-base mb-1"
-                  style={{ color: 'var(--brown)' }}
+                  style={{ color: 'var(--espresso)' }}
                 >
                   {feat.title}
                 </h3>
                 <p
                   className="text-sm leading-relaxed"
-                  style={{ color: 'color-mix(in srgb, var(--brown) 58%, transparent)' }}
+                  style={{ color: 'color-mix(in srgb, var(--espresso) 58%, transparent)' }}
                 >
                   {feat.body}
                 </p>
@@ -533,7 +533,7 @@ export function LandingPage() {
       </section>
 
       {/* ── CTA Banner ──────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20" style={{ backgroundColor: 'var(--brown)' }}>
+      <section className="py-16 sm:py-20" style={{ backgroundColor: 'var(--espresso)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h2
             className="text-3xl sm:text-4xl font-bold mb-4"
@@ -545,7 +545,7 @@ export function LandingPage() {
             className="text-base sm:text-lg mb-8"
             style={{ color: 'color-mix(in srgb, var(--warm-white) 70%, transparent)' }}
           >
-            Join FoodChain and let our AI take the indecision out of your next meal.
+            Join FoodChain and discover your next favourite meal in under a minute.
           </p>
           <Button
             size="lg"
@@ -562,7 +562,7 @@ export function LandingPage() {
       <footer
         className="py-8 border-t"
         style={{
-          backgroundColor: 'var(--brown)',
+          backgroundColor: 'var(--espresso)',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
       >
