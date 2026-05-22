@@ -19,13 +19,9 @@ dist/index.html
 .claude/
 
 
-.index.html
-
 # OS
 .DS_Store
 Thumbs.db
 
 guidelines/
 CLAUDE.md
-index.html
-index.jsp

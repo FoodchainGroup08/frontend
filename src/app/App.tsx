@@ -230,17 +230,6 @@ function CustomerLayout() {
   const helpMeChooseShownFor = useRef(new Set<string>());
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  // Track which branches have already shown the AI modal this session
-  const aiModalShownFor = useRef(new Set<string>());
-  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(() => {
-    // Restore after Paystack redirect — PaymentCallback stores the orderId here
-    const fromCallback = sessionStorage.getItem("foodchain_tracking_order_id");
-    if (fromCallback) {
-      sessionStorage.removeItem("foodchain_tracking_order_id");
-      return fromCallback;
-    }
-    return null;
-  });
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
 
