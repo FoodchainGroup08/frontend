@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { X, ChevronLeft, ShoppingCart, RefreshCw, RotateCcw, AlertCircle, UtensilsCrossed } from 'lucide-react';
+import { X, ChevronLeft, ShoppingCart, RefreshCw, RotateCcw, AlertCircle, UtensilsCrossed, UserCircle } from 'lucide-react';
 import { Drawer as DrawerPrimitive } from 'vaul';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ export interface FoodPreferences {
   spice: string | null;
 }
 
-type Step = 'welcome' | 'hunger' | 'budget' | 'mood' | 'loading' | 'results' | 'error';
+type Step = 'onboarding' | 'welcome' | 'hunger' | 'budget' | 'mood' | 'loading' | 'results' | 'error';
 
 interface Answers {
   hunger: string | null;
@@ -47,6 +47,7 @@ export interface HelpMeChooseSheetProps {
   onAddToCart: (item: AddToCartItem, quantity: number) => void;
   onGoToCart: () => void;
   onBrowseMenu: () => void;
+  onGoToProfile: () => void;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -104,6 +105,11 @@ function loadSavedPreferences(userId?: string): FoodPreferences | null {
   } catch {
     return null;
   }
+}
+
+function hasCompletedPreferences(prefs: FoodPreferences | null): boolean {
+  if (!prefs) return false;
+  return prefs.dietary.length > 0 || prefs.cuisines.length > 0 || prefs.spice !== null;
 }
 
 function buildRequest(
@@ -360,6 +366,7 @@ export function HelpMeChooseSheet({
   onAddToCart,
   onGoToCart,
   onBrowseMenu,
+  onGoToProfile,
 }: HelpMeChooseSheetProps) {
   const isDesktop = useIsDesktop();
   const [step, setStep] = useState<Step>('welcome');
@@ -376,7 +383,12 @@ export function HelpMeChooseSheet({
 
   useEffect(() => {
     if (isOpen) {
-      setSavedPrefs(loadSavedPreferences(userId));
+      const prefs = loadSavedPreferences(userId);
+      setSavedPrefs(prefs);
+      setStep(hasCompletedPreferences(prefs) ? 'welcome' : 'onboarding');
+      setAnswers(DEFAULT_ANSWERS);
+      setResult(null);
+      setErrorMsg('');
     }
   }, [isOpen, userId]);
 
@@ -412,6 +424,11 @@ export function HelpMeChooseSheet({
     setResult(null);
     setErrorMsg('');
     goTo('welcome');
+  };
+
+  const handleGoToProfile = () => {
+    onClose();
+    onGoToProfile();
   };
 
   const submitAnswers = async () => {
@@ -482,6 +499,42 @@ export function HelpMeChooseSheet({
 
   const renderContent = () => {
     switch (step) {
+      case 'onboarding':
+        return (
+          <div className="flex flex-col items-center text-center px-2 py-4">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--golden-amber) 15%, transparent)' }}
+            >
+              <UserCircle className="w-8 h-8" style={{ color: 'var(--golden-amber)' }} />
+            </div>
+            <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--espresso)' }}>
+              Get better meal suggestions!
+            </h2>
+            <p className="text-sm mb-6 leading-relaxed" style={{ color: 'var(--espresso)', opacity: 0.65 }}>
+              Tell us a little about your food preferences so we can recommend meals you'll actually enjoy.
+            </p>
+            <button
+              onClick={handleGoToProfile}
+              className="w-full py-3.5 rounded-xl text-base font-semibold mb-3"
+              style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
+            >
+              Complete Profile
+            </button>
+            <button
+              onClick={() => goTo('welcome')}
+              className="w-full py-2.5 rounded-xl text-sm font-medium border"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--espresso) 15%, transparent)',
+                color: 'var(--espresso)',
+                opacity: 0.7,
+              }}
+            >
+              Skip for now
+            </button>
+          </div>
+        );
+
       case 'welcome':
         return (
           <div className="flex flex-col items-center text-center px-2 py-4">
@@ -763,7 +816,7 @@ export function HelpMeChooseSheet({
   // ── Footer ────────────────────────────────────────────────────────────────────
 
   const renderFooter = () => {
-    if (step === 'loading' || step === 'welcome') return null;
+    if (step === 'loading' || step === 'welcome' || step === 'onboarding') return null;
 
     if (step === 'results') {
       return (

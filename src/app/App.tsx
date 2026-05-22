@@ -475,6 +475,7 @@ function CustomerLayout() {
           onAddToCart={handleAddToCart}
           onGoToCart={() => { setIsHelpMeChooseOpen(false); navigate('/cart'); }}
           onBrowseMenu={() => { setIsHelpMeChooseOpen(false); navigate('/menu'); }}
+          onGoToProfile={() => { setIsHelpMeChooseOpen(false); navigate('/profile'); }}
         />
       )}
     </>
