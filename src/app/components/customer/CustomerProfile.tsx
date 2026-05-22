@@ -5,23 +5,31 @@ import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { updateProfile } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import {
+  DIETARY_RESTRICTION_OPTIONS,
+  CUISINE_PREFERENCE_OPTIONS,
+  SPICE_LEVEL_OPTIONS,
+  normalizePrefKey,
+} from "@/constants/recommendation";
 import type { FoodPreferences } from "./HelpMeChooseSheet";
-
-// ─── Food preference options ──────────────────────────────────────────────────
-
-const DIETARY_OPTIONS = [
-  'No restrictions', 'Vegetarian', 'Vegan', 'Halal',
-  'High protein', 'Low carb', 'No seafood', 'Diabetic-friendly',
-];
-
-const CUISINE_OPTIONS = [
-  'Nigerian', 'Italian', 'Continental', 'Asian', 'Fast food', 'Any',
-];
-
-const SPICE_OPTIONS = ['Mild', 'Medium', 'Spicy'];
 
 function PrefsKey(userId: string) {
   return `foodchain_food_prefs_${userId}`;
+}
+
+function loadFoodPrefs(userId: string): FoodPreferences {
+  try {
+    const raw = localStorage.getItem(PrefsKey(userId));
+    if (!raw) return { dietary: [], cuisines: [], spice: null };
+    const p = JSON.parse(raw);
+    return {
+      dietary: (p.dietary ?? []).map(normalizePrefKey),
+      cuisines: (p.cuisines ?? []).map(normalizePrefKey),
+      spice: p.spice ? normalizePrefKey(p.spice) : null,
+    };
+  } catch {
+    return { dietary: [], cuisines: [], spice: null };
+  }
 }
 
 // ─── Chip button ──────────────────────────────────────────────────────────────
@@ -75,36 +83,38 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
   const [nameInput, setNameInput] = useState(user?.name ?? '');
   const [isSaving, setIsSaving] = useState(false);
 
-  const [foodPrefs, setFoodPrefs] = useState<FoodPreferences>(() => {
-    if (!user?.id) return { dietary: [], cuisines: [], spice: null };
-    try {
-      const raw = localStorage.getItem(PrefsKey(user.id));
-      return raw ? JSON.parse(raw) : { dietary: [], cuisines: [], spice: null };
-    } catch {
-      return { dietary: [], cuisines: [], spice: null };
-    }
-  });
+  const [foodPrefs, setFoodPrefs] = useState<FoodPreferences>(() =>
+    user?.id ? loadFoodPrefs(user.id) : { dietary: [], cuisines: [], spice: null },
+  );
 
-  const toggleDietary = (opt: string) => {
-    setFoodPrefs((p) => ({
-      ...p,
-      dietary: p.dietary.includes(opt)
-        ? p.dietary.filter((d) => d !== opt)
-        : [...p.dietary, opt],
-    }));
+  const toggleDietary = (key: string) => {
+    setFoodPrefs((p) => {
+      if (key === 'no_restrictions') {
+        return { ...p, dietary: p.dietary.includes('no_restrictions') ? [] : ['no_restrictions'] };
+      }
+      const without = p.dietary.filter((d) => d !== 'no_restrictions');
+      return {
+        ...p,
+        dietary: without.includes(key) ? without.filter((d) => d !== key) : [...without, key],
+      };
+    });
   };
 
-  const toggleCuisine = (opt: string) => {
-    setFoodPrefs((p) => ({
-      ...p,
-      cuisines: p.cuisines.includes(opt)
-        ? p.cuisines.filter((c) => c !== opt)
-        : [...p.cuisines, opt],
-    }));
+  const toggleCuisine = (key: string) => {
+    setFoodPrefs((p) => {
+      if (key === 'any') {
+        return { ...p, cuisines: p.cuisines.includes('any') ? [] : ['any'] };
+      }
+      const without = p.cuisines.filter((c) => c !== 'any');
+      return {
+        ...p,
+        cuisines: without.includes(key) ? without.filter((c) => c !== key) : [...without, key],
+      };
+    });
   };
 
-  const setSpice = (opt: string) => {
-    setFoodPrefs((p) => ({ ...p, spice: p.spice === opt ? null : opt }));
+  const toggleSpice = (key: string) => {
+    setFoodPrefs((p) => ({ ...p, spice: p.spice === key ? null : key }));
   };
 
   const handleSaveAll = async () => {
@@ -267,12 +277,12 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
                   Dietary
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {DIETARY_OPTIONS.map((opt) => (
+                  {DIETARY_RESTRICTION_OPTIONS.map(({ key, label }) => (
                     <Chip
-                      key={opt}
-                      label={opt}
-                      selected={foodPrefs.dietary.includes(opt)}
-                      onClick={() => toggleDietary(opt)}
+                      key={key}
+                      label={label}
+                      selected={foodPrefs.dietary.includes(key)}
+                      onClick={() => toggleDietary(key)}
                     />
                   ))}
                 </div>
@@ -283,12 +293,12 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
                   Favourite Cuisine
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {CUISINE_OPTIONS.map((opt) => (
+                  {CUISINE_PREFERENCE_OPTIONS.map(({ key, label }) => (
                     <Chip
-                      key={opt}
-                      label={opt}
-                      selected={foodPrefs.cuisines.includes(opt)}
-                      onClick={() => toggleCuisine(opt)}
+                      key={key}
+                      label={label}
+                      selected={foodPrefs.cuisines.includes(key)}
+                      onClick={() => toggleCuisine(key)}
                     />
                   ))}
                 </div>
@@ -299,12 +309,12 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
                   Spice Level
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {SPICE_OPTIONS.map((opt) => (
+                  {SPICE_LEVEL_OPTIONS.map(({ key, label }) => (
                     <Chip
-                      key={opt}
-                      label={opt}
-                      selected={foodPrefs.spice === opt}
-                      onClick={() => setSpice(opt)}
+                      key={key}
+                      label={label}
+                      selected={foodPrefs.spice === key}
+                      onClick={() => toggleSpice(key)}
                     />
                   ))}
                 </div>

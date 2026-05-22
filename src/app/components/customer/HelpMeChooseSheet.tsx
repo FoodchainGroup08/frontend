@@ -10,6 +10,13 @@ import {
   type ComboSuggestion,
   type AiRecommendationResponse,
 } from '@/services/api';
+import {
+  HUNGER_OPTIONS,
+  BUDGET_PRESETS,
+  MOOD_OPTIONS,
+  normalizePrefKey,
+} from '@/constants/recommendation';
+import type { SpiceLevelKey } from '@/constants/recommendation';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +31,7 @@ type Step = 'welcome' | 'hunger' | 'budget' | 'mood' | 'loading' | 'results' | '
 interface Answers {
   hunger: string | null;
   budgetCustom: string;
-  budgetPreset: number | null;
+  budgetPresetKey: string | null;
   moods: string[];
 }
 
@@ -53,30 +60,10 @@ export interface HelpMeChooseSheetProps {
 
 const QUESTION_STEPS: Step[] = ['hunger', 'budget', 'mood'];
 
-const HUNGER_OPTIONS = [
-  { id: 'light', label: 'Light snack', emoji: '🍪', appetite: 'light' as const },
-  { id: 'moderate', label: 'Moderately hungry', emoji: '🍽️', appetite: 'heavy' as const },
-  { id: 'very', label: 'Very hungry', emoji: '🍖', appetite: 'heavy' as const },
-];
-
-const BUDGET_PRESETS = [
-  { label: 'Under ₦5,000', value: 4999 },
-  { label: '₦5,000–10,000', value: 10000 },
-  { label: '₦10,000–15,000', value: 15000 },
-  { label: '₦15,000+', value: 20000 },
-];
-
-const MOOD_OPTIONS = [
-  { id: 'spicy', label: 'Spicy', emoji: '🌶️' },
-  { id: 'sweet', label: 'Sweet', emoji: '🍬' },
-  { id: 'savory', label: 'Savory', emoji: '🧀' },
-  { id: 'comfort', label: 'Comfort food', emoji: '🍲' },
-];
-
 const DEFAULT_ANSWERS: Answers = {
   hunger: null,
   budgetCustom: '',
-  budgetPreset: null,
+  budgetPresetKey: null,
   moods: [],
 };
 
@@ -100,7 +87,13 @@ function loadSavedPreferences(userId?: string): FoodPreferences | null {
   if (!userId) return null;
   try {
     const raw = localStorage.getItem(`foodchain_food_prefs_${userId}`);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const prefs = JSON.parse(raw);
+    return {
+      dietary: (prefs.dietary ?? []).map(normalizePrefKey),
+      cuisines: (prefs.cuisines ?? []).map(normalizePrefKey),
+      spice: prefs.spice ? normalizePrefKey(prefs.spice) : null,
+    };
   } catch {
     return null;
   }
@@ -113,38 +106,33 @@ function buildRequest(
   savedPrefs: FoodPreferences | null,
 ): FoodSuggestionRequest {
   const hungerOpt = HUNGER_OPTIONS.find((o) => o.id === answers.hunger);
-  const appetite = hungerOpt?.appetite ?? 'heavy';
+  const appetite = hungerOpt?.appetite;
 
+  const selectedPreset = BUDGET_PRESETS.find((p) => p.key === answers.budgetPresetKey);
   const budget = answers.budgetCustom
     ? parseFloat(answers.budgetCustom)
-    : answers.budgetPreset ?? undefined;
+    : selectedPreset?.unlimited
+      ? undefined
+      : (selectedPreset?.maxValue ?? undefined);
+  const budgetUnlimited = !answers.budgetCustom && (selectedPreset?.unlimited ?? false);
 
-  const dietaryPreferences: string[] = [];
-  if (savedPrefs?.dietary) {
-    savedPrefs.dietary
-      .filter((d) => d !== 'No restrictions')
-      .forEach((d) => dietaryPreferences.push(d.toLowerCase()));
-  }
-  if (savedPrefs?.spice && savedPrefs.spice !== 'Any') {
-    dietaryPreferences.push(savedPrefs.spice.toLowerCase());
-  }
-  const moodMap: Record<string, string> = {
-    spicy: 'spicy',
-    sweet: 'sweet',
-    savory: 'savory',
-    comfort: 'comfort food',
-  };
-  answers.moods.forEach((m) => {
-    if (moodMap[m]) dietaryPreferences.push(moodMap[m]);
-  });
+  const dietaryRestrictions = (savedPrefs?.dietary ?? []).filter(
+    (d) => d !== 'no_restrictions',
+  );
+  const cuisinePreferences = (savedPrefs?.cuisines ?? []).filter((c) => c !== 'any');
+  const spiceLevel = (savedPrefs?.spice ?? null) as SpiceLevelKey | null;
 
   return {
     branchId,
     branchName,
-    appetite,
-    peopleCount: 1,
+    ...(appetite && { appetite }),
     ...(budget !== undefined && { budget }),
-    ...(dietaryPreferences.length > 0 && { dietaryPreferences: [...new Set(dietaryPreferences)] }),
+    ...(budgetUnlimited && { budgetUnlimited: true }),
+    ...(dietaryRestrictions.length > 0 && { dietaryRestrictions }),
+    ...(cuisinePreferences.length > 0 && { cuisinePreferences }),
+    ...(spiceLevel && { spiceLevel }),
+    ...(answers.moods.length > 0 && { moods: answers.moods }),
+    peopleCount: 1,
     limit: 5,
   };
 }
@@ -539,40 +527,39 @@ export function HelpMeChooseSheet({
           </div>
         );
 
-      case 'budget':
+      case 'budget': {
+        const activePreset = BUDGET_PRESETS.find(
+          (p) => p.key === answers.budgetPresetKey && !answers.budgetCustom,
+        );
         return (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              {BUDGET_PRESETS.map((preset) => (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() =>
-                    setAnswers((a) => ({
-                      ...a,
-                      budgetPreset: a.budgetPreset === preset.value ? null : preset.value,
-                      budgetCustom: '',
-                    }))
-                  }
-                  className="px-3 py-3 rounded-xl text-sm font-medium border-2 transition-all text-center"
-                  style={{
-                    backgroundColor:
-                      answers.budgetPreset === preset.value && !answers.budgetCustom
-                        ? 'var(--espresso)'
-                        : 'var(--white)',
-                    color:
-                      answers.budgetPreset === preset.value && !answers.budgetCustom
-                        ? 'var(--warm-white)'
-                        : 'var(--espresso)',
-                    borderColor:
-                      answers.budgetPreset === preset.value && !answers.budgetCustom
+              {BUDGET_PRESETS.map((preset) => {
+                const isActive = activePreset?.key === preset.key;
+                return (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    onClick={() =>
+                      setAnswers((a) => ({
+                        ...a,
+                        budgetPresetKey: a.budgetPresetKey === preset.key ? null : preset.key,
+                        budgetCustom: '',
+                      }))
+                    }
+                    className="px-3 py-3 rounded-xl text-sm font-medium border-2 transition-all text-center"
+                    style={{
+                      backgroundColor: isActive ? 'var(--espresso)' : 'var(--white)',
+                      color: isActive ? 'var(--warm-white)' : 'var(--espresso)',
+                      borderColor: isActive
                         ? 'var(--espresso)'
                         : 'color-mix(in srgb, var(--espresso) 12%, transparent)',
-                  }}
-                >
-                  {preset.label}
-                </button>
-              ))}
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
             <div>
               <p className="text-xs mb-1.5" style={{ color: 'var(--charcoal)', opacity: 0.5 }}>
@@ -601,7 +588,11 @@ export function HelpMeChooseSheet({
                   placeholder="e.g. 8,000"
                   value={answers.budgetCustom}
                   onChange={(e) =>
-                    setAnswers((a) => ({ ...a, budgetCustom: e.target.value, budgetPreset: null }))
+                    setAnswers((a) => ({
+                      ...a,
+                      budgetCustom: e.target.value,
+                      budgetPresetKey: null,
+                    }))
                   }
                   className="flex-1 bg-transparent text-base outline-none"
                   style={{ color: 'var(--espresso)' }}
@@ -610,6 +601,7 @@ export function HelpMeChooseSheet({
             </div>
           </div>
         );
+      }
 
       case 'mood':
         return (

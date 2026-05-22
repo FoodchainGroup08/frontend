@@ -324,11 +324,15 @@ export interface SystemUser {
 
 export interface FoodSuggestionRequest {
   branchId: string;
-  branchName: string;
+  branchName?: string;
   budget?: number;
+  budgetUnlimited?: boolean;
   mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert';
-  appetite?: 'light' | 'heavy';
-  dietaryPreferences?: string[];
+  appetite?: 'light' | 'moderate' | 'heavy';
+  dietaryRestrictions?: string[];
+  cuisinePreferences?: string[];
+  spiceLevel?: 'spice_mild' | 'spice_medium' | 'spice_hot' | null;
+  moods?: string[];
   peopleCount?: number;
   fulfillmentType?: 'pickup' | 'delivery' | 'dine-in';
   limit?: number;
