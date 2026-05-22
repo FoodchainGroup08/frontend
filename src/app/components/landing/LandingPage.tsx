@@ -105,7 +105,7 @@ export function LandingPage() {
             }}
           >
             <Sparkles size={13} />
-            Powered by AI
+            Quick meal discovery
           </div>
 
           <h1
@@ -114,15 +114,15 @@ export function LandingPage() {
           >
             Not sure what to eat?
             <br />
-            <span style={{ color: 'var(--golden-amber)' }}>Let our AI figure it out.</span>
+            <span style={{ color: 'var(--golden-amber)' }}>We'll help you choose.</span>
           </h1>
 
           <p
             className="text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl mx-auto"
             style={{ color: 'color-mix(in srgb, var(--espresso) 68%, transparent)' }}
           >
-            Tell us how you're feeling and we'll suggest the perfect meal from your nearest branch
-            — no scrolling required.
+            Answer a few quick questions and we'll suggest the perfect meal from your nearest branch
+            — personalised to your taste, no endless scrolling.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -132,7 +132,7 @@ export function LandingPage() {
               className="font-semibold text-white min-w-36"
               style={{ backgroundColor: 'var(--espresso)' }}
             >
-              <Link to="/register">Try the AI</Link>
+              <Link to="/register">Help Me Choose</Link>
             </Button>
             <Button
               size="lg"
@@ -150,7 +150,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── AI Walkthrough ─────────────────────────────────────────────────── */}
+      {/* ── How It Works ───────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -252,7 +252,7 @@ export function LandingPage() {
               />
             </div>
 
-            {/* Step 2 — AI thinks */}
+            {/* Step 2 — We match */}
             <div
               className="flex-1 rounded-2xl border p-6 flex flex-col"
               style={{
@@ -268,7 +268,7 @@ export function LandingPage() {
                   2
                 </span>
                 <span className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>
-                  AI thinks
+                  We match
                 </span>
               </div>
               <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
@@ -301,7 +301,7 @@ export function LandingPage() {
                   className="text-xs"
                   style={{ color: 'color-mix(in srgb, var(--espresso) 48%, transparent)' }}
                 >
-                  Checking your branch's menu against your mood
+                  Checking your branch's menu against your preferences
                 </p>
               </div>
             </div>
@@ -545,7 +545,7 @@ export function LandingPage() {
             className="text-base sm:text-lg mb-8"
             style={{ color: 'color-mix(in srgb, var(--warm-white) 70%, transparent)' }}
           >
-            Join FoodChain and let our AI take the indecision out of your next meal.
+            Join FoodChain and discover your next favourite meal in under a minute.
           </p>
           <Button
             size="lg"

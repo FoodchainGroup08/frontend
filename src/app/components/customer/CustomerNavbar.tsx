@@ -26,6 +26,7 @@ interface CustomerNavbarProps {
   selectedBranchId?: string;
   onChangeBranch: (branch: Branch) => void;
   onLogout: () => void;
+  onOpenHelpMeChoose?: () => void;
 }
 
 export function CustomerNavbar({
@@ -38,6 +39,7 @@ export function CustomerNavbar({
   selectedBranchId,
   onChangeBranch,
   onLogout,
+  onOpenHelpMeChoose,
 }: CustomerNavbarProps) {
   const isMobile = useIsMobile();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -183,7 +185,7 @@ export function CustomerNavbar({
               </button>
 
               <button
-                onClick={() => onNavigate('ai-suggestions')}
+                onClick={() => onOpenHelpMeChoose ? onOpenHelpMeChoose() : onNavigate('ai-suggestions')}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all hidden sm:flex ${
                   currentScreen === 'ai-suggestions' ? 'opacity-100' : 'opacity-70 hover:opacity-100'
                 }`}
@@ -192,7 +194,7 @@ export function CustomerNavbar({
                 }}
               >
                 <Sparkles className="w-4 h-4" />
-                AI Suggest
+                Help Me Choose
               </button>
 
               <button
@@ -363,7 +365,6 @@ export function CustomerNavbar({
         <div className="flex items-stretch h-14">
           {([
             { id: 'menu', icon: UtensilsCrossed, label: 'Menu', active: currentScreen === 'menu' },
-            { id: 'ai-suggestions', icon: Sparkles, label: 'AI', active: currentScreen === 'ai-suggestions' },
             { id: 'active-orders', icon: History, label: 'Orders', active: currentScreen === 'active-orders' || currentScreen === 'order-tracker' },
           ] as const).map(({ id, icon: Icon, label, active }) => (
             <button
@@ -376,6 +377,15 @@ export function CustomerNavbar({
               <span className="text-[10px] font-medium tracking-wide">{label}</span>
             </button>
           ))}
+          {/* Help Me Choose */}
+          <button
+            onClick={() => onOpenHelpMeChoose ? onOpenHelpMeChoose() : onNavigate('ai-suggestions')}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-opacity"
+            style={{ color: 'rgba(255,255,255,0.6)' }}
+          >
+            <Sparkles className="w-5 h-5" />
+            <span className="text-[10px] font-medium tracking-wide">Choose</span>
+          </button>
 
           {/* Alerts */}
           <button

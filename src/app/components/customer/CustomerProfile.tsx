@@ -1,10 +1,57 @@
 import { useState } from "react";
-import { User, MapPin, Save, ArrowLeft } from "lucide-react";
+import { User, MapPin, Save, ArrowLeft, UtensilsCrossed } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { updateProfile } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import type { FoodPreferences } from "./HelpMeChooseSheet";
+
+// ─── Food preference options ──────────────────────────────────────────────────
+
+const DIETARY_OPTIONS = [
+  'No restrictions', 'Vegetarian', 'Vegan', 'Halal',
+  'High protein', 'Low carb', 'No seafood', 'Diabetic-friendly',
+];
+
+const CUISINE_OPTIONS = [
+  'Nigerian', 'Italian', 'Continental', 'Asian', 'Fast food', 'Any',
+];
+
+const SPICE_OPTIONS = ['Mild', 'Medium', 'Spicy'];
+
+function PrefsKey(userId: string) {
+  return `foodchain_food_prefs_${userId}`;
+}
+
+// ─── Chip button ──────────────────────────────────────────────────────────────
+
+function Chip({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="px-3 py-1.5 rounded-full text-sm font-medium border transition-all"
+      style={{
+        backgroundColor: selected ? 'var(--espresso)' : 'transparent',
+        color: selected ? 'var(--warm-white)' : 'var(--espresso)',
+        borderColor: selected
+          ? 'var(--espresso)'
+          : 'color-mix(in srgb, var(--espresso) 20%, transparent)',
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
 interface CustomerProfileProps {
   onGoBack: () => void;
@@ -28,32 +75,66 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
   const [nameInput, setNameInput] = useState(user?.name ?? '');
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async () => {
-    if (!addressInput.trim() && nameInput === user?.name) return;
+  const [foodPrefs, setFoodPrefs] = useState<FoodPreferences>(() => {
+    if (!user?.id) return { dietary: [], cuisines: [], spice: null };
+    try {
+      const raw = localStorage.getItem(PrefsKey(user.id));
+      return raw ? JSON.parse(raw) : { dietary: [], cuisines: [], spice: null };
+    } catch {
+      return { dietary: [], cuisines: [], spice: null };
+    }
+  });
 
+  const toggleDietary = (opt: string) => {
+    setFoodPrefs((p) => ({
+      ...p,
+      dietary: p.dietary.includes(opt)
+        ? p.dietary.filter((d) => d !== opt)
+        : [...p.dietary, opt],
+    }));
+  };
+
+  const toggleCuisine = (opt: string) => {
+    setFoodPrefs((p) => ({
+      ...p,
+      cuisines: p.cuisines.includes(opt)
+        ? p.cuisines.filter((c) => c !== opt)
+        : [...p.cuisines, opt],
+    }));
+  };
+
+  const setSpice = (opt: string) => {
+    setFoodPrefs((p) => ({ ...p, spice: p.spice === opt ? null : opt }));
+  };
+
+  const handleSaveAll = async () => {
     setIsSaving(true);
     try {
-      const payload: Parameters<typeof updateProfile>[0] = {};
+      const profilePayload: Parameters<typeof updateProfile>[0] = {};
 
       if (nameInput.trim() && nameInput !== user?.name) {
-        payload.name = nameInput.trim();
+        profilePayload.name = nameInput.trim();
       }
-
-      if (addressInput.trim()) {
+      if (addressInput.trim() && addressInput !== user?.addressLine) {
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
         const { lat, lng } = await geocodeAddress(addressInput.trim(), apiKey);
-        payload.addressLine = addressInput.trim();
-        payload.latitude = lat;
-        payload.longitude = lng;
+        profilePayload.addressLine = addressInput.trim();
+        profilePayload.latitude = lat;
+        profilePayload.longitude = lng;
       }
 
-      if (Object.keys(payload).length === 0) return;
+      if (Object.keys(profilePayload).length > 0) {
+        await updateProfile(profilePayload);
+        await refreshUser();
+      }
 
-      await updateProfile(payload);
-      await refreshUser();
-      toast.success('Profile updated');
+      if (user?.id) {
+        localStorage.setItem(PrefsKey(user.id), JSON.stringify(foodPrefs));
+      }
+
+      toast.success('Profile saved');
     } catch (err: any) {
-      toast.error(err.message ?? 'Failed to update profile');
+      toast.error(err.message ?? 'Failed to save profile');
     } finally {
       setIsSaving(false);
     }
@@ -169,14 +250,76 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
             </CardContent>
           </Card>
 
+          {/* ── Food Preferences ─────────────────────────────────────────── */}
+          <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2" style={{ color: 'var(--espresso)' }}>
+                <UtensilsCrossed className="w-5 h-5" />
+                Food Preferences
+              </CardTitle>
+              <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.55 }}>
+                Optional — helps us give you better suggestions.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <p className="text-sm font-medium mb-2.5" style={{ color: 'var(--espresso)' }}>
+                  Dietary
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {DIETARY_OPTIONS.map((opt) => (
+                    <Chip
+                      key={opt}
+                      label={opt}
+                      selected={foodPrefs.dietary.includes(opt)}
+                      onClick={() => toggleDietary(opt)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-2.5" style={{ color: 'var(--espresso)' }}>
+                  Favourite Cuisine
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {CUISINE_OPTIONS.map((opt) => (
+                    <Chip
+                      key={opt}
+                      label={opt}
+                      selected={foodPrefs.cuisines.includes(opt)}
+                      onClick={() => toggleCuisine(opt)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-2.5" style={{ color: 'var(--espresso)' }}>
+                  Spice Level
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {SPICE_OPTIONS.map((opt) => (
+                    <Chip
+                      key={opt}
+                      label={opt}
+                      selected={foodPrefs.spice === opt}
+                      onClick={() => setSpice(opt)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Button
-            onClick={handleSave}
+            onClick={handleSaveAll}
             disabled={isSaving}
             className="w-full gap-2"
             style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}
           >
             <Save className="w-4 h-4" />
-            {isSaving ? 'Saving…' : 'Save Changes'}
+            {isSaving ? 'Saving…' : 'Save Profile'}
           </Button>
         </div>
       </div>

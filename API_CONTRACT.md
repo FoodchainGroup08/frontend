@@ -322,7 +322,75 @@ Note: The order status enum mismatch from Section 4 applies here too — `PICKED
 
 ---
 
-## Section 9 — Additional Endpoints
+## Section 9 — Recommendations & Food Preferences
+
+> These endpoints power the "Help Me Choose" feature. The frontend currently stores food preferences in `localStorage` as a fallback; once these endpoints are live, the frontend will call them instead.
+
+### Food Preferences
+
+**Status: ❌ Not built**
+
+| Method | Endpoint | Used In | Roles | Priority | Notes |
+|--------|----------|---------|-------|----------|-------|
+| GET | `/api/users/me/preferences` | CustomerProfile, HelpMeChooseSheet | C | 🟡 MVP | Returns saved dietary/cuisine/spice preferences for the logged-in user. |
+| PUT | `/api/users/me/preferences` | CustomerProfile | C | 🟡 MVP | Replaces the user's food preferences entirely. Body: `UserFoodPreferences`. |
+
+**UserFoodPreferences object (frontend type — do not change field names):**
+```typescript
+{
+  dietary: string[];  // e.g. ["vegetarian", "halal"]
+  cuisines: string[]; // e.g. ["Nigerian", "Italian"]
+  spice: string | null; // "Mild" | "Medium" | "Spicy" | null
+}
+```
+
+**Persistence note:** Until `GET /users/me/preferences` is built, preferences are saved to `localStorage` under key `foodchain_food_prefs_{userId}`. Once the endpoint exists, the `CustomerProfile` component should load preferences from the API on mount and save via PUT on submit.
+
+---
+
+### Meal Recommendations
+
+**Status: ⚠️ Built (AI/Gemini powered) — needs to support rule-based fallback**
+
+| Method | Endpoint | Used In | Roles | Priority | Notes |
+|--------|----------|---------|-------|----------|-------|
+| POST | `/api/menu/suggestions` | HelpMeChooseSheet, AISuggestions | C | 🟡 MVP | Accepts user preferences and branch ID, returns ranked combo suggestions. **The "AI" label has been removed from the frontend UX.** The endpoint is now called "Help Me Choose". |
+
+**Important UX note:** The frontend no longer shows "AI" or "Gemini" as the recommendation source. The `recommendationSource` field in the response (`GEMINI` | `RULE_BASED`) is still used internally for analytics/fallback logic but is not shown to users.
+
+**FoodSuggestionRequest (frontend sends):**
+```typescript
+{
+  branchId: string;
+  branchName: string;
+  budget?: number;          // Max spend in Naira
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert';
+  appetite?: 'light' | 'heavy';
+  dietaryPreferences?: string[]; // From saved preferences + onboarding
+  peopleCount?: number;     // 1 = solo, 2+ = sharing
+  fulfillmentType?: 'pickup' | 'delivery' | 'dine-in';
+  limit?: number;           // Default 5
+}
+```
+
+**AiRecommendationResponse (backend returns):**
+```typescript
+{
+  recommendationSource: 'GEMINI' | 'RULE_BASED' | 'NONE';
+  fallbackUsed: boolean;
+  message: string;
+  readyForSuggestions: boolean;
+  questions: string[];           // Follow-up questions if not ready
+  suggestions: ComboSuggestion[];
+  estimatedTotalCost: number;
+}
+```
+
+**Rule-based fallback requirement:** When Gemini is unavailable or returns no results, the backend MUST return `recommendationSource: 'RULE_BASED'` with at least 2–3 fallback combos based on popularity/availability at the branch. The frontend handles empty `suggestions[]` with a "Browse Full Menu" fallback but a non-empty list is preferred UX.
+
+---
+
+## Section 10 — Additional Endpoints
 
 | Method | Endpoint | Used In | Roles | Priority | Notes |
 |--------|----------|---------|-------|----------|-------|

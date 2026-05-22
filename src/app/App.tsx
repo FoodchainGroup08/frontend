@@ -17,7 +17,7 @@ import { ResetPassword } from "./components/auth/ResetPassword";
 import { SetupLocation } from "./components/auth/SetupLocation";
 import { VerifyEmail } from "./components/auth/VerifyEmail";
 import { ActiveOrdersList } from "./components/customer/ActiveOrdersList";
-import { AIFoodAssistantModal } from "./components/customer/AIFoodAssistantModal";
+import { HelpMeChooseSheet } from "./components/customer/HelpMeChooseSheet";
 import { AISuggestions } from "./components/customer/AISuggestions";
 import { BranchSelector } from "./components/customer/BranchSelector";
 import { Cart } from "./components/customer/Cart";
@@ -220,9 +220,9 @@ function CustomerLayout() {
     try { return JSON.parse(localStorage.getItem(cartKey) ?? '[]'); } catch { return []; }
   });
   const [currentOrder, setCurrentOrder] = useState<ConfirmationOrder | null>(null);
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  // Track which branches have already shown the AI modal this session
-  const aiModalShownFor = useRef(new Set<string>());
+  const [isHelpMeChooseOpen, setIsHelpMeChooseOpen] = useState(false);
+  // Track which branches have already shown the Help Me Choose sheet this session
+  const helpMeChooseShownFor = useRef(new Set<string>());
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
@@ -271,11 +271,11 @@ function CustomerLayout() {
     setSelectedBranch(branch);
     navigate('/menu');
     toast.success(`Selected ${branch.name}`, { description: "Browse our menu and start ordering" });
-    // Open the AI assistant once per branch per session, unless the user dismissed it permanently
-    const permanentlyDismissed = localStorage.getItem('foodchain_ai_assistant_dismissed') === 'true';
-    if (!permanentlyDismissed && !aiModalShownFor.current.has(branch.id)) {
-      aiModalShownFor.current.add(branch.id);
-      setIsAIModalOpen(true);
+    // Open Help Me Choose once per branch per session, unless the user dismissed it permanently
+    const permanentlyDismissed = localStorage.getItem('foodchain_help_me_choose_dismissed') === 'true';
+    if (!permanentlyDismissed && !helpMeChooseShownFor.current.has(branch.id)) {
+      helpMeChooseShownFor.current.add(branch.id);
+      setIsHelpMeChooseOpen(true);
     }
   };
 
@@ -449,6 +449,7 @@ function CustomerLayout() {
           selectedBranchId={selectedBranch.id}
           onChangeBranch={handleChangeBranch}
           onLogout={logout}
+          onOpenHelpMeChoose={() => setIsHelpMeChooseOpen(true)}
         />
       )}
       <div className="pb-16 sm:pb-0">{renderScreen()}</div>
@@ -458,13 +459,16 @@ function CustomerLayout() {
         onClose={() => setIsOrderDetailOpen(false)}
       />
       {selectedBranch && (
-        <AIFoodAssistantModal
-          isOpen={isAIModalOpen}
-          onClose={() => setIsAIModalOpen(false)}
+        <HelpMeChooseSheet
+          isOpen={isHelpMeChooseOpen}
+          onClose={() => setIsHelpMeChooseOpen(false)}
           branchId={selectedBranch.id}
           branchName={selectedBranch.name}
+          userName={user?.name}
+          userId={user?.id}
           onAddToCart={handleAddToCart}
-          onGoToCart={() => { setIsAIModalOpen(false); navigate('/cart'); }}
+          onGoToCart={() => { setIsHelpMeChooseOpen(false); navigate('/cart'); }}
+          onBrowseMenu={() => { setIsHelpMeChooseOpen(false); navigate('/menu'); }}
         />
       )}
     </>

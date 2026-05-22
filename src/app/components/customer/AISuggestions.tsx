@@ -8,8 +8,6 @@ import {
   AlertCircle,
   Utensils,
   Heart,
-  Bot,
-  Cpu,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -115,23 +113,20 @@ function HealthScoreBar({ score }: { score: number }) {
   );
 }
 
-// ─── Source badge ─────────────────────────────────────────────────────────────
+// ─── Match badge ──────────────────────────────────────────────────────────────
 
-function SourceBadge({ source }: { source: string }) {
-  const isAi = source === 'GEMINI';
+function MatchBadge() {
   return (
     <span
       className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0'
       style={{
-        backgroundColor: isAi
-          ? 'color-mix(in srgb, var(--golden-amber) 18%, transparent)'
-          : 'color-mix(in srgb, #6366f1 15%, transparent)',
-        color: isAi ? 'var(--golden-amber)' : '#6366f1',
-        border: `1px solid ${isAi ? 'color-mix(in srgb, var(--golden-amber) 35%, transparent)' : 'color-mix(in srgb, #6366f1 30%, transparent)'}`,
+        backgroundColor: 'color-mix(in srgb, var(--golden-amber) 18%, transparent)',
+        color: 'var(--golden-amber)',
+        border: '1px solid color-mix(in srgb, var(--golden-amber) 35%, transparent)',
       }}
     >
-      {isAi ? <Bot className='w-3 h-3' /> : <Cpu className='w-3 h-3' />}
-      {isAi ? 'AI' : 'Smart Fallback'}
+      <Sparkles className='w-3 h-3' />
+      Match
     </span>
   );
 }
@@ -193,12 +188,10 @@ function SuggestionEmptyState({ onReset }: { onReset: () => void }) {
 
 function ComboCard({
   combo,
-  source,
   onAddCombo,
   onAddItem,
 }: {
   combo: ComboSuggestion;
-  source: string;
   onAddCombo: (combo: ComboSuggestion) => void;
   onAddItem: (item: AddToCartItem, qty: number) => void;
 }) {
@@ -216,7 +209,7 @@ function ComboCard({
       style={{ borderColor: 'color-mix(in srgb, var(--espresso) 12%, transparent)' }}
     >
       <CardContent className='flex flex-col flex-1 p-4 gap-3'>
-        {/* Header: combo name + price + source badge */}
+        {/* Header: combo name + price + match badge */}
         <div className='flex items-start justify-between gap-2'>
           <div className='flex-1 min-w-0'>
             <h3 className='font-semibold text-base leading-tight' style={{ color: 'var(--espresso)' }}>
@@ -227,7 +220,7 @@ function ComboCard({
             <span className='text-sm font-bold' style={{ color: 'var(--golden-amber)' }}>
               ₦{combo.totalPrice.toLocaleString()}
             </span>
-            <SourceBadge source={source} />
+            <MatchBadge />
           </div>
         </div>
 
@@ -287,7 +280,7 @@ function ComboCard({
           ))}
         </div>
 
-        {/* AI reason */}
+        {/* Reason */}
         {combo.reason && (
           <div
             className='flex items-start gap-2 rounded-md p-2.5'
@@ -362,8 +355,7 @@ export function AISuggestions({
       const response = await getFoodSuggestions(buildRequest());
       setResult(response);
       if (response.readyForSuggestions && response.suggestions.length > 0) {
-        const src = response.recommendationSource === 'GEMINI' ? 'AI' : 'Smart Fallback';
-        toast.success(`Found ${response.suggestions.length} combo${response.suggestions.length > 1 ? 's' : ''} via ${src}!`);
+          toast.success(`Found ${response.suggestions.length} match${response.suggestions.length > 1 ? 'es' : ''} for you!`);
       }
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? 'Failed to get suggestions. Please try again.';
@@ -420,11 +412,11 @@ export function AISuggestions({
           <div className='flex items-center gap-2 mb-1'>
             <Sparkles className='w-6 h-6' style={{ color: 'var(--golden-amber)' }} />
             <h1 className='text-2xl font-bold' style={{ color: 'var(--espresso)' }}>
-              AI Food Suggestions
+              Help Me Choose
             </h1>
           </div>
           <p className='text-sm' style={{ color: 'var(--charcoal)', opacity: 0.6 }}>
-            Tell us what you're craving and our AI will suggest healthy meal combos from {branchName}.
+            Set your preferences and we'll find the best meal combos from {branchName}.
           </p>
         </div>
 
@@ -530,9 +522,9 @@ export function AISuggestions({
                 <Button type='submit' disabled={isLoading} className='sm:w-auto'
                   style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}>
                   {isLoading ? (
-                    <><RefreshCw className='w-4 h-4 mr-2 animate-spin' />Getting suggestions…</>
+                    <><RefreshCw className='w-4 h-4 mr-2 animate-spin' />Finding matches…</>
                   ) : (
-                    <><Sparkles className='w-4 h-4 mr-2' />Get AI Suggestions</>
+                    <><Sparkles className='w-4 h-4 mr-2' />Find My Match</>
                   )}
                 </Button>
                 {result && (
@@ -562,7 +554,7 @@ export function AISuggestions({
         {/* ── Loading skeletons ────────────────────────────────────────────── */}
         {isLoading && <SuggestionSkeleton />}
 
-        {/* ── AI is asking for more info ───────────────────────────────────── */}
+        {/* ── More info needed ─────────────────────────────────────────────── */}
         {!isLoading && hasQuestions && (
           <div className='flex items-start gap-3 p-5 rounded-lg border mb-6'
             style={{ borderColor: 'color-mix(in srgb, var(--golden-amber) 40%, transparent)', backgroundColor: 'color-mix(in srgb, var(--golden-amber) 10%, transparent)' }}>
@@ -578,7 +570,7 @@ export function AISuggestions({
                 ))}
               </ol>
               <p className='text-xs mt-3' style={{ color: 'var(--charcoal)', opacity: 0.5 }}>
-                Fill in the form above and click "Get AI Suggestions" again.
+                Update your preferences above and click "Find My Match" again.
               </p>
             </div>
           </div>
@@ -592,7 +584,7 @@ export function AISuggestions({
               <div>
                 <div className='flex items-center gap-2 mb-0.5'>
                   <p className='text-sm font-medium' style={{ color: 'var(--espresso)' }}>{result!.message}</p>
-                  <SourceBadge source={result!.recommendationSource} />
+                  <MatchBadge />
                 </div>
                 {result!.estimatedTotalCost > 0 && (
                   <p className='text-xs mt-0.5' style={{ color: 'var(--charcoal)', opacity: 0.55 }}>
@@ -618,7 +610,6 @@ export function AISuggestions({
                 <ComboCard
                   key={`${combo.comboName}-${i}`}
                   combo={combo}
-                  source={result!.recommendationSource}
                   onAddCombo={handleAddCombo}
                   onAddItem={onAddToCart}
                 />

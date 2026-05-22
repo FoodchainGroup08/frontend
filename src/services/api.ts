@@ -497,6 +497,20 @@ export const getMe = () =>
 export const updateProfile = (data: { name?: string; addressLine?: string; latitude?: number; longitude?: number }) =>
   apiClient.patch<any>('/users/me', data).then(r => mapUser(r.data));
 
+// ─── Food Preferences ─────────────────────────────────────────────────────────
+
+export interface UserFoodPreferences {
+  dietary: string[];
+  cuisines: string[];
+  spice: string | null;
+}
+
+export const getFoodPreferences = (): Promise<UserFoodPreferences> =>
+  apiClient.get<UserFoodPreferences>('/users/me/preferences').then(r => r.data);
+
+export const updateFoodPreferences = (prefs: UserFoodPreferences): Promise<UserFoodPreferences> =>
+  apiClient.put<UserFoodPreferences>('/users/me/preferences', prefs).then(r => r.data);
+
 export const postForgotPassword = (email: string) =>
   apiClient.post<AuthMessageResponse>('/auth/forgot-password', { email }).then(r => r.data);
 
