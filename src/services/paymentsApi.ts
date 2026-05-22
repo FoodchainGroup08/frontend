@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useRef } from 'react';
 import { apiClient } from './api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -54,20 +54,63 @@ export const getPendingOrderId = () =>
 export const clearPendingOrderId = () =>
   sessionStorage.removeItem(PENDING_ORDER_KEY);
 
-// ─── React Query hooks ────────────────────────────────────────────────────────
+// ─── React hooks ─────────────────────────────────────────────────────────────
+
+export interface MutationState<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+}
 
 export function useInitializePaystackPayment() {
-  return useMutation<InitializePaymentResponse, Error, InitializePaymentRequest>({
-    mutationFn: initializePaystackPayment,
+  const [state, setState] = useState<MutationState<InitializePaymentResponse>>({
+    data: null,
+    loading: false,
+    error: null,
   });
+
+  const mutate = async (req: InitializePaymentRequest): Promise<InitializePaymentResponse> => {
+    setState({ data: null, loading: true, error: null });
+    try {
+      const data = await initializePaystackPayment(req);
+      setState({ data, loading: false, error: null });
+      return data;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Initialization failed';
+      setState({ data: null, loading: false, error: msg });
+      throw err;
+    }
+  };
+
+  return { ...state, mutate };
+}
+
+export interface QueryState<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
 }
 
 export function useVerifyPaystackPayment(reference: string, enabled: boolean) {
-  return useQuery<VerifyPaymentResponse, Error>({
-    queryKey: ['payment', 'verify', reference],
-    queryFn: () => verifyPaystackPayment(reference),
-    enabled: enabled && !!reference,
-    retry: 2,
-    staleTime: Infinity,
+  const [state, setState] = useState<QueryState<VerifyPaymentResponse>>({
+    data: null,
+    loading: false,
+    error: null,
   });
+  const calledRef = useRef(false);
+
+  useEffect(() => {
+    if (!enabled || !reference || calledRef.current) return;
+    calledRef.current = true;
+
+    setState({ data: null, loading: true, error: null });
+    verifyPaystackPayment(reference)
+      .then(data => setState({ data, loading: false, error: null }))
+      .catch(err => {
+        const msg = err instanceof Error ? err.message : 'Verification failed';
+        setState({ data: null, loading: false, error: msg });
+      });
+  }, [reference, enabled]);
+
+  return state;
 }
