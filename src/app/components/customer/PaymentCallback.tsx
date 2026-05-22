@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import {
   verifyPaystackPayment,
   getPendingOrderId,
@@ -15,6 +16,7 @@ type VerifyState = "verifying" | "success" | "failed" | "error";
 export function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const reference = searchParams.get("reference") ?? "";
 
   const [state, setState] = useState<VerifyState>("verifying");
@@ -37,6 +39,7 @@ export function PaymentCallback() {
         if (res.success) {
           setState("success");
           clearPendingOrderId();
+          if (user?.id) localStorage.removeItem(`foodchain_cart_${user.id}`);
           toast.success("Payment confirmed!", {
             description: "Your order is now being prepared.",
           });

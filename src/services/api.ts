@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'http://54.235.78.18:8080') + '/api/v1';
+// VITE_API_BASE_URL should include the full path (e.g. https://api.foodchain.live/api/v1).
+// Falls back to /api/v1 in dev so the Vite proxy handles the request and avoids CORS.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const TOKEN_KEY = 'foodchain_token';
 export const REFRESH_TOKEN_KEY = 'foodchain_refresh_token';
 
@@ -178,6 +180,7 @@ export interface KitchenOrder {
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   tableNumber?: string;
   receivedAt: string;
+  notes?: string;
   isNew?: boolean;
   isUrgent?: boolean;
   customerName?: string;
@@ -209,6 +212,7 @@ const mapKitchenOrder = (order: any): KitchenOrder => ({
   orderType: normalizeKitchenOrderType(order.displayOrderType ?? order.orderType),
   tableNumber: order.tableNumber ?? undefined,
   receivedAt: order.receivedAt ?? order.createdAt ?? new Date().toISOString(),
+  notes: order.notes ?? undefined,
   isNew: order.isNew,
   isUrgent: order.isUrgent,
   customerName: order.customerName ?? undefined,

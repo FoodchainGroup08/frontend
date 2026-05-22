@@ -1,6 +1,6 @@
 import { useTimerTick } from "@/hooks/useTimerTick";
 import { formatOrderReference } from "@/utils/orderDisplay";
-import { computeOrderCountdown } from "@/utils/orderTimer";
+import { computeOrderCountdown, toUtcDate } from "@/utils/orderTimer";
 import { AlertCircle, Clock, Flame } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -24,6 +24,7 @@ interface KitchenOrderDetail {
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   tableNumber?: string;
   receivedAt: string;
+  notes?: string;
   customerName?: string;
   isUrgent?: boolean;
 }
@@ -87,7 +88,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                 </span>
               </div>
               <p className="text-xs mt-1" style={{ color: 'var(--brown)', opacity: 0.6 }}>
-                Time Remaining
+                Time Elapsed
               </p>
             </div>
           </div>
@@ -156,7 +157,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
               <div className="flex justify-between">
                 <span style={{ color: 'var(--brown)', opacity: 0.7 }}>Received At</span>
                 <span style={{ color: 'var(--brown)', fontWeight: 600 }}>
-                  {new Date(order.receivedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  {toUtcDate(order.receivedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
               {order.customerName && (
@@ -171,6 +172,14 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                   {order.items.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               </div>
+              {order.notes && (
+                <div className="flex flex-col gap-1 pt-1">
+                  <span style={{ color: 'var(--brown)', opacity: 0.7 }}>Special Instructions</span>
+                  <p className="text-sm italic px-3 py-2 rounded-md" style={{ backgroundColor: 'color-mix(in srgb, var(--golden-amber) 15%, transparent)', color: 'var(--brown)' }}>
+                    {order.notes}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -192,7 +201,7 @@ export function KitchenOrderDetail({ order, isOpen, onClose, onStatusChange }: K
                 onClick={onClose}
                 variant="outline"
                 className="border-2"
-                style={{ borderColor: 'var(--brown)', color: 'var(--warm-white)' }}
+                style={{ borderColor: 'var(--brown)', color: 'var(--brown)' }}
               >
                 Close
               </Button>
