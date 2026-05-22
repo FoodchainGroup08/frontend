@@ -105,6 +105,7 @@ export interface MenuItem {
 }
 
 export type OrderStatus =
+  | 'PAYMENT_PENDING'
   | 'RECEIVED'
   | 'CONFIRMED'
   | 'PREPARING'
@@ -113,6 +114,8 @@ export type OrderStatus =
   | 'SERVED'
   | 'COMPLETED'
   | 'CANCELLED';
+
+export type PaymentStatus = 'UNPAID' | 'PAYMENT_PENDING' | 'PAID' | 'FAILED' | 'CANCELLED';
 
 export interface OrderItem {
   id: string;
@@ -143,6 +146,8 @@ export interface Order {
   orderDate?: string;
   deliveryDate?: string;
   paymentMethod?: string;
+  paymentStatus?: PaymentStatus;
+  paymentReference?: string;
 }
 
 export interface PlaceOrderPayload {
@@ -545,6 +550,7 @@ function normaliseOrderType(raw: string): 'dine-in' | 'takeaway' | 'delivery' {
 
 function normaliseOrderStatus(raw: string): string {
   switch (raw) {
+    case 'PAYMENT_PENDING':
     case 'RECEIVED':
     case 'CONFIRMED':
     case 'PREPARING':
@@ -589,6 +595,8 @@ function mapOrder(o: any): Order {
     estimatedTime: o.estimatedTime,
     placedAt: o.placedAt ?? o.createdAt ?? new Date().toISOString(),
     paymentMethod: o.paymentMethod,
+    paymentStatus: o.paymentStatus as PaymentStatus | undefined,
+    paymentReference: o.paymentReference,
   };
 }
 

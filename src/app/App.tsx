@@ -17,6 +17,7 @@ import { ResetPassword } from "./components/auth/ResetPassword";
 import { SetupLocation } from "./components/auth/SetupLocation";
 import { VerifyEmail } from "./components/auth/VerifyEmail";
 import { ActiveOrdersList } from "./components/customer/ActiveOrdersList";
+import { PaymentCallback } from "./components/customer/PaymentCallback";
 import { AIFoodAssistantModal } from "./components/customer/AIFoodAssistantModal";
 import { AISuggestions } from "./components/customer/AISuggestions";
 import { BranchSelector } from "./components/customer/BranchSelector";
@@ -227,7 +228,15 @@ function CustomerLayout() {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   // Track which branches have already shown the AI modal this session
   const aiModalShownFor = useRef(new Set<string>());
-  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(() => {
+    // Restore after Paystack redirect — PaymentCallback stores the orderId here
+    const fromCallback = sessionStorage.getItem("foodchain_tracking_order_id");
+    if (fromCallback) {
+      sessionStorage.removeItem("foodchain_tracking_order_id");
+      return fromCallback;
+    }
+    return null;
+  });
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
 
@@ -739,8 +748,9 @@ function AppRoutes() {
             <Route path="/admin/*" element={<AdminLayout />} />
           </Route>
 
-          {/* Customer catch-all — must be last so specific role paths above take priority */}
+          {/* Customer routes — payment callback is standalone (no navbar), all others use CustomerLayout */}
           <Route element={<RequireRole role="Customer" />}>
+            <Route path="/payment/callback" element={<PaymentCallback />} />
             <Route path="/*" element={<CustomerLayout />} />
           </Route>
         </Route>
