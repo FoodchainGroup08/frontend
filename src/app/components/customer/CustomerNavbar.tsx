@@ -1,10 +1,10 @@
-import { useRef, useState, useEffect } from "react";
-import { Link } from "react-router";
-import { ShoppingCart, History, MapPin, User, Sparkles, Bell, ChevronDown, Check, UtensilsCrossed, LogOut, X } from "lucide-react";
-import { Badge } from "../ui/badge";
-import { NotificationPanel } from "./NotificationPanel";
 import { useCustomerNotifications } from "@/hooks/useCustomerNotifications";
 import { getBranches, type Branch } from "@/services/api";
+import { Bell, Check, ChevronDown, History, LogOut, MapPin, ShoppingCart, Sparkles, User, UtensilsCrossed, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
+import { Badge } from "../ui/badge";
+import { NotificationPanel } from "./NotificationPanel";
 
 function useIsMobile(breakpoint = 640) {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < breakpoint);
@@ -26,7 +26,6 @@ interface CustomerNavbarProps {
   selectedBranchId?: string;
   onChangeBranch: (branch: Branch) => void;
   onLogout: () => void;
-  onOpenHelpMeChoose?: () => void;
 }
 
 export function CustomerNavbar({
@@ -39,7 +38,6 @@ export function CustomerNavbar({
   selectedBranchId,
   onChangeBranch,
   onLogout,
-  onOpenHelpMeChoose,
 }: CustomerNavbarProps) {
   const isMobile = useIsMobile();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -82,17 +80,17 @@ export function CustomerNavbar({
       className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl py-1 z-50 max-h-72 overflow-y-auto border"
       style={{ backgroundColor: 'var(--warm-white)', borderColor: 'rgba(59,35,20,0.1)' }}
     >
-      <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--espresso)', opacity: 0.5 }}>Switch branch</p>
+      <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--brown)', opacity: 0.5 }}>Switch branch</p>
       {branchesLoading ? (
-        <div className="px-3 py-3 text-sm text-center" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+        <div className="px-3 py-3 text-sm text-center" style={{ color: 'var(--brown)', opacity: 0.6 }}>
           Loading…
         </div>
       ) : branches.map(b => (
         <button
           key={b.id}
           onClick={() => { onChangeBranch(b); setIsBranchOpen(false); }}
-          className="w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-[var(--espresso)]/5 transition-colors"
-          style={{ color: 'var(--espresso)' }}
+          className="w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-[var(--brown)]/5 transition-colors"
+          style={{ color: 'var(--brown)' }}
         >
           {b.id === selectedBranchId
             ? <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
@@ -107,7 +105,7 @@ export function CustomerNavbar({
   return (
     <>
       {/* Top navbar */}
-      <nav className="border-b sticky top-0 z-50" style={{ backgroundColor: 'var(--espresso)', borderColor: 'var(--espresso)' }}>
+      <nav className="border-b sticky top-0 z-50" style={{ backgroundColor: 'var(--brown)', borderColor: 'var(--brown)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
 
@@ -116,7 +114,7 @@ export function CustomerNavbar({
               <Link to="/">
                 <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect width="40" height="40" rx="8" fill="var(--golden-amber)"/>
-                  <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--espresso)"/>
+                  <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--brown)"/>
                   <circle cx="20" cy="20" r="4" fill="var(--warm-white)"/>
                 </svg>
               </Link>
@@ -185,7 +183,7 @@ export function CustomerNavbar({
               </button>
 
               <button
-                onClick={() => onOpenHelpMeChoose ? onOpenHelpMeChoose() : onNavigate('ai-suggestions')}
+                onClick={() => onNavigate('ai-suggestions')}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all hidden sm:flex ${
                   currentScreen === 'ai-suggestions' ? 'opacity-100' : 'opacity-70 hover:opacity-100'
                 }`}
@@ -194,7 +192,7 @@ export function CustomerNavbar({
                 }}
               >
                 <Sparkles className="w-4 h-4" />
-                Help Me Choose
+                AI Suggest
               </button>
 
               <button
@@ -261,21 +259,21 @@ export function CustomerNavbar({
                 </button>
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1" style={{ backgroundColor: 'var(--warm-white)' }}>
-                    <div className="px-4 py-2 border-b border-[var(--espresso)]/10">
-                      <p className="text-sm" style={{ color: 'var(--espresso)', fontWeight: 600 }}>{userName || 'Guest'}</p>
-                      <p className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.6 }}>Customer</p>
+                    <div className="px-4 py-2 border-b border-[var(--brown)]/10">
+                      <p className="text-sm" style={{ color: 'var(--brown)', fontWeight: 600 }}>{userName || 'Guest'}</p>
+                      <p className="text-xs" style={{ color: 'var(--brown)', opacity: 0.6 }}>Customer</p>
                     </div>
                     <button
                       onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--espresso)]/5 transition-colors"
-                      style={{ color: 'var(--espresso)' }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--brown)]/5 transition-colors"
+                      style={{ color: 'var(--brown)' }}
                     >
                       My Profile
                     </button>
                     <button
                       onClick={onLogout}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--espresso)]/5 transition-colors"
-                      style={{ color: 'var(--espresso)' }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--brown)]/5 transition-colors"
+                      style={{ color: 'var(--brown)' }}
                     >
                       Logout
                     </button>
@@ -326,13 +324,13 @@ export function CustomerNavbar({
               style={{ borderBottom: '1px solid rgba(59,35,20,0.1)' }}
             >
               <div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>{userName || 'Guest'}</p>
-                <p className="text-xs" style={{ color: 'var(--espresso)', opacity: 0.5 }}>Customer</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--brown)' }}>{userName || 'Guest'}</p>
+                <p className="text-xs" style={{ color: 'var(--brown)', opacity: 0.5 }}>Customer</p>
               </div>
               <button
                 onClick={() => setIsProfileOpen(false)}
                 className="p-1.5 rounded-full"
-                style={{ color: 'var(--espresso)', opacity: 0.5 }}
+                style={{ color: 'var(--brown)', opacity: 0.5 }}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -340,7 +338,7 @@ export function CustomerNavbar({
             <button
               onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }}
               className="w-full text-left px-5 py-4 text-sm flex items-center gap-3"
-              style={{ color: 'var(--espresso)', borderBottom: '1px solid rgba(59,35,20,0.07)' }}
+              style={{ color: 'var(--brown)', borderBottom: '1px solid rgba(59,35,20,0.07)' }}
             >
               <User className="w-4 h-4" style={{ opacity: 0.5 }} />
               My Profile
@@ -360,11 +358,12 @@ export function CustomerNavbar({
       {/* Mobile bottom navigation bar */}
       <nav
         className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t"
-        style={{ backgroundColor: 'var(--espresso)', borderColor: 'rgba(255,255,255,0.1)' }}
+        style={{ backgroundColor: 'var(--brown)', borderColor: 'rgba(255,255,255,0.1)' }}
       >
         <div className="flex items-stretch h-14">
           {([
             { id: 'menu', icon: UtensilsCrossed, label: 'Menu', active: currentScreen === 'menu' },
+            { id: 'ai-suggestions', icon: Sparkles, label: 'AI', active: currentScreen === 'ai-suggestions' },
             { id: 'active-orders', icon: History, label: 'Orders', active: currentScreen === 'active-orders' || currentScreen === 'order-tracker' },
           ] as const).map(({ id, icon: Icon, label, active }) => (
             <button
@@ -377,15 +376,6 @@ export function CustomerNavbar({
               <span className="text-[10px] font-medium tracking-wide">{label}</span>
             </button>
           ))}
-          {/* Help Me Choose */}
-          <button
-            onClick={() => onOpenHelpMeChoose ? onOpenHelpMeChoose() : onNavigate('ai-suggestions')}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-opacity"
-            style={{ color: 'rgba(255,255,255,0.6)' }}
-          >
-            <Sparkles className="w-5 h-5" />
-            <span className="text-[10px] font-medium tracking-wide">Choose</span>
-          </button>
 
           {/* Alerts */}
           <button
