@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Textarea } from "../ui/textarea";
 import { toast } from "sonner";
 import { placeOrder, type Order, type BranchTable } from "@/services/api";
+import { initializePaystackPayment, savePendingOrderId } from "@/services/paymentsApi";
 import { LocationPicker } from "../auth/LocationPicker";
 import { getSavedDeliveryLocation, saveDeliveryLocation } from "@/services/locationService";
 import { useAuth } from "@/context/AuthContext";
@@ -91,6 +92,8 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
 
     // 'pickup' is a UI-only label — the backend receives 'takeaway' for this flow.
     const apiOrderType = orderType === 'pickup' ? 'takeaway' : orderType;
+    // Card payments go through Paystack; cash/transfer go directly to the kitchen.
+    const apiPaymentMethod = paymentMethod === 'card' ? 'PAYSTACK' : paymentMethod;
 
     const payload = {
       branchId,
@@ -106,29 +109,41 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
       })),
       customerName,
       phoneNumber,
-      paymentMethod,
+      paymentMethod: apiPaymentMethod,
       specialInstructions,
     };
 
     try {
       const order = await placeOrder(payload);
-
       if (orderType === 'delivery') saveDeliveryLocation(deliveryAddress);
 
-      const formData: OrderDetails = {
-        customerName,
-        phoneNumber,
-        deliveryAddress: orderType === 'delivery' ? deliveryAddress : '',
-        paymentMethod,
-        specialInstructions,
-        subtotal,
-        deliveryFee,
-        reservationFee,
-        total,
-        orderType,
-      };
-      onPlaceOrder(formData, order);
-      toast.success("Order placed successfully!", { description: `Order ${formatOrderReference(order.id)}` });
+      if (apiPaymentMethod === 'PAYSTACK') {
+        // Paystack flow: initialize payment then redirect to checkout page
+        const paymentInit = await initializePaystackPayment({
+          orderId: order.id,
+          email: user?.email ?? '',
+          amount: total,
+        });
+        savePendingOrderId(order.id);
+        // Hard redirect — Paystack will redirect back to PAYSTACK_CALLBACK_URL
+        window.location.href = paymentInit.authorizationUrl;
+      } else {
+        // Cash / transfer: order enters kitchen immediately
+        const formData: OrderDetails = {
+          customerName,
+          phoneNumber,
+          deliveryAddress: orderType === 'delivery' ? deliveryAddress : '',
+          paymentMethod,
+          specialInstructions,
+          subtotal,
+          deliveryFee,
+          reservationFee,
+          total,
+          orderType,
+        };
+        onPlaceOrder(formData, order);
+        toast.success("Order placed successfully!", { description: `Order ${formatOrderReference(order.id)}` });
+      }
     } catch {
       toast.error("Failed to place order", { description: "Please try again" });
     } finally {
@@ -596,7 +611,12 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
                       color: "var(--charcoal)",
                     }}
                   >
-                    {isProcessing ? "Processing…" : "Place Order"}
+                    {isProcessing
+                    ? "Processing…"
+                    : paymentMethod === 'card'
+                      ? "Pay with Paystack"
+                      : "Place Order"
+                  }
                   </Button>
                   {orderType === 'delivery' && !deliveryAddress.trim() && (
                     <p className="text-xs text-center" style={{ color: "var(--espresso)", opacity: 0.5 }}>

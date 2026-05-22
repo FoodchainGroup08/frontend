@@ -17,6 +17,7 @@ import { ResetPassword } from "./components/auth/ResetPassword";
 import { SetupLocation } from "./components/auth/SetupLocation";
 import { VerifyEmail } from "./components/auth/VerifyEmail";
 import { ActiveOrdersList } from "./components/customer/ActiveOrdersList";
+import { PaymentCallback } from "./components/customer/PaymentCallback";
 import { HelpMeChooseSheet } from "./components/customer/HelpMeChooseSheet";
 import { AISuggestions } from "./components/customer/AISuggestions";
 import { BranchSelector } from "./components/customer/BranchSelector";
@@ -34,12 +35,16 @@ import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
 import { KitchenSidebar } from "./components/kitchen/KitchenSidebar";
 import { LandingPage } from "./components/landing/LandingPage";
+
 import { DailySales } from "./components/manager/DailySales";
 import { LiveOrders } from "./components/manager/LiveOrders";
 import { ManagerDashboard } from "./components/manager/ManagerDashboard";
 import { ManagerHistory } from "./components/manager/ManagerHistory";
 import { ManagerSidebar } from "./components/manager/ManagerSidebar";
 import { PopularItems } from "./components/manager/PopularItems";
+
+import { InstallPage } from "./components/landing/InstallPage";
+
 import { Toaster } from "./components/ui/sonner";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -224,6 +229,18 @@ function CustomerLayout() {
   // Track which branches have already shown the Help Me Choose sheet this session
   const helpMeChooseShownFor = useRef(new Set<string>());
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  // Track which branches have already shown the AI modal this session
+  const aiModalShownFor = useRef(new Set<string>());
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(() => {
+    // Restore after Paystack redirect — PaymentCallback stores the orderId here
+    const fromCallback = sessionStorage.getItem("foodchain_tracking_order_id");
+    if (fromCallback) {
+      sessionStorage.removeItem("foodchain_tracking_order_id");
+      return fromCallback;
+    }
+    return null;
+  });
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
 
@@ -713,6 +730,9 @@ function AppRoutes() {
           }
         />
 
+        {/* PWA install page — public, no auth */}
+        <Route path="/install" element={<InstallPage />} />
+
         {/* Public auth routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -736,8 +756,9 @@ function AppRoutes() {
             <Route path="/admin/*" element={<AdminLayout />} />
           </Route>
 
-          {/* Customer catch-all — must be last so specific role paths above take priority */}
+          {/* Customer routes — payment callback is standalone (no navbar), all others use CustomerLayout */}
           <Route element={<RequireRole role="Customer" />}>
+            <Route path="/payment/callback" element={<PaymentCallback />} />
             <Route path="/*" element={<CustomerLayout />} />
           </Route>
         </Route>
