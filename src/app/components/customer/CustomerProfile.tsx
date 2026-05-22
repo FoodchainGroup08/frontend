@@ -6,13 +6,7 @@ import { toast } from "sonner";
 import { updateProfile } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import type { FoodPreferences } from "./HelpMeChooseSheet";
-
-// ─── Food preference options ──────────────────────────────────────────────────
-
-const DIETARY_OPTIONS = [
-  'No restrictions', 'Vegetarian', 'Vegan', 'Halal',
-  'High protein', 'Low carb', 'No seafood', 'Diabetic-friendly',
-];
+import { DIETARY_OPTIONS, formatDietaryLabel } from "@/constants/recommendation";
 
 const CUISINE_OPTIONS = [
   'Nigerian', 'Italian', 'Continental', 'Asian', 'Fast food', 'Any',
@@ -86,11 +80,18 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
   });
 
   const toggleDietary = (opt: string) => {
+    if (opt === 'no_restrictions') {
+      setFoodPrefs((p) => ({
+        ...p,
+        dietary: p.dietary.includes('no_restrictions') ? [] : ['no_restrictions'],
+      }));
+      return;
+    }
     setFoodPrefs((p) => ({
       ...p,
       dietary: p.dietary.includes(opt)
         ? p.dietary.filter((d) => d !== opt)
-        : [...p.dietary, opt],
+        : [...p.dietary.filter((d) => d !== 'no_restrictions'), opt],
     }));
   };
 
@@ -270,7 +271,7 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
                   {DIETARY_OPTIONS.map((opt) => (
                     <Chip
                       key={opt}
-                      label={opt}
+                      label={formatDietaryLabel(opt)}
                       selected={foodPrefs.dietary.includes(opt)}
                       onClick={() => toggleDietary(opt)}
                     />

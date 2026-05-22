@@ -55,7 +55,7 @@ const QUESTION_STEPS: Step[] = ['hunger', 'budget', 'mood'];
 
 const HUNGER_OPTIONS = [
   { id: 'light', label: 'Light snack', emoji: '🍪', appetite: 'light' as const },
-  { id: 'moderate', label: 'Moderately hungry', emoji: '🍽️', appetite: 'heavy' as const },
+  { id: 'moderate', label: 'Moderately hungry', emoji: '🍽️', appetite: 'moderate' as const },
   { id: 'very', label: 'Very hungry', emoji: '🍖', appetite: 'heavy' as const },
 ];
 
@@ -115,28 +115,40 @@ function buildRequest(
   const hungerOpt = HUNGER_OPTIONS.find((o) => o.id === answers.hunger);
   const appetite = hungerOpt?.appetite ?? 'heavy';
 
-  const budget = answers.budgetCustom
-    ? parseFloat(answers.budgetCustom)
-    : answers.budgetPreset ?? undefined;
+  const isUnlimitedPreset = answers.budgetPreset === 20000;
+  const hasCustomBudget = answers.budgetCustom !== '';
+  const hasPresetBudget = answers.budgetPreset !== null && !isUnlimitedPreset;
+  const skipped = !hasCustomBudget && !hasPresetBudget && !isUnlimitedPreset;
 
-  const dietaryPreferences: string[] = [];
-  if (savedPrefs?.dietary) {
-    savedPrefs.dietary
-      .filter((d) => d !== 'No restrictions')
-      .forEach((d) => dietaryPreferences.push(d.toLowerCase()));
-  }
-  if (savedPrefs?.spice && savedPrefs.spice !== 'Any') {
-    dietaryPreferences.push(savedPrefs.spice.toLowerCase());
-  }
+  const budget = hasCustomBudget
+    ? parseFloat(answers.budgetCustom)
+    : hasPresetBudget
+    ? answers.budgetPreset!
+    : undefined;
+  const budgetUnlimited = isUnlimitedPreset || skipped;
+
+  const dietaryRestrictions = (savedPrefs?.dietary ?? []).filter(
+    (d) => d !== 'no_restrictions' && d.toLowerCase() !== 'no restrictions',
+  );
+
+  const cuisinePreferences = (savedPrefs?.cuisines ?? []).filter(
+    (c) => c.toLowerCase() !== 'any',
+  );
+
+  const spiceLower = savedPrefs?.spice?.toLowerCase();
+  const spiceLevel =
+    spiceLower === 'mild' ? 'spice_mild'
+    : spiceLower === 'medium' ? 'spice_medium'
+    : spiceLower === 'spicy' ? 'spice_hot'
+    : null;
+
   const moodMap: Record<string, string> = {
     spicy: 'spicy',
     sweet: 'sweet',
     savory: 'savory',
-    comfort: 'comfort food',
+    comfort: 'comfort_food',
   };
-  answers.moods.forEach((m) => {
-    if (moodMap[m]) dietaryPreferences.push(moodMap[m]);
-  });
+  const moods = answers.moods.map((m) => moodMap[m]).filter(Boolean);
 
   return {
     branchId,
@@ -144,7 +156,11 @@ function buildRequest(
     appetite,
     peopleCount: 1,
     ...(budget !== undefined && { budget }),
-    ...(dietaryPreferences.length > 0 && { dietaryPreferences: [...new Set(dietaryPreferences)] }),
+    ...(budgetUnlimited && { budgetUnlimited: true }),
+    ...(dietaryRestrictions.length > 0 && { dietaryRestrictions }),
+    ...(cuisinePreferences.length > 0 && { cuisinePreferences }),
+    ...(spiceLevel && { spiceLevel }),
+    ...(moods.length > 0 && { moods }),
     limit: 5,
   };
 }

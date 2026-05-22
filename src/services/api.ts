@@ -328,14 +328,18 @@ export interface SystemUser {
 
 export interface FoodSuggestionRequest {
   branchId: string;
-  branchName: string;
+  branchName?: string;
   budget?: number;
+  budgetUnlimited?: boolean;
+  appetite?: 'light' | 'moderate' | 'heavy';
   mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert';
-  appetite?: 'light' | 'heavy';
-  dietaryPreferences?: string[];
-  peopleCount?: number;
   fulfillmentType?: 'pickup' | 'delivery' | 'dine-in';
+  peopleCount?: number;
   limit?: number;
+  dietaryRestrictions?: string[];
+  cuisinePreferences?: string[];
+  spiceLevel?: 'spice_mild' | 'spice_medium' | 'spice_hot' | null;
+  moods?: string[];
 }
 
 // Legacy single-item types (kept for backward compat)

@@ -21,6 +21,7 @@ import {
   type ComboSuggestion,
   type AiRecommendationResponse,
 } from '@/services/api';
+import { DIETARY_OPTIONS, formatDietaryLabel } from '@/constants/recommendation';
 
 // ─── Prop types ───────────────────────────────────────────────────────────────
 
@@ -56,16 +57,6 @@ const FULFILLMENT_TYPES: FoodSuggestionRequest['fulfillmentType'][] = [
   'dine-in',
 ];
 
-const DIETARY_OPTIONS = [
-  'no restrictions',
-  'halal',
-  'vegetarian',
-  'vegan',
-  'low carb',
-  'high protein',
-  'diabetic-friendly',
-  'weight loss',
-];
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -73,7 +64,7 @@ interface SuggestionForm {
   budget: string;
   mealType: string;
   appetite: string;
-  dietaryPreferences: string[];
+  dietaryRestrictions: string[];
   peopleCount: string;
   fulfillmentType: string;
   limit: string;
@@ -83,7 +74,7 @@ const DEFAULT_FORM: SuggestionForm = {
   budget: '',
   mealType: '',
   appetite: '',
-  dietaryPreferences: [],
+  dietaryRestrictions: [],
   peopleCount: '1',
   fulfillmentType: '',
   limit: '5',
@@ -326,27 +317,38 @@ export function AISuggestions({
 
   const toggleDietary = (pref: string) => {
     setForm((f) => {
-      if (!f.dietaryPreferences.includes(pref) && f.dietaryPreferences.length >= 3) return f;
+      if (pref === 'no_restrictions') {
+        return {
+          ...f,
+          dietaryRestrictions: f.dietaryRestrictions.includes('no_restrictions')
+            ? []
+            : ['no_restrictions'],
+        };
+      }
+      if (!f.dietaryRestrictions.includes(pref) && f.dietaryRestrictions.filter(d => d !== 'no_restrictions').length >= 3) return f;
       return {
         ...f,
-        dietaryPreferences: f.dietaryPreferences.includes(pref)
-          ? f.dietaryPreferences.filter((p) => p !== pref)
-          : [...f.dietaryPreferences, pref],
+        dietaryRestrictions: f.dietaryRestrictions.includes(pref)
+          ? f.dietaryRestrictions.filter((p) => p !== pref)
+          : [...f.dietaryRestrictions.filter((p) => p !== 'no_restrictions'), pref],
       };
     });
   };
 
-  const buildRequest = (): FoodSuggestionRequest => ({
-    branchId,
-    branchName,
-    ...(form.budget && { budget: parseFloat(form.budget) }),
-    ...(form.mealType && { mealType: form.mealType as FoodSuggestionRequest['mealType'] }),
-    ...(form.appetite && { appetite: form.appetite as FoodSuggestionRequest['appetite'] }),
-    ...(form.dietaryPreferences.length > 0 && { dietaryPreferences: form.dietaryPreferences }),
-    ...(form.peopleCount && { peopleCount: parseInt(form.peopleCount, 10) }),
-    ...(form.fulfillmentType && { fulfillmentType: form.fulfillmentType as FoodSuggestionRequest['fulfillmentType'] }),
-    ...(form.limit && { limit: parseInt(form.limit, 10) }),
-  });
+  const buildRequest = (): FoodSuggestionRequest => {
+    const restrictions = form.dietaryRestrictions.filter((d) => d !== 'no_restrictions');
+    return {
+      branchId,
+      branchName,
+      ...(form.budget && { budget: parseFloat(form.budget) }),
+      ...(form.mealType && { mealType: form.mealType as FoodSuggestionRequest['mealType'] }),
+      ...(form.appetite && { appetite: form.appetite as FoodSuggestionRequest['appetite'] }),
+      ...(restrictions.length > 0 && { dietaryRestrictions: restrictions }),
+      ...(form.peopleCount && { peopleCount: parseInt(form.peopleCount, 10) }),
+      ...(form.fulfillmentType && { fulfillmentType: form.fulfillmentType as FoodSuggestionRequest['fulfillmentType'] }),
+      ...(form.limit && { limit: parseInt(form.limit, 10) }),
+    };
+  };
 
   const fetchSuggestions = async () => {
     setIsLoading(true);
@@ -478,6 +480,7 @@ export function AISuggestions({
                     className='w-full h-9 rounded-md border px-3 py-1 text-sm' style={selectStyle}>
                     <option value=''>Any</option>
                     <option value='light'>Light</option>
+                    <option value='moderate'>Moderate</option>
                     <option value='heavy'>Heavy</option>
                   </select>
                 </div>
@@ -497,11 +500,11 @@ export function AISuggestions({
               {/* Dietary preference toggles */}
               <div className='space-y-2'>
                 <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>
-                  Dietary Preferences <span style={{ opacity: 0.5 }}>(max 3)</span>
+                  Dietary Restrictions <span style={{ opacity: 0.5 }}>(max 3)</span>
                 </label>
                 <div className='flex flex-wrap gap-2'>
                   {DIETARY_OPTIONS.map((pref) => {
-                    const active = form.dietaryPreferences.includes(pref);
+                    const active = form.dietaryRestrictions.includes(pref);
                     return (
                       <button key={pref} type='button' onClick={() => toggleDietary(pref)}
                         className='px-3 py-1 rounded-full text-xs font-medium border transition-all'
@@ -510,7 +513,7 @@ export function AISuggestions({
                           color: active ? 'var(--warm-white)' : 'var(--espresso)',
                           borderColor: 'var(--espresso)',
                         }}>
-                        {pref}
+                        {formatDietaryLabel(pref)}
                       </button>
                     );
                   })}
