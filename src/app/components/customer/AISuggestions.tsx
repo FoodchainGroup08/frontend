@@ -21,11 +21,6 @@ import {
   type ComboSuggestion,
   type AiRecommendationResponse,
 } from '@/services/api';
-import {
-  DIETARY_RESTRICTION_OPTIONS,
-  MEAL_TYPE_OPTIONS,
-  FULFILLMENT_TYPE_OPTIONS,
-} from '@/constants/recommendation';
 
 // ─── Prop types ───────────────────────────────────────────────────────────────
 
@@ -45,13 +40,40 @@ interface AISuggestionsProps {
   onGoToCart: () => void;
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const MEAL_TYPES: FoodSuggestionRequest['mealType'][] = [
+  'breakfast',
+  'lunch',
+  'dinner',
+  'snack',
+  'dessert',
+];
+
+const FULFILLMENT_TYPES: FoodSuggestionRequest['fulfillmentType'][] = [
+  'pickup',
+  'delivery',
+  'dine-in',
+];
+
+const DIETARY_OPTIONS = [
+  'no restrictions',
+  'halal',
+  'vegetarian',
+  'vegan',
+  'low carb',
+  'high protein',
+  'diabetic-friendly',
+  'weight loss',
+];
+
 // ─── Form state ───────────────────────────────────────────────────────────────
 
 interface SuggestionForm {
   budget: string;
   mealType: string;
   appetite: string;
-  dietaryRestrictions: string[];
+  dietaryPreferences: string[];
   peopleCount: string;
   fulfillmentType: string;
   limit: string;
@@ -61,7 +83,7 @@ const DEFAULT_FORM: SuggestionForm = {
   budget: '',
   mealType: '',
   appetite: '',
-  dietaryRestrictions: [],
+  dietaryPreferences: [],
   peopleCount: '1',
   fulfillmentType: '',
   limit: '5',
@@ -302,38 +324,29 @@ export function AISuggestions({
   const [result, setResult] = useState<AiRecommendationResponse | null>(null);
   const [error, setError] = useState('');
 
-  const toggleDietary = (key: string) => {
+  const toggleDietary = (pref: string) => {
     setForm((f) => {
-      if (key === 'no_restrictions') {
-        return {
-          ...f,
-          dietaryRestrictions: f.dietaryRestrictions.includes('no_restrictions') ? [] : ['no_restrictions'],
-        };
-      }
-      if (!f.dietaryRestrictions.includes(key) && f.dietaryRestrictions.filter(d => d !== 'no_restrictions').length >= 3) return f;
+      if (!f.dietaryPreferences.includes(pref) && f.dietaryPreferences.length >= 3) return f;
       return {
         ...f,
-        dietaryRestrictions: f.dietaryRestrictions.includes(key)
-          ? f.dietaryRestrictions.filter((p) => p !== key)
-          : [...f.dietaryRestrictions.filter(d => d !== 'no_restrictions'), key],
+        dietaryPreferences: f.dietaryPreferences.includes(pref)
+          ? f.dietaryPreferences.filter((p) => p !== pref)
+          : [...f.dietaryPreferences, pref],
       };
     });
   };
 
-  const buildRequest = (): FoodSuggestionRequest => {
-    const restrictions = form.dietaryRestrictions.filter(d => d !== 'no_restrictions');
-    return {
-      branchId,
-      branchName,
-      ...(form.budget && { budget: parseFloat(form.budget) }),
-      ...(form.mealType && { mealType: form.mealType as FoodSuggestionRequest['mealType'] }),
-      ...(form.appetite && { appetite: form.appetite as FoodSuggestionRequest['appetite'] }),
-      ...(restrictions.length > 0 && { dietaryRestrictions: restrictions }),
-      ...(form.peopleCount && { peopleCount: parseInt(form.peopleCount, 10) }),
-      ...(form.fulfillmentType && { fulfillmentType: form.fulfillmentType as FoodSuggestionRequest['fulfillmentType'] }),
-      ...(form.limit && { limit: parseInt(form.limit, 10) }),
-    };
-  };
+  const buildRequest = (): FoodSuggestionRequest => ({
+    branchId,
+    branchName,
+    ...(form.budget && { budget: parseFloat(form.budget) }),
+    ...(form.mealType && { mealType: form.mealType as FoodSuggestionRequest['mealType'] }),
+    ...(form.appetite && { appetite: form.appetite as FoodSuggestionRequest['appetite'] }),
+    ...(form.dietaryPreferences.length > 0 && { dietaryPreferences: form.dietaryPreferences }),
+    ...(form.peopleCount && { peopleCount: parseInt(form.peopleCount, 10) }),
+    ...(form.fulfillmentType && { fulfillmentType: form.fulfillmentType as FoodSuggestionRequest['fulfillmentType'] }),
+    ...(form.limit && { limit: parseInt(form.limit, 10) }),
+  });
 
   const fetchSuggestions = async () => {
     setIsLoading(true);
@@ -454,8 +467,8 @@ export function AISuggestions({
                   <select value={form.mealType} onChange={(e) => setForm((f) => ({ ...f, mealType: e.target.value }))}
                     className='w-full h-9 rounded-md border px-3 py-1 text-sm' style={selectStyle}>
                     <option value=''>Any</option>
-                    {MEAL_TYPE_OPTIONS.map((t) => (
-                      <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                    {MEAL_TYPES.map((t) => (
+                      <option key={t} value={t}>{t!.charAt(0).toUpperCase() + t!.slice(1)}</option>
                     ))}
                   </select>
                 </div>
@@ -465,7 +478,6 @@ export function AISuggestions({
                     className='w-full h-9 rounded-md border px-3 py-1 text-sm' style={selectStyle}>
                     <option value=''>Any</option>
                     <option value='light'>Light</option>
-                    <option value='moderate'>Moderate</option>
                     <option value='heavy'>Heavy</option>
                   </select>
                 </div>
@@ -475,30 +487,30 @@ export function AISuggestions({
                     onChange={(e) => setForm((f) => ({ ...f, fulfillmentType: e.target.value }))}
                     className='w-full h-9 rounded-md border px-3 py-1 text-sm' style={selectStyle}>
                     <option value=''>Any</option>
-                    {FULFILLMENT_TYPE_OPTIONS.map((ft) => (
-                      <option key={ft} value={ft}>{ft.charAt(0).toUpperCase() + ft.slice(1)}</option>
+                    {FULFILLMENT_TYPES.map((ft) => (
+                      <option key={ft} value={ft}>{ft!.charAt(0).toUpperCase() + ft!.slice(1)}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
-              {/* Dietary restriction toggles */}
+              {/* Dietary preference toggles */}
               <div className='space-y-2'>
                 <label className='text-xs font-medium' style={{ color: 'var(--espresso)' }}>
-                  Dietary Restrictions <span style={{ opacity: 0.5 }}>(max 3)</span>
+                  Dietary Preferences <span style={{ opacity: 0.5 }}>(max 3)</span>
                 </label>
                 <div className='flex flex-wrap gap-2'>
-                  {DIETARY_RESTRICTION_OPTIONS.map(({ key, label }) => {
-                    const active = form.dietaryRestrictions.includes(key);
+                  {DIETARY_OPTIONS.map((pref) => {
+                    const active = form.dietaryPreferences.includes(pref);
                     return (
-                      <button key={key} type='button' onClick={() => toggleDietary(key)}
+                      <button key={pref} type='button' onClick={() => toggleDietary(pref)}
                         className='px-3 py-1 rounded-full text-xs font-medium border transition-all'
                         style={{
                           backgroundColor: active ? 'var(--espresso)' : 'transparent',
                           color: active ? 'var(--warm-white)' : 'var(--espresso)',
                           borderColor: 'var(--espresso)',
                         }}>
-                        {label}
+                        {pref}
                       </button>
                     );
                   })}
