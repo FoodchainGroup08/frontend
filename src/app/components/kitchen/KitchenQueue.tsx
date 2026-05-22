@@ -226,7 +226,7 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
         onClick={() => onOrderClick(order)}
         style={{
           backgroundColor: 'var(--warm-white)',
-          borderColor: order.isNew ? 'var(--golden-amber)' : order.isUrgent || isOverdue ? 'var(--burnt-orange)' : 'transparent'
+          borderColor: order.isNew ? 'var(--golden-amber)' : order.isUrgent || isOverdue ? 'var(--burnt-orange)' : 'var(--brown)'
         }}
       >
         <CardHeader className="pb-3">
@@ -269,11 +269,18 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
         <CardContent className="space-y-3">
           <div className="space-y-1">
             {order.items.slice(0, 2).map((item) => (
-              <div key={item.id} className="flex items-center gap-2 text-sm">
-                <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
-                <span style={{ color: 'var(--brown)' }}>
-                  {item.quantity}× {item.name}
-                </span>
+              <div key={item.id} className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2 text-sm">
+                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--golden-amber)' }} />
+                  <span style={{ color: 'var(--brown)' }}>
+                    {item.quantity}× {item.name}
+                  </span>
+                </div>
+                {item.specialInstructions && (
+                  <p className="text-xs pl-5 italic" style={{ color: 'var(--burnt-orange)' }}>
+                    Note: {item.specialInstructions}
+                  </p>
+                )}
               </div>
             ))}
             {order.items.length > 2 && (
@@ -282,6 +289,13 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
               </p>
             )}
           </div>
+
+          {order.notes && (
+            <div className="flex items-start gap-2 px-2 py-1.5 rounded-md" style={{ backgroundColor: 'color-mix(in srgb, var(--golden-amber) 15%, transparent)' }}>
+              <span className="text-xs font-semibold flex-shrink-0" style={{ color: 'var(--brown)' }}>Note:</span>
+              <span className="text-xs italic" style={{ color: 'var(--brown)' }}>{order.notes}</span>
+            </div>
+          )}
 
           {order.status === 'received' && (
             <Button
