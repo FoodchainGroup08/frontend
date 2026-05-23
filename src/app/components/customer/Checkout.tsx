@@ -8,7 +8,7 @@ import { Separator } from "../ui/separator";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Textarea } from "../ui/textarea";
 import { toast } from "sonner";
-import { placeOrder, type Order, type BranchTable } from "@/services/api";
+import { placeOrder, getTablesByBranch, type Order, type BranchTable } from "@/services/api";
 import { initializePaystackPayment, savePendingOrderId } from "@/services/paymentsApi";
 import { LocationPicker } from "../auth/LocationPicker";
 import { getSavedDeliveryLocation, saveDeliveryLocation } from "@/services/locationService";
@@ -62,23 +62,14 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
 
   const RESERVATION_FEE = 500;
 
-  const DEMO_TABLES: BranchTable[] = [
-    { id: 't1', tableNumber: 1, capacity: 2, isAvailable: true },
-    { id: 't2', tableNumber: 2, capacity: 4, isAvailable: true },
-    { id: 't3', tableNumber: 3, capacity: 4, isAvailable: true },
-    { id: 't4', tableNumber: 4, capacity: 6, isAvailable: true },
-    { id: 't5', tableNumber: 5, capacity: 2, isAvailable: true },
-    { id: 't6', tableNumber: 6, capacity: 8, isAvailable: true },
-  ];
-
   useEffect(() => {
-    if (orderType !== 'dine-in') return;
+    if (orderType !== 'dine-in' || !branchId) return;
     setTablesLoading(true);
     setSelectedTable(null);
-    setTimeout(() => {
-      setTables(DEMO_TABLES);
-      setTablesLoading(false);
-    }, 600);
+    getTablesByBranch(branchId)
+      .then(data => setTables(data))
+      .catch(() => toast.error('Could not load tables', { description: 'Please try again.' }))
+      .finally(() => setTablesLoading(false));
   }, [orderType, branchId]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);

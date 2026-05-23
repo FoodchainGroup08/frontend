@@ -42,6 +42,7 @@ import { DailySales } from "./components/manager/DailySales";
 import { LiveOrders } from "./components/manager/LiveOrders";
 import { ManagerDashboard } from "./components/manager/ManagerDashboard";
 import { ManagerHistory } from "./components/manager/ManagerHistory";
+import { TableManagement } from "./components/manager/TableManagement";
 import { ManagerSidebar } from "./components/manager/ManagerSidebar";
 import { PopularItems } from "./components/manager/PopularItems";
 
@@ -570,6 +571,7 @@ function KitchenLayout() {
 const managerScreenPaths: Record<string, string> = {
   'dashboard': '/manager',
   'live-orders': '/manager/live-orders',
+  'tables': '/manager/tables',
   'daily-sales': '/manager/daily-sales',
   'popular-items': '/manager/popular-items',
   'history': '/manager/history',
@@ -584,6 +586,7 @@ function ManagerLayout() {
   const pathToScreen: Record<string, string> = {
     '/manager': 'dashboard',
     '/manager/live-orders': 'live-orders',
+    '/manager/tables': 'tables',
     '/manager/daily-sales': 'daily-sales',
     '/manager/popular-items': 'popular-items',
     '/manager/history': 'history',
@@ -593,6 +596,7 @@ function ManagerLayout() {
   const screenLabels: Record<string, string> = {
     'dashboard': 'Dashboard',
     'live-orders': 'Live Orders',
+    'tables': 'Tables',
     'daily-sales': 'Daily Sales',
     'popular-items': 'Popular Items',
     'history': 'History',
@@ -621,6 +625,7 @@ function ManagerLayout() {
           <Routes>
             <Route index element={<ManagerDashboard />} />
             <Route path="live-orders" element={<LiveOrders />} />
+            <Route path="tables" element={<TableManagement />} />
             <Route path="daily-sales" element={<DailySales />} />
             <Route path="popular-items" element={<PopularItems />} />
             <Route path="history" element={<ManagerHistory />} />

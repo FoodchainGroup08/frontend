@@ -1,4 +1,4 @@
-import { Award, ClipboardList, History, LayoutDashboard, TrendingUp, User, X } from "lucide-react";
+import { Award, ClipboardList, History, LayoutDashboard, TrendingUp, User, X, LayoutGrid } from "lucide-react";
 import { Link } from "react-router";
 
 interface ManagerSidebarProps {
@@ -23,6 +23,7 @@ export function ManagerSidebar({
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'live-orders', label: 'Live Orders', icon: ClipboardList },
+    { id: 'tables', label: 'Tables', icon: LayoutGrid },
     { id: 'daily-sales', label: 'Daily Sales', icon: TrendingUp },
     { id: 'popular-items', label: 'Popular Items', icon: Award },
     { id: 'history', label: 'History', icon: History },

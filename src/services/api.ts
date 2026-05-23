@@ -536,6 +536,14 @@ export interface UserPreferencesV2 {
   defaultBudget?: number;
   budgetUnlimited: boolean;
   preferencesCompleted: boolean;
+  healthGoal?: string | null;
+  foodAllergies?: string[];
+  tastePreferences?: string[];
+  dislikedIngredients?: string[];
+  appetiteSize?: string | null;
+  usualMealTimes?: string[];
+  orderFrequency?: string | null;
+  typicalGroupSize?: string | null;
   updatedAt?: string;
 }
 
@@ -545,6 +553,14 @@ export interface SavePreferencesV2Request {
   spiceLevel: string | null;
   defaultBudget?: number;
   budgetUnlimited: boolean;
+  healthGoal?: string | null;
+  foodAllergies?: string[];
+  tastePreferences?: string[];
+  dislikedIngredients?: string[];
+  appetiteSize?: string | null;
+  usualMealTimes?: string[];
+  orderFrequency?: string | null;
+  typicalGroupSize?: string | null;
 }
 
 export const getUserPreferencesV2 = (): Promise<UserPreferencesV2> =>
@@ -702,17 +718,38 @@ export interface BranchTable {
   isAvailable: boolean;
 }
 
-// Expects GET /branches/{branchId}/tables returning an array or Spring Page of table objects.
-export const getTablesByBranch = (branchId: string): Promise<BranchTable[]> =>
+export interface BranchTableDetail extends BranchTable {
+  status: 'AVAILABLE' | 'OCCUPIED' | 'RESERVED';
+}
+
+function mapTable(t: any): BranchTableDetail {
+  return {
+    id: t.id ?? String(t.tableNumber ?? t.number),
+    tableNumber: t.tableNumber ?? t.number ?? '?',
+    capacity: t.capacity ?? t.seats ?? 4,
+    isAvailable: (t.status ?? t.isAvailable ?? true) === 'AVAILABLE' || t.isAvailable === true,
+    status: t.status ?? (t.isAvailable ? 'AVAILABLE' : 'OCCUPIED'),
+  };
+}
+
+export const getTablesByBranch = (branchId: string): Promise<BranchTableDetail[]> =>
   apiClient.get<any>(`/branches/${branchId}/tables`).then(r => {
     const items: any[] = r.data?.content ?? r.data?.tables ?? (Array.isArray(r.data) ? r.data : []);
-    return items.map(t => ({
-      id: t.id ?? String(t.tableNumber ?? t.number),
-      tableNumber: t.tableNumber ?? t.number ?? '?',
-      capacity: t.capacity ?? t.seats ?? 4,
-      isAvailable: t.isAvailable ?? t.available ?? true,
-    }));
+    return items.map(mapTable);
   });
+
+export const addTable = (branchId: string, payload: { tableNumber: number; capacity: number }): Promise<BranchTableDetail> =>
+  apiClient.post<any>(`/branches/${branchId}/tables`, payload).then(r => mapTable(r.data));
+
+export const deleteTable = (branchId: string, tableId: string): Promise<void> =>
+  apiClient.delete(`/branches/${branchId}/tables/${tableId}`).then(() => {});
+
+export const updateTableStatus = (
+  branchId: string,
+  tableId: string,
+  status: 'AVAILABLE' | 'OCCUPIED' | 'RESERVED',
+): Promise<BranchTableDetail> =>
+  apiClient.patch<any>(`/branches/${branchId}/tables/${tableId}/status`, { status }).then(r => mapTable(r.data));
 
 // ─── MENU ─────────────────────────────────────────────────────────────────────
 // All paths include /v1/ — the menu service uses that as an internal prefix.
