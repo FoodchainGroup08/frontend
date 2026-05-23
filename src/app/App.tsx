@@ -30,6 +30,8 @@ import { OrderConfirmation } from "./components/customer/OrderConfirmation";
 import { OrderDetailModal } from "./components/customer/OrderDetailModal";
 import { OrderHistory } from "./components/customer/OrderHistory";
 import { OrderTracker } from "./components/customer/OrderTracker";
+import { PreferencesOnboardingModal } from "./components/customer/PreferencesOnboardingModal";
+import { getUserPreferencesV2 } from "@/services/api";
 import { KitchenCompletedOrders } from "./components/kitchen/KitchenCompletedOrders";
 import { KitchenOrderDetail } from "./components/kitchen/KitchenOrderDetail";
 import { KitchenQueue } from "./components/kitchen/KitchenQueue";
@@ -226,6 +228,7 @@ function CustomerLayout() {
   });
   const [currentOrder, setCurrentOrder] = useState<ConfirmationOrder | null>(null);
   const [isHelpMeChooseOpen, setIsHelpMeChooseOpen] = useState(false);
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
   // Track which branches have already shown the Help Me Choose sheet this session
   const helpMeChooseShownFor = useRef(new Set<string>());
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
@@ -242,6 +245,14 @@ function CustomerLayout() {
     if (selectedBranch) localStorage.setItem(branchKey, JSON.stringify(selectedBranch));
     else localStorage.removeItem(branchKey);
   }, [selectedBranch, branchKey, user?.id]);
+
+  // Check v2 preferences on mount — show onboarding modal if not yet completed
+  useEffect(() => {
+    if (!user?.id) return;
+    getUserPreferencesV2()
+      .then(prefs => { if (!prefs.preferencesCompleted) setIsPreferencesModalOpen(true); })
+      .catch(() => {}); // silently ignore — never block the customer flow
+  }, [user?.id]);
 
   const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -463,6 +474,12 @@ function CustomerLayout() {
         order={selectedOrderDetail}
         isOpen={isOrderDetailOpen}
         onClose={() => setIsOrderDetailOpen(false)}
+      />
+      <PreferencesOnboardingModal
+        isOpen={isPreferencesModalOpen}
+        onClose={() => setIsPreferencesModalOpen(false)}
+        userId={user?.id}
+        onSaved={() => setIsPreferencesModalOpen(false)}
       />
       {selectedBranch && (
         <HelpMeChooseSheet

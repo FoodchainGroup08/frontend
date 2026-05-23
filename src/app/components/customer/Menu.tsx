@@ -342,7 +342,7 @@ export function Menu({ onAddToCart, onGoToCart, cart, branchId }: MenuProps) {
         return (
           <button
             onClick={onGoToCart}
-            className="fixed bottom-6 right-12 flex items-center gap-2 px-5 py-3 rounded-full shadow-lg transition-all hover:scale-105 z-50"
+            className="fixed bottom-20 sm:bottom-6 right-6 sm:right-12 flex items-center gap-2 px-5 py-3 rounded-full shadow-lg transition-all hover:scale-105 z-50"
             style={{
               backgroundColor: 'var(--golden-amber)',
               color: 'var(--charcoal)',

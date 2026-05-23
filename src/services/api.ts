@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// VITE_API_BASE_URL should include the full path (e.g. https://api.foodchain.live/api/v1).
-// Falls back to /api/v1 in dev so the Vite proxy handles the request and avoids CORS.
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+// VITE_API_BASE_URL is the host only (e.g. https://api.foodchain.live).
+// Falls back to '' in dev so the Vite proxy handles /api/* and avoids CORS.
+const API_HOST = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? '';
+const BASE_URL = API_HOST ? `${API_HOST}/api/v1` : '/api/v1';
+const BASE_URL_V2 = API_HOST ? `${API_HOST}/api/v2` : '/api/v2';
 export const TOKEN_KEY = 'foodchain_token';
 export const REFRESH_TOKEN_KEY = 'foodchain_refresh_token';
 
@@ -379,7 +381,7 @@ export interface ComboSuggestion {
   confidence: number;
 }
 
-export type RecommendationSource = 'GEMINI' | 'RULE_BASED' | 'NONE';
+export type RecommendationSource = 'GEMINI' | 'RULE_BASED' | 'NONE' | 'PREFERENCE_BASED_V2';
 
 export interface AiRecommendationResponse {
   recommendationSource: RecommendationSource;
@@ -523,6 +525,33 @@ export const getFoodPreferences = (): Promise<UserFoodPreferences> =>
 
 export const updateFoodPreferences = (prefs: UserFoodPreferences): Promise<UserFoodPreferences> =>
   apiClient.put<UserFoodPreferences>('/users/me/preferences', prefs).then(r => r.data);
+
+// ─── V2 User Preferences ──────────────────────────────────────────────────────
+
+export interface UserPreferencesV2 {
+  userId?: string;
+  dietaryRestrictions: string[];
+  cuisinePreferences: string[];
+  spiceLevel: string | null;
+  defaultBudget?: number;
+  budgetUnlimited: boolean;
+  preferencesCompleted: boolean;
+  updatedAt?: string;
+}
+
+export interface SavePreferencesV2Request {
+  dietaryRestrictions: string[];
+  cuisinePreferences: string[];
+  spiceLevel: string | null;
+  defaultBudget?: number;
+  budgetUnlimited: boolean;
+}
+
+export const getUserPreferencesV2 = (): Promise<UserPreferencesV2> =>
+  apiClient.get<UserPreferencesV2>('/users/preferences', { baseURL: BASE_URL_V2 }).then(r => r.data);
+
+export const saveUserPreferencesV2 = (prefs: SavePreferencesV2Request): Promise<UserPreferencesV2> =>
+  apiClient.post<UserPreferencesV2>('/users/preferences', prefs, { baseURL: BASE_URL_V2 }).then(r => r.data);
 
 export const postForgotPassword = (email: string) =>
   apiClient.post<AuthMessageResponse>('/auth/forgot-password', { email }).then(r => r.data);
@@ -760,7 +789,7 @@ export const updateCategory = (id: string, data: { name?: string; displayOrder?:
   apiClient.put<any>(`/menu/categories/${id}`, data).then((r) => r.data);
 
 export const getFoodSuggestions = (request: FoodSuggestionRequest): Promise<AiRecommendationResponse> =>
-  apiClient.post<AiRecommendationResponse>('/menu/suggestions', request).then((r) => r.data);
+  apiClient.post<AiRecommendationResponse>('/menu/recommendations', request, { baseURL: BASE_URL_V2 }).then((r) => r.data);
 
 export const uploadMenuItemImage = async (id: string, file: File) => {
   const formData = new FormData();
