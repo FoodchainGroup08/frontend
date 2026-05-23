@@ -368,7 +368,6 @@ export function KitchenQueue({ onOrderClick, onStatusChange }: KitchenQueueProps
     );
   }
 
-//testing the build
   
   if (error) {
     return (
