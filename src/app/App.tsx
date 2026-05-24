@@ -111,9 +111,10 @@ type HistoricalOrder = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getRoleHome(role: UserRole | undefined, userId?: string): string {
+function getRoleHome(role: UserRole | undefined, userId?: string, hasAddress?: boolean): string {
   switch (role) {
     case 'Customer': {
+      if (!hasAddress) return '/setup-location';
       if (userId) {
         try {
           const saved = localStorage.getItem(`foodchain_branch_${userId}`);
@@ -139,7 +140,7 @@ function RequireAuth() {
 
 function RequireRole({ role }: { role: UserRole }) {
   const { user } = useAuth();
-  if (user?.role !== role) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
+  if (user?.role !== role) return <Navigate to={getRoleHome(user?.role, user?.id, !!user?.addressLine)} replace />;
   return <Outlet />;
 }
 
@@ -148,7 +149,7 @@ function RequireRole({ role }: { role: UserRole }) {
 function LoginPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id, !!user?.addressLine)} replace />;
   return (
     <Login
       onNavigateToRegister={() => navigate('/register')}
@@ -161,7 +162,7 @@ function LoginPage() {
 function RegisterPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id, !!user?.addressLine)} replace />;
   return (
     <Register
       onNavigateToLogin={() => navigate('/login')}
@@ -179,7 +180,7 @@ function VerifyEmailPage() {
   const email = params.get('email') ?? undefined;
   // Only redirect away if there's no token — if a token is present the user must complete
   // verification even if they're already signed in (e.g. opened the link on a logged-in device).
-  if (isAuthenticated && !token) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
+  if (isAuthenticated && !token) return <Navigate to={getRoleHome(user?.role, user?.id, !!user?.addressLine)} replace />;
   return <VerifyEmail token={token} email={email} onNavigateToLogin={() => navigate('/login')} />;
 }
 
@@ -190,7 +191,7 @@ function SetupLocationPage() {
   return (
     <SetupLocation
       userName={user?.name}
-      onComplete={() => navigate(getRoleHome(user?.role, user?.id), { replace: true })}
+      onComplete={() => navigate('/branches', { replace: true })}
     />
   );
 }
@@ -198,7 +199,7 @@ function SetupLocationPage() {
 function ForgotPasswordPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id, !!user?.addressLine)} replace />;
   return (
     <ForgotPassword
       onNavigateToLogin={() => navigate('/login')}
@@ -214,7 +215,7 @@ function ResetPasswordPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id, !!user?.addressLine)} replace />;
   const token = new URLSearchParams(location.search).get('token') ?? '';
   return <ResetPassword token={token} onNavigateToLogin={() => navigate('/login')} />;
 }
@@ -752,7 +753,7 @@ function AppRoutes() {
           path="/"
           element={
             isAuthenticated ? (
-              <Navigate to={getRoleHome(user?.role, user?.id)} replace />
+              <Navigate to={getRoleHome(user?.role, user?.id, !!user?.addressLine)} replace />
             ) : (
               <LandingPage />
             )

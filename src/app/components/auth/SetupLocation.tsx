@@ -1,5 +1,7 @@
-import { saveDeliveryLocation } from '@/services/locationService';
-import { MapPin } from 'lucide-react';
+import { geocodeAddressText, saveDeliveryLocation } from '@/services/locationService';
+import { updateProfile } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import { MapPin, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from "react-router";
 import { Button } from '../ui/button';
@@ -21,20 +23,35 @@ interface SetupLocationProps {
 }
 
 export function SetupLocation({ userName, onComplete }: SetupLocationProps) {
+  const { refreshUser } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [deliveryLocation, setDeliveryLocation] = useState('');
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!phoneNumber.trim()) { setError('Phone number is required'); return; }
     if (!deliveryLocation.trim()) { setError('Please enter your delivery location'); return; }
 
-    saveDeliveryLocation(deliveryLocation);
-    localStorage.setItem('foodchain_phone_number', phoneNumber.trim());
-    onComplete();
+    setIsSaving(true);
+    try {
+      const coords = await geocodeAddressText(deliveryLocation.trim());
+      await updateProfile({
+        addressLine: deliveryLocation.trim(),
+        ...(coords ? { latitude: coords.lat, longitude: coords.lng } : {}),
+      });
+      await refreshUser();
+      saveDeliveryLocation(deliveryLocation);
+      localStorage.setItem('foodchain_phone_number', phoneNumber.trim());
+      onComplete();
+    } catch {
+      setError('Failed to save your location. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const firstName = userName?.split(' ')[0];
@@ -117,10 +134,12 @@ export function SetupLocation({ userName, onComplete }: SetupLocationProps) {
             <CardFooter>
               <Button
                 type="submit"
+                disabled={isSaving}
                 className="w-full transition-all hover:opacity-90 hover:shadow-lg"
                 style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
               >
-                Get started
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2 inline" /> : null}
+                {isSaving ? 'Saving…' : 'Get started'}
               </Button>
             </CardFooter>
           </form>

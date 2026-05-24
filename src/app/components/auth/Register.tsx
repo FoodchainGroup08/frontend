@@ -130,6 +130,7 @@ export function Register({ onNavigateToLogin, onVerificationRequired }: Register
       window.google?.accounts.id.renderButton(googleBtnRef.current, {
         theme: 'outline',
         size: 'large',
+        text: 'signup_with',
         width: googleBtnRef.current?.offsetWidth,
       });
     };

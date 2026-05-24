@@ -102,7 +102,6 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
   };
 
   const demoAccounts = [
-    { role: "Customer", email: "user@demo.com", password: "Demo@1234" },
     { role: "Kitchen Staff", email: "kitchen@demo.com", password: "Demo@1234" },
     { role: "Branch Manager", email: "manager@demo.com", password: "Demo@1234" },
     { role: "Admin", email: "admin@demo.com", password: "Demo@1234" }
@@ -269,7 +268,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
               }}
             >
               <p className="text-xs mb-3" style={{ color: 'var(--brown)', opacity: 0.7 }}>
-                Use these test accounts to explore different user roles
+                Use these test accounts to explore staff roles. To log in as a customer, use your personal account credentials.
               </p>
               <div className="space-y-2">
                 {demoAccounts.map((account) => (
