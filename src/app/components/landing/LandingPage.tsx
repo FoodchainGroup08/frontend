@@ -122,7 +122,7 @@ export function LandingPage() {
             style={{ color: 'color-mix(in srgb, var(--espresso) 68%, transparent)' }}
           >
             Answer a few quick questions and we'll suggest the perfect meal from your nearest branch
-            — personalised to your taste, no endless scrolling.
+            - personalised to your taste, no endless scrolling.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -132,7 +132,7 @@ export function LandingPage() {
               className="font-semibold text-white min-w-36"
               style={{ backgroundColor: 'var(--espresso)' }}
             >
-              <Link to="/register">Help Me Choose</Link>
+              <Link to="/register">Get Started</Link>
             </Button>
             <Button
               size="lg"

@@ -135,7 +135,7 @@ export function SetupLocation({ userName, onComplete }: SetupLocationProps) {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="w-full transition-all hover:opacity-90 hover:shadow-lg"
+                className="w-full mt-4 transition-all hover:opacity-90 hover:shadow-lg"
                 style={{ backgroundColor: 'var(--golden-amber)', color: 'var(--charcoal)' }}
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2 inline" /> : null}

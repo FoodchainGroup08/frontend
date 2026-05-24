@@ -226,7 +226,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
                   className="underline"
                   style={{ color: 'var(--golden-amber)' }}
                 >
-                  Create account
+                  Create One!
                 </button>
               </div>
             </CardFooter>
