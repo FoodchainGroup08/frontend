@@ -67,7 +67,7 @@ export function Checkout({ cart, branchId, branchName, branchAddress, onPlaceOrd
     setTablesLoading(true);
     setSelectedTable(null);
     getTablesByBranch(branchId)
-      .then(data => setTables(data))
+      .then(data => setTables(data.filter(t => t.isAvailable)))
       .catch(() => toast.error('Could not load tables', { description: 'Please try again.' }))
       .finally(() => setTablesLoading(false));
   }, [orderType, branchId]);
