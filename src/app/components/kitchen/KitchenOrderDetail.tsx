@@ -14,7 +14,7 @@ import { Separator } from "../ui/separator";
 
 interface KitchenOrderDetail {
   id: string;
-  status: 'received' | 'preparing' | 'ready';
+  status: 'received' | 'preparing' | 'ready' | 'picked-up' | 'served';
   items: Array<{
     id: string;
     name: string;

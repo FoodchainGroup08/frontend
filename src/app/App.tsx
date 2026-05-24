@@ -111,9 +111,17 @@ type HistoricalOrder = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getRoleHome(role: UserRole | undefined): string {
+function getRoleHome(role: UserRole | undefined, userId?: string): string {
   switch (role) {
-    case 'Customer': return '/branches';
+    case 'Customer': {
+      if (userId) {
+        try {
+          const saved = localStorage.getItem(`foodchain_branch_${userId}`);
+          if (saved && saved !== 'null') return '/menu';
+        } catch { /* ignore */ }
+      }
+      return '/branches';
+    }
     case 'Kitchen Staff': return '/kitchen';
     case 'Branch Manager': return '/manager';
     case 'Admin': return '/admin';
@@ -131,7 +139,7 @@ function RequireAuth() {
 
 function RequireRole({ role }: { role: UserRole }) {
   const { user } = useAuth();
-  if (user?.role !== role) return <Navigate to={getRoleHome(user?.role)} replace />;
+  if (user?.role !== role) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
   return <Outlet />;
 }
 
@@ -140,7 +148,7 @@ function RequireRole({ role }: { role: UserRole }) {
 function LoginPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
   return (
     <Login
       onNavigateToRegister={() => navigate('/register')}
@@ -153,7 +161,7 @@ function LoginPage() {
 function RegisterPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
   return (
     <Register
       onNavigateToLogin={() => navigate('/login')}
@@ -171,7 +179,7 @@ function VerifyEmailPage() {
   const email = params.get('email') ?? undefined;
   // Only redirect away if there's no token — if a token is present the user must complete
   // verification even if they're already signed in (e.g. opened the link on a logged-in device).
-  if (isAuthenticated && !token) return <Navigate to={getRoleHome(user?.role)} replace />;
+  if (isAuthenticated && !token) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
   return <VerifyEmail token={token} email={email} onNavigateToLogin={() => navigate('/login')} />;
 }
 
@@ -182,7 +190,7 @@ function SetupLocationPage() {
   return (
     <SetupLocation
       userName={user?.name}
-      onComplete={() => navigate(getRoleHome(user?.role), { replace: true })}
+      onComplete={() => navigate(getRoleHome(user?.role, user?.id), { replace: true })}
     />
   );
 }
@@ -190,7 +198,7 @@ function SetupLocationPage() {
 function ForgotPasswordPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
   return (
     <ForgotPassword
       onNavigateToLogin={() => navigate('/login')}
@@ -206,7 +214,7 @@ function ResetPasswordPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role)} replace />;
+  if (isAuthenticated) return <Navigate to={getRoleHome(user?.role, user?.id)} replace />;
   const token = new URLSearchParams(location.search).get('token') ?? '';
   return <ResetPassword token={token} onNavigateToLogin={() => navigate('/login')} />;
 }
@@ -232,6 +240,7 @@ function CustomerLayout() {
   const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
   // Track which branches have already shown the Help Me Choose sheet this session
   const helpMeChooseShownFor = useRef(new Set<string>());
+  const preferencesCheckedRef = useRef(false);
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
@@ -247,13 +256,6 @@ function CustomerLayout() {
     else localStorage.removeItem(branchKey);
   }, [selectedBranch, branchKey, user?.id]);
 
-  // Check v2 preferences on mount — show onboarding modal if not yet completed
-  useEffect(() => {
-    if (!user?.id) return;
-    getUserPreferencesV2()
-      .then(prefs => { if (!prefs.preferencesCompleted) setIsPreferencesModalOpen(true); })
-      .catch(() => {}); // silently ignore — never block the customer flow
-  }, [user?.id]);
 
   const cartItemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -289,9 +291,24 @@ function CustomerLayout() {
     setSelectedBranch(branch);
     navigate('/menu');
     toast.success(`Selected ${branch.name}`, { description: "Browse our menu and start ordering" });
-    // Open Help Me Choose once per branch per session, unless the user dismissed it permanently
+
+    // Check preferences once per session after the user picks a branch.
+    // Only show Help Me Choose if preferences are already completed.
     const permanentlyDismissed = localStorage.getItem('foodchain_help_me_choose_dismissed') === 'true';
-    if (!permanentlyDismissed && !helpMeChooseShownFor.current.has(branch.id)) {
+    if (!preferencesCheckedRef.current) {
+      preferencesCheckedRef.current = true;
+      getUserPreferencesV2()
+        .then(prefs => {
+          if (!prefs.preferencesCompleted) {
+            setIsPreferencesModalOpen(true);
+          } else if (!permanentlyDismissed && !helpMeChooseShownFor.current.has(branch.id)) {
+            helpMeChooseShownFor.current.add(branch.id);
+            setIsHelpMeChooseOpen(true);
+          }
+        })
+        .catch(() => {});
+    } else if (!permanentlyDismissed && !helpMeChooseShownFor.current.has(branch.id)) {
+      // Preferences already checked this session and completed — show Help Me Choose for new branches
       helpMeChooseShownFor.current.add(branch.id);
       setIsHelpMeChooseOpen(true);
     }
@@ -438,7 +455,7 @@ function CustomerLayout() {
       case 'order-history':
         return <OrderHistory onViewDetails={handleViewOrderDetails} onBrowseMenu={() => navigate('/menu')} />;
       case 'profile':
-        return <CustomerProfile onGoBack={() => navigate(-1)} />;
+        return <CustomerProfile onGoBack={() => navigate(-1)} onChangeBranch={() => navigate('/branches')} />;
       case 'ai-suggestions':
         if (!selectedBranch) return <Navigate to="/branches" replace />;
         return (
@@ -735,7 +752,7 @@ function AppRoutes() {
           path="/"
           element={
             isAuthenticated ? (
-              <Navigate to={getRoleHome(user?.role)} replace />
+              <Navigate to={getRoleHome(user?.role, user?.id)} replace />
             ) : (
               <LandingPage />
             )

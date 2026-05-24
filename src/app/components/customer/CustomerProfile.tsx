@@ -5,6 +5,8 @@ import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { updateProfile, getUserPreferencesV2, saveUserPreferencesV2, type SavePreferencesV2Request } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { geocodeAddressText } from "@/services/locationService";
+import { LocationPicker } from "../auth/LocationPicker";
 
 // ─── Option lists (aligned with v2 API) ──────────────────────────────────────
 
@@ -112,16 +114,6 @@ function syncToLocalStorage(userId: string, prefs: SavePreferencesV2Request) {
   );
 }
 
-async function geocodeAddress(address: string, apiKey: string): Promise<{ lat: number; lng: number }> {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.status !== 'OK' || !data.results?.[0]) {
-    throw new Error('Address not found. Try being more specific (include city/state).');
-  }
-  const { lat, lng } = data.results[0].geometry.location;
-  return { lat, lng };
-}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -193,11 +185,12 @@ function SingleSelectGrid({
 
 interface CustomerProfileProps {
   onGoBack: () => void;
+  onChangeBranch?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
+export function CustomerProfile({ onGoBack, onChangeBranch }: CustomerProfileProps) {
   const { user, refreshUser } = useAuth();
 
   const [addressInput, setAddressInput] = useState(user?.addressLine ?? '');
@@ -271,12 +264,15 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
       if (nameInput.trim() && nameInput !== user?.name) {
         profilePayload.name = nameInput.trim();
       }
+      let addressChanged = false;
       if (addressInput.trim() && addressInput !== user?.addressLine) {
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-        const { lat, lng } = await geocodeAddress(addressInput.trim(), apiKey);
+        const coords = await geocodeAddressText(addressInput.trim());
         profilePayload.addressLine = addressInput.trim();
-        profilePayload.latitude = lat;
-        profilePayload.longitude = lng;
+        if (coords) {
+          profilePayload.latitude = coords.lat;
+          profilePayload.longitude = coords.lng;
+        }
+        addressChanged = true;
       }
       if (Object.keys(profilePayload).length > 0) {
         await updateProfile(profilePayload);
@@ -304,6 +300,10 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
       if (user?.id) syncToLocalStorage(user.id, prefsPayload);
 
       toast.success('Profile saved');
+      if (addressChanged && onChangeBranch) {
+        toast.info('Showing branches near your new address…', { duration: 2000 });
+        setTimeout(onChangeBranch, 800);
+      }
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to save profile');
     } finally {
@@ -370,36 +370,55 @@ export function CustomerProfile({ onGoBack }: CustomerProfileProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
-                Your saved address is used to find nearby branches automatically. Enter a full address including city and state for best results.
+                Your saved address is used to find nearby branches automatically.
               </p>
               {user?.addressLine && (
                 <div className="flex items-start gap-2 p-3 rounded-md" style={{ backgroundColor: 'var(--warm-white)' }}>
                   <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--sage-green)' }} />
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>{user.addressLine}</p>
-                    {user.latitude && user.longitude && (
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--espresso)', opacity: 0.5 }}>
-                        {user.latitude.toFixed(4)}, {user.longitude.toFixed(4)}
-                      </p>
-                    )}
-                  </div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>{user.addressLine}</p>
                 </div>
               )}
-              <div>
-                <label className="block text-sm mb-1.5" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
-                  {user?.addressLine ? 'Update address' : 'Enter your delivery address'}
-                </label>
-                <input
-                  type="text"
-                  value={addressInput}
-                  onChange={e => setAddressInput(e.target.value)}
-                  placeholder="e.g. 123 Awolowo Road, Ikoyi, Lagos"
-                  className="w-full px-3 py-2 rounded-md border text-sm outline-none focus:ring-2"
-                  style={{ borderColor: 'var(--espresso)', color: 'var(--espresso)', backgroundColor: 'var(--warm-white)' }}
-                />
-              </div>
+              <label className="block text-sm mb-1.5" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
+                {user?.addressLine ? 'Update address' : 'Enter your delivery address'}
+              </label>
+              <LocationPicker
+                value={addressInput}
+                onChange={setAddressInput}
+              />
             </CardContent>
           </Card>
+
+          {/* Change Branch */}
+          {onChangeBranch && (
+            <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2" style={{ color: 'var(--espresso)' }}>
+                  <UtensilsCrossed className="w-5 h-5" />
+                  Your Branch
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm mb-3" style={{ color: 'var(--espresso)', opacity: 0.6 }}>
+                  Switch to a different branch or find one closer to you.
+                </p>
+                <div
+                  className="flex items-start gap-2 p-3 rounded-lg mb-4 text-sm"
+                  style={{ backgroundColor: 'rgba(240,165,0,0.1)', border: '1px solid rgba(240,165,0,0.3)', color: 'var(--espresso)' }}
+                >
+                  <span className="mt-0.5">💡</span>
+                  <p>If you updated your address above, scroll down and <strong>Save Profile</strong> first — the branch list will then show locations near your new address.</p>
+                </div>
+                <Button
+                  onClick={onChangeBranch}
+                  variant="outline"
+                  className="w-full"
+                  style={{ borderColor: 'var(--espresso)', color: 'var(--espresso)' }}
+                >
+                  Change Branch
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* ── Food Preferences ──────────────────────────────────────────────── */}
           <Card className="border-[var(--espresso)]/10" style={{ backgroundColor: 'var(--white)' }}>
