@@ -113,7 +113,7 @@ export function Login({ onNavigateToRegister, onNavigateToForgotPassword, onVeri
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-2">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="40" height="40" rx="8" fill="var(--brown)"/>
+              <rect width="40" height="40" rx="8" fill="var(--espresso)"/>
               <path d="M20 10L28 16V24L20 30L12 24V16L20 10Z" fill="var(--golden-amber)"/>
               <circle cx="20" cy="20" r="4" fill="var(--warm-white)"/>
             </svg>
