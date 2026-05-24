@@ -225,10 +225,9 @@ export function PreferencesOnboardingModal({ isOpen, onClose, userId, onSaved }:
     setDislikedInput('');
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
+  const buildPayload = (): SavePreferencesV2Request => {
     const budgetUnlimited = budgetPreset === null || budgetPreset === undefined;
-    const payload: SavePreferencesV2Request = {
+    return {
       dietaryRestrictions: dietary,
       cuisinePreferences: cuisines,
       spiceLevel: spice,
@@ -243,7 +242,17 @@ export function PreferencesOnboardingModal({ isOpen, onClose, userId, onSaved }:
       orderFrequency: frequency,
       typicalGroupSize: groupSize,
     };
+  };
 
+  const handleNext = async () => {
+    // Save progress silently so selections survive if the modal is closed early
+    try { await saveUserPreferencesV2(buildPayload()); } catch { /* ignore — best effort */ }
+    setStep(s => s + 1);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    const payload = buildPayload();
     try {
       await saveUserPreferencesV2(payload);
       syncToLocalStorage(userId, payload);
@@ -484,7 +493,7 @@ export function PreferencesOnboardingModal({ isOpen, onClose, userId, onSaved }:
                 {step < 2 ? (
                   <button
                     type="button"
-                    onClick={() => setStep(s => s + 1)}
+                    onClick={handleNext}
                     className="w-full py-3.5 rounded-xl text-base font-bold transition-opacity hover:opacity-90 active:opacity-80 flex items-center justify-center gap-2"
                     style={{ backgroundColor: 'var(--espresso)', color: 'var(--warm-white)' }}
                   >
