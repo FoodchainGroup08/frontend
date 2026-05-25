@@ -41,6 +41,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* FoodChain Brand Colors */
+  --brown: #3B2314;
   --espresso: #3B2314;
   --golden-amber: #F0A500;
   --charcoal: #1E1E1E;
@@ -128,6 +129,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* FoodChain Brand Colors */
+  --color-foodchain-brown: var(--brown);
   --color-foodchain-espresso: var(--espresso);
   --color-foodchain-golden-amber: var(--golden-amber);
   --color-foodchain-charcoal: var(--charcoal);

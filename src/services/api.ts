@@ -89,7 +89,8 @@ export interface Branch {
   longitude?: number;
   location?: string;
   distance?: string;
-  hours: string;
+  hours?: string;
+  hoursDisplay?: string;
   rating: number;
   isOpen: boolean;
   isActive: boolean;

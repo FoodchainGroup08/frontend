@@ -2,11 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { MapPin, Clock, Star, LogOut } from "lucide-react";
 
-const isOpenNow = () => {
-  const h = new Date().getHours();
-  return h >= 8 && h < 23;
-};
-
 function getDisplayRating(rating: number, id: string): string {
   if (rating > 0) return rating.toFixed(1);
   const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -159,7 +154,7 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
           <div className="grid gap-4 sm:gap-6">
             {branches.map((branch, index) => {
               const isSuggested = index === 0;
-              const open = isOpenNow();
+              const open = branch.isOpen;
               return (
               <Card
                 key={branch.id}
@@ -224,11 +219,11 @@ export function BranchSelector({ onSelectBranch, onLogout, userName }: BranchSel
                         {branch.address || branch.location}
                       </CardDescription>
                     </div>
-                    {branch.hours && (
+                    {(branch.hoursDisplay || branch.hours) && (
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--espresso)', opacity: 0.6 }} />
                         <CardDescription className="text-sm" style={{ color: 'var(--espresso)', opacity: 0.7 }}>
-                          {branch.hours}
+                          {branch.hoursDisplay || branch.hours}
                         </CardDescription>
                       </div>
                     )}
